@@ -10,6 +10,7 @@ using Unity.Transforms;
 
 public partial struct CubeSystem : ISystem
 {
+
     public void OnCreate( ref SystemState state )
     {
         
@@ -26,10 +27,11 @@ public partial struct CubeSystem : ISystem
         var ecbSingleton = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>();
         CubeJob job = new CubeJob
         {
-            ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged),
-            deltaTime = SystemAPI.Time.DeltaTime
+            ECB = ecbSingleton.CreateCommandBuffer(state.WorldUnmanaged), deltaTime = SystemAPI.Time.DeltaTime
         };
         job.Schedule();
+
+
     }
 }
 
@@ -37,7 +39,7 @@ public partial struct CubeJob : IJobEntity
 {
     public float deltaTime;
     public EntityCommandBuffer ECB;
-    
+
     public void Execute(Entity entity, ref CubeData cubeData, ref LocalTransform transform, EnabledRefRO<EntityCollider> col )
     {
         
