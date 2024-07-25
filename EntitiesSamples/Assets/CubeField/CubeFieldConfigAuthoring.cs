@@ -1,14 +1,15 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class CubeFieldConfigAuthoring : MonoBehaviour
 {
     public GameObject cubePrefab;
-    public int count;
-    
-    
+    public int2 dimensions;
+
     public class Baker : Baker<CubeFieldConfigAuthoring>
     {
         public override void Bake( CubeFieldConfigAuthoring authoring )
@@ -17,7 +18,7 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
             AddComponent(entity, new CubeFieldConfig
             {
                 cubePrefab = GetEntity(authoring.cubePrefab, TransformUsageFlags.Dynamic),
-                count = authoring.count
+                dimensions = authoring.dimensions
             });
         }
     }
@@ -26,5 +27,5 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
 public struct CubeFieldConfig : IComponentData
 {
     public Entity cubePrefab;
-    public int count;
+    public int2 dimensions;
 }
