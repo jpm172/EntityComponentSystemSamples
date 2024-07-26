@@ -154,7 +154,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cubePrefab: {fileID: 2071275406393858763, guid: 929d19c8c62b1b441b3339012a86ded8,
     type: 3}
-  count: 5
+  dimensions:
+    x: 10
+    y: 10
 --- !u!4 &615453353
 Transform:
   m_ObjectHideFlags: 0

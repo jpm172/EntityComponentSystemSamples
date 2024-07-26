@@ -18,9 +18,14 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
             AddComponent(entity, new CubeFieldConfig
             {
                 cubePrefab = GetEntity(authoring.cubePrefab, TransformUsageFlags.Dynamic),
-                dimensions = authoring.dimensions
+                dimensions = authoring.CalcuateDimensions()//authoring.dimensions
             });
         }
+    }
+
+    private int2 CalcuateDimensions()
+    {
+        return new int2(5,10);
     }
 }
 
