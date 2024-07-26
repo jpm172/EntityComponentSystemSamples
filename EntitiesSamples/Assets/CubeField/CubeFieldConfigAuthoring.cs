@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class CubeFieldConfigAuthoring : MonoBehaviour
 {
@@ -25,7 +26,8 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
 
     private int2 CalcuateDimensions()
     {
-        return new int2(5,10);
+        Random.seed = 1;
+        return new int2(Random.Range( 1,4 ),Random.Range( 1,4 ));
     }
 }
 
