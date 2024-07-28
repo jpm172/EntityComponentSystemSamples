@@ -157,6 +157,10 @@ MonoBehaviour:
   dimensions:
     x: 10
     y: 10
+  Meshes:
+  - {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  mat: {fileID: 0}
 --- !u!4 &615453353
 Transform:
   m_ObjectHideFlags: 0
