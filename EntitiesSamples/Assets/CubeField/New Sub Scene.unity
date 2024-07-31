@@ -123,7 +123,7 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &615453351
+--- !u!1 &1418636589
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -131,43 +131,36 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 615453353}
-  - component: {fileID: 615453352}
+  - component: {fileID: 1418636591}
+  - component: {fileID: 1418636590}
   m_Layer: 0
-  m_Name: CubeFieldConfig
+  m_Name: GameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &615453352
+--- !u!114 &1418636590
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 615453351}
+  m_GameObject: {fileID: 1418636589}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b7b6dac0b5dd7240a17bef0206bc5ab, type: 3}
+  m_Script: {fileID: 11500000, guid: 4b59632d35f6d774984aa64be3411b57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubePrefab: {fileID: 2071275406393858763, guid: 929d19c8c62b1b441b3339012a86ded8,
-    type: 3}
-  dimensions:
-    x: 10
-    y: 10
-  Meshes:
-  - {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
-  - {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
-  mat: {fileID: 0}
---- !u!4 &615453353
+  mesh: {fileID: 4300000, guid: 49a87e3402ce60f4eba9b0498164bdd5, type: 3}
+  mat: {fileID: 2100000, guid: ce92d71cb794d4d1c9706b5be72ad8ba, type: 2}
+--- !u!4 &1418636591
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 615453351}
+  m_GameObject: {fileID: 1418636589}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -180,4 +173,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 615453353}
+  - {fileID: 1418636591}

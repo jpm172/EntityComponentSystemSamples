@@ -28,6 +28,7 @@ public partial struct CubeFieldSystem : ISystem
     public void OnUpdate( ref SystemState state )
     {
         state.Enabled = false;//only run once
+
         CubeFieldConfig config = SystemAPI.GetSingleton<CubeFieldConfig>();
         EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.Temp);
         

@@ -79,7 +79,7 @@ public partial class MeshChangerSystem : SystemBase
     }
 
     protected override void OnUpdate()
-    {
+    { 
         EntityManager entityManager = EntityManager;
 
         Entities

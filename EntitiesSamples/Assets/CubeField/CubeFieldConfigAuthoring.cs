@@ -20,11 +20,14 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
         public override void Bake( CubeFieldConfigAuthoring authoring )
         {
             Entity entity = GetEntity(TransformUsageFlags.None);
+
             AddComponent(entity, new CubeFieldConfig
             {
                 cubePrefab = GetEntity(authoring.cubePrefab, TransformUsageFlags.Dynamic),
                 dimensions = authoring.CalcuateDimensions(),//authoring.dimensions
             });
+            
+            
         }
     }
 
@@ -33,6 +36,13 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
         Random.seed = 1; 
         return new int2(Random.Range( 1,4 ),Random.Range( 1,4 ));
     }
+}
+
+
+[BakingType]
+public class CubeFieldMeshes : IComponentData
+{
+    public RenderMeshArray meshArray;
 }
 
 public struct CubeFieldConfig : IComponentData
