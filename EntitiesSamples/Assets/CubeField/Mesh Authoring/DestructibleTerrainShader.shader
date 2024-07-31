@@ -56,6 +56,7 @@ Shader "Unlit/Destructible Terrain"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
 
+                /*
                 //map the uv to the position of the pixel in the point array
                 int x = (i.uv.x/_MainTex_TexelSize.x) - _CompositeOrigin.x - _BlockPosition.x;
                 int y = (i.uv.y/ _MainTex_TexelSize.y)- _CompositeOrigin.y - _BlockPosition.y;
@@ -66,7 +67,7 @@ Shader "Unlit/Destructible Terrain"
                 int index = x + _BlockSize*y;
 
                 clip(_PointsBuffer[index] - 1);//remove any "destroyed" pixels
-
+                */
 
                 return col;
             }

@@ -77,7 +77,18 @@ public class EntityMeshCreator : MonoBehaviour
 
         Mesh[] meshes = GetRandomMeshes(10);
         
-        var renderMeshArray = new RenderMeshArray(new[] {mat}, meshes);
+        var matList = new List<Material>();
+        for (int i=0;i< 1 ;i++)
+        {
+            var newMat = new Material(mat);
+            Color col = Color.HSVToRGB(((float)(i * 10) / (float)1) % 1.0f, 0.7f, 1.0f);
+            newMat.SetColor("_Color", col);              // set for LW
+            newMat.SetColor("_BaseColor", col);          // set for HD
+            matList.Add(newMat);
+        }
+        
+        //we can have a bunch of unique shaders
+        var renderMeshArray = new RenderMeshArray(matList.ToArray(), meshes);
         var renderMeshDescription = new RenderMeshDescription
         {
             FilterSettings = filterSettings,
@@ -130,21 +141,31 @@ public class EntityMeshCreator : MonoBehaviour
     private Mesh[] GetRandomMeshes(int amount)
     {
         Mesh[] result = new Mesh[amount];
+        int blockSize = 64;
         
+        int[] solidPointField = new int[blockSize*blockSize];
         
-        
+        for ( int n = 0; n < solidPointField.Length; n++ )
+        {
+            solidPointField[n] = 1;
+        }
         
         for ( int i = 0; i < amount; i++ )
         {
             MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
-            int blockSize = 64;
+            
+            
+            /*
             int[] points = new int[blockSize*blockSize];
-
             for ( int n = 0; n < points.Length; n++ )
             {
                 points[n] = Random.Range( 0, 2 );
             }
-            result[i] = meshConstructor.ConstructMesh( new Vector2Int( 10, 5 ), new Vector2Int( blockSize*i, 0 ), blockSize, points );
+            */
+            result[i] = meshConstructor.ConstructMesh( new Vector2Int( 10, 5 ),
+                new Vector2Int( blockSize*i, 0 ),
+                blockSize,
+                solidPointField );
         }
 
 

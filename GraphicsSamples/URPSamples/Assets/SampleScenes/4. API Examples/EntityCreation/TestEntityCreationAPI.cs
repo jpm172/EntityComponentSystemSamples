@@ -39,6 +39,7 @@ public class TestEntityCreationAPI : MonoBehaviour
             // Prototype has all correct components up front, can use SetComponent
             Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
             Ecb.SetComponent(index, e, new MaterialColor() {Value = ComputeColor(index)});
+
             // MeshBounds must be set according to the actual mesh for culling to work.
             int meshIndex = index % MeshCount;
             Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(0, meshIndex));
