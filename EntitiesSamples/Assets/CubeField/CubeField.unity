@@ -152,8 +152,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b59632d35f6d774984aa64be3411b57, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mesh: {fileID: -3071380337512292834, guid: 44ea919590270cd4e9f5dca4315edcf8, type: 3}
   mat: {fileID: 2100000, guid: ce92d71cb794d4d1c9706b5be72ad8ba, type: 2}
+  EntityCount: 10
 --- !u!4 &208954154
 Transform:
   m_ObjectHideFlags: 0

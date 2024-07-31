@@ -40,10 +40,11 @@ public partial struct CubeJob : IJobEntity
     public float deltaTime;
     public EntityCommandBuffer ECB;
 
-    public void Execute(Entity entity, ref CubeData cubeData, ref LocalTransform transform, EnabledRefRO<EntityCollider> col )
+    //public void Execute(Entity entity, ref CubeData cubeData, ref LocalTransform transform, EnabledRefRO<EntityCollider> col )
+    public void Execute(Entity entity, EnabledRefRO<EntityCollider> col )
     {
         
-        transform = transform.RotateY( math.radians(cubeData.speed * deltaTime) );
+        //transform = transform.RotateY( math.radians(cubeData.speed * deltaTime) );
         ECB.DestroyEntity( entity );
         
     }

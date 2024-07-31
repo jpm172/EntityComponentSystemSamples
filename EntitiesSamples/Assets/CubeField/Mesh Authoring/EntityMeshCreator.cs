@@ -11,14 +11,15 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Random = UnityEngine.Random;
 
 
 public class EntityMeshCreator : MonoBehaviour
 {
 
-    public Mesh mesh;
+    //public Mesh mesh;
     public Material mat;
-
+    public int EntityCount = 10;
     
     public struct SpawnJob : IJobParallelFor
     {
@@ -74,14 +75,16 @@ public class EntityMeshCreator : MonoBehaviour
         filterSettings.ShadowCastingMode = ShadowCastingMode.Off;
         filterSettings.ReceiveShadows = false;
 
-        var renderMeshArray = new RenderMeshArray(new[] {mat}, new[] {mesh});
+        Mesh[] meshes = GetRandomMeshes(10);
+        
+        var renderMeshArray = new RenderMeshArray(new[] {mat}, meshes);
         var renderMeshDescription = new RenderMeshDescription
         {
             FilterSettings = filterSettings,
             LightProbeUsage = LightProbeUsage.Off,
         };
 
-
+        //create the base entity that will be used as a template for spawning the reset
         Entity prototype = entityManager.CreateEntity();
         entityManager.SetName( prototype, "MyEntity" );
         RenderMeshUtility.AddComponents(
@@ -90,24 +93,29 @@ public class EntityMeshCreator : MonoBehaviour
             renderMeshDescription,
             renderMeshArray,
             MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-        entityManager.AddComponentData(prototype, new MaterialColor());
-
         
-        //var bounds = new NativeArray<RenderBounds>(Meshes.Count, Allocator.TempJob);
-        var bounds = new NativeArray<RenderBounds>(1, Allocator.TempJob);
+        entityManager.AddComponentData(prototype, new MaterialColor());
+        entityManager.AddComponentData( prototype, new EntityCollider() );
+        entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
+        entityManager.AddComponentData( prototype, new DestructibleData()
+        {
+            PointField = new NativeArray<int>(64, Allocator.Persistent)
+        } );
+        
+        var bounds = new NativeArray<RenderBounds>(meshes.Length, Allocator.TempJob);
         for (int i = 0; i < bounds.Length; ++i)
-            bounds[i] = new RenderBounds {Value = mesh.bounds.ToAABB()};
+            bounds[i] = new RenderBounds {Value = meshes[i].bounds.ToAABB()};
 
         var spawnJob = new SpawnJob
         {
             Prototype = prototype,
             Ecb = ecbJob.AsParallelWriter(),
-            EntityCount = 1,
-            MeshCount = 1,
+            EntityCount = EntityCount,
+            MeshCount = meshes.Length,
             MeshBounds = bounds
         };
 
-        var spawnHandle = spawnJob.Schedule(1, 128);
+        var spawnHandle = spawnJob.Schedule(EntityCount, 128);
         bounds.Dispose(spawnHandle);
 
         spawnHandle.Complete();
@@ -116,6 +124,30 @@ public class EntityMeshCreator : MonoBehaviour
         ecbJob.Playback(entityManager);
         ecbJob.Dispose();
         entityManager.DestroyEntity(prototype);
+    }
+
+
+    private Mesh[] GetRandomMeshes(int amount)
+    {
+        Mesh[] result = new Mesh[amount];
         
+        
+        
+        
+        for ( int i = 0; i < amount; i++ )
+        {
+            MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
+            int blockSize = 64;
+            int[] points = new int[blockSize*blockSize];
+
+            for ( int n = 0; n < points.Length; n++ )
+            {
+                points[n] = Random.Range( 0, 2 );
+            }
+            result[i] = meshConstructor.ConstructMesh( new Vector2Int( 10, 5 ), new Vector2Int( blockSize*i, 0 ), blockSize, points );
+        }
+
+
+        return result;
     }
 }

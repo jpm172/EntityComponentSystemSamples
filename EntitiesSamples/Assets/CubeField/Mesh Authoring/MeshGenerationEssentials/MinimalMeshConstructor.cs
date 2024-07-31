@@ -31,18 +31,17 @@ public class MinimalMeshConstructor
     }
 
 
-    public Mesh ConstructMesh(Blob blob, Vector2Int blockOrigin, int blockSize,  int[] pointField )
+    public Mesh ConstructMesh(Vector2Int dimensions, Vector2Int blockOrigin, int blockSize,  int[] pointField )
     {
-        Vector2Int dimensions = new Vector2Int(blob.Width, blob.Height);
-        
+
         if ( dimensions.x > dimensions.y )
         {
-            Dictionary<int, List < MeshStrip >> strips = MakeHorizontalStrips( blob, blockOrigin, blockSize, pointField );
+            Dictionary<int, List < MeshStrip >> strips = MakeHorizontalStrips( blockOrigin, blockSize, pointField );
             BlobStripsToMesh( JoinStrips( strips ) );
         }
         else
         {
-            Dictionary<int, List < MeshStrip >> strips = MakeVerticalStrips( blob, blockOrigin, blockSize, pointField );
+            Dictionary<int, List < MeshStrip >> strips = MakeVerticalStrips(  blockOrigin, blockSize, pointField );
             BlobStripsToMesh( JoinStrips( strips ) );
         }
 
@@ -50,24 +49,7 @@ public class MinimalMeshConstructor
     }
     
     
-    public Mesh ConstructMesh(LevelNode room, int[,] layout)
-    {
-        Vector2Int dimensions = room.UpperBounds - room.LowerBounds;
-        
-
-        if ( dimensions.x > dimensions.y )
-        {
-            Dictionary<int, List < MeshStrip >> strips = MakeHorizontalStrips( room, layout );
-            StripsToMesh( JoinStrips( strips ) );
-        }
-        else
-        {
-            Dictionary<int, List < MeshStrip >> strips = MakeVerticalStrips( room, layout );
-            StripsToMesh( JoinStrips( strips ) );
-        }
-
-        return FinishMesh();
-    }
+    
     
     private Mesh FinishMesh()
     {
@@ -139,7 +121,7 @@ public class MinimalMeshConstructor
     }
     
     
-    private Dictionary<int, List < MeshStrip >> MakeHorizontalStrips( int blockSize, int[] pointField)
+    private Dictionary<int, List < MeshStrip >> MakeHorizontalStrips( Vector2Int blockOrigin, int blockSize, int[] pointField)
     {
         Dictionary<int, List < MeshStrip >> stripDict = new Dictionary<int, List<MeshStrip>>();
 
@@ -162,7 +144,7 @@ public class MinimalMeshConstructor
                     }
                     else
                     {
-                        stripEnd = blob.LowerBounds + new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
+                        stripEnd =  new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
                     }
                 }
                 else if ( hasStrip )
@@ -180,7 +162,7 @@ public class MinimalMeshConstructor
         return stripDict;
     }
     
-    private Dictionary<int, List < MeshStrip >> MakeVerticalStrips(Blob blob, Vector2Int blockOrigin, int blockSize, int[] pointField)
+    private Dictionary<int, List < MeshStrip >> MakeVerticalStrips( Vector2Int blockOrigin, int blockSize, int[] pointField)
     {
         Dictionary<int, List < MeshStrip >> stripDict = new Dictionary<int, List<MeshStrip>>();
 
@@ -197,13 +179,13 @@ public class MinimalMeshConstructor
                 {
                     if ( !hasStrip )
                     {
-                        stripStart = blob.LowerBounds + new Vector2Int( blockOrigin.x + x, blockOrigin.y +y);
-                        stripEnd = blob.LowerBounds + new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
+                        stripStart =  new Vector2Int( blockOrigin.x + x, blockOrigin.y +y);
+                        stripEnd =  new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
                         hasStrip = true;
                     }
                     else
                     {
-                        stripEnd = blob.LowerBounds + new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
+                        stripEnd =  new Vector2Int(blockOrigin.x + x, blockOrigin.y +y);
                     }
                 }
                 else if ( hasStrip )
@@ -222,90 +204,6 @@ public class MinimalMeshConstructor
         return stripDict;
     }
     
-    
-    //make minimal mesh out of room
-    private Dictionary<int, List < MeshStrip >> MakeHorizontalStrips(LevelNode room, int[,] layout)
-    {
-        Dictionary<int, List < MeshStrip >> stripDict = new Dictionary<int, List<MeshStrip>>();
-
-        for ( int y = room.LowerBounds.y; y <= room.UpperBounds.y; y++ )
-        {
-            stripDict[y] = new List<MeshStrip>();
-            bool hasStrip = false;
-            Vector2Int stripStart = new Vector2Int(0,0);
-            Vector2Int stripEnd = new Vector2Int(0,0);
-            
-            for ( int x = room.LowerBounds.x; x <= room.UpperBounds.x; x++ )
-            {
-                if ( layout[x, y] == room.ID)
-                {
-                    if ( !hasStrip )
-                    {
-                        stripStart = new Vector2Int(x,y);
-                        stripEnd = new Vector2Int(x,y);
-                        hasStrip = true;
-                    }
-                    else
-                    {
-                        stripEnd = new Vector2Int(x,y);
-                    }
-                }
-                else if ( hasStrip )
-                {
-                    stripDict[y].Add( new MeshStrip(stripStart, stripEnd) );
-                    hasStrip = false;
-                }
-            }
-            
-            if(hasStrip)
-                stripDict[y].Add( new MeshStrip(stripStart, stripEnd) );
-            
-        }
-        
-        return stripDict;
-    }
-    
-    private Dictionary<int, List < MeshStrip >> MakeVerticalStrips(LevelNode room, int[,] layout)
-    {
-        Dictionary<int, List < MeshStrip >> stripDict = new Dictionary<int, List<MeshStrip>>();
-
-        for ( int x = room.LowerBounds.x; x <= room.UpperBounds.x; x++ )
-        {
-            stripDict[x] = new List<MeshStrip>();
-            bool hasStrip = false;
-            Vector2Int stripStart = new Vector2Int(0,0);
-            Vector2Int stripEnd = new Vector2Int(0,0);
-            
-            for ( int y = room.LowerBounds.y; y <= room.UpperBounds.y; y++ )
-            {
-                if ( layout[x, y] == room.ID)
-                {
-                    if ( !hasStrip )
-                    {
-                        stripStart = new Vector2Int(x,y);
-                        stripEnd = new Vector2Int(x,y);
-                        hasStrip = true;
-                    }
-                    else
-                    {
-                        stripEnd = new Vector2Int(x,y);
-                    }
-                }
-                else if ( hasStrip )
-                {
-                    stripDict[x].Add( new MeshStrip(stripStart, stripEnd) );
-                    hasStrip = false;
-                }
-            }
-
-            if ( hasStrip )
-            {
-                stripDict[x].Add( new MeshStrip(stripStart, stripEnd) );
-            }
-        }
-        
-        return stripDict;
-    }
 
     private List<MeshStrip> JoinStrips(Dictionary<int, List < MeshStrip >> stripDict)
     {
