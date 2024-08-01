@@ -78,12 +78,19 @@ public class EntityMeshCreator : MonoBehaviour
         Mesh[] meshes = GetRandomMeshes(10);
         
         var matList = new List<Material>();
-        for (int i=0;i< 1 ;i++)
+        for (int i=0;i< 1; i++)
         {
             var newMat = new Material(mat);
             Color col = Color.HSVToRGB(((float)(i * 10) / (float)1) % 1.0f, 0.7f, 1.0f);
             newMat.SetColor("_Color", col);              // set for LW
             newMat.SetColor("_BaseColor", col);          // set for HD
+            //
+            ComputeBuffer buffer = new ComputeBuffer(3, sizeof(int));
+
+            buffer.SetData( new int[]{1,2,3} );
+            newMat.SetBuffer( "_PointsBuffer", buffer );
+            
+            //
             matList.Add(newMat);
         }
         

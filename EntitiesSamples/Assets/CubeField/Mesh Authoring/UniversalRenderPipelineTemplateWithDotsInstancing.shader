@@ -8,10 +8,15 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
 
     SubShader
     {
+    /*
         Tags
         {
             "RenderPipeline"="UniversalPipeline" "Queue"="Geometry"
         }
+        */
+        Tags {"Queue" = "Transparent" "RenderType"="TransparentCutout" }
+        Zwrite off //set off for transparent shader
+        Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
         {
@@ -58,7 +63,6 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             #ifdef UNITY_DOTS_INSTANCING_ENABLED
                 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
                     UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
-                    UNITY_DOTS_INSTANCED_PROP(StructuredBuffer<int> _PointsBuffer)
                 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
                 #define _BaseColor UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor)
             #endif
@@ -77,6 +81,12 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 output.positionCS = positionInputs.positionCS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
+                if(_PointsBuffer[1] == 2)
+                {
+                    output.color = float4(0,0,0,0);
+                }
+                
+                
                 return output;
             }
 
@@ -84,7 +94,6 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half4 baseMap = half4(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv));
-                
                 return baseMap * _BaseColor * input.color;
             }
             ENDHLSL

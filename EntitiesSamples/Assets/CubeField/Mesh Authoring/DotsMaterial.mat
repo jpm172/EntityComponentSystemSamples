@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: DotsMaterial
-  m_Shader: {fileID: 4800000, guid: c2f794fa654a3544991adc9d3991712d, type: 3}
+  m_Shader: {fileID: 4800000, guid: 4792c099f1d18a34381a8be38597f36f, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
