@@ -40,7 +40,7 @@ public class EntityMeshCreator : MonoBehaviour
             Ecb.SetComponent(index, e, new MaterialColor() {Value = ComputeColor(index)});
             // MeshBounds must be set according to the actual mesh for culling to work.
             int meshIndex = index % MeshCount;
-            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(0, meshIndex));
+            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(meshIndex, meshIndex));
             Ecb.SetComponent(index, e, MeshBounds[meshIndex]);
         }
 
@@ -78,7 +78,7 @@ public class EntityMeshCreator : MonoBehaviour
         Mesh[] meshes = GetRandomMeshes(10);
         
         var matList = new List<Material>();
-        for (int i=0;i< 1; i++)
+        for (int i=0;i< 10; i++)
         {
             var newMat = new Material(mat);
             Color col = Color.HSVToRGB(((float)(i * 10) / (float)1) % 1.0f, 0.7f, 1.0f);
@@ -87,7 +87,7 @@ public class EntityMeshCreator : MonoBehaviour
             //
             ComputeBuffer buffer = new ComputeBuffer(3, sizeof(int));
 
-            buffer.SetData( new int[]{1,2,3} );
+            buffer.SetData( new int[]{1+i,2+i,3+i});
             newMat.SetBuffer( "_PointsBuffer", buffer );
             
             //
