@@ -89,6 +89,7 @@ public class EntityMeshCreator : MonoBehaviour
 
             buffer.SetData( new int[]{1+i,2+i,3+i});
             newMat.SetBuffer( "_PointsBuffer", buffer );
+            //buffer.Dispose();
             
             //
             matList.Add(newMat);
@@ -115,10 +116,15 @@ public class EntityMeshCreator : MonoBehaviour
         entityManager.AddComponentData(prototype, new MaterialColor());
         entityManager.AddComponentData( prototype, new EntityCollider() );
         entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
-        entityManager.AddComponentData( prototype, new DestructibleData()
+        entityManager.AddBuffer<DestructibleData>( prototype );
+
+        DynamicBuffer<DestructibleData> db = entityManager.GetBuffer<DestructibleData>( prototype );
+        for ( int i = 0; i < 16; i++ )
         {
-            PointField = new NativeArray<int>(64, Allocator.Persistent)
-        } );
+            db.Add( new DestructibleData {Value = 1} );
+        }
+            
+        //entityManager.SetComponentEnabled( prototype, typeof(DestructibleData), false);
         
         var bounds = new NativeArray<RenderBounds>(meshes.Length, Allocator.TempJob);
         for (int i = 0; i < bounds.Length; ++i)

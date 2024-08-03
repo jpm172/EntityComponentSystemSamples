@@ -2,9 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Rendering;
 using UnityEngine;
 
-public struct DestructibleData : IComponentData
+
+[InternalBufferCapacity(16*16)]
+public struct DestructibleData : IBufferElementData
 {
-    public NativeArray<int> PointField;
+    public int Value;
 }
+
+public struct DestructibleTag : IEnableableComponent
+{}

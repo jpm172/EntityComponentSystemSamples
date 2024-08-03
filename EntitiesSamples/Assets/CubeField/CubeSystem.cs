@@ -45,7 +45,7 @@ public partial struct CubeJob : IJobEntity
     {
         
         //transform = transform.RotateY( math.radians(cubeData.speed * deltaTime) );
-        ECB.DestroyEntity( entity );
+        //ECB.DestroyEntity( entity );
         
     }
 }

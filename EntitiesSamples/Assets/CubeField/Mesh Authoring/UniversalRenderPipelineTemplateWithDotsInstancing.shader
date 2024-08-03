@@ -81,7 +81,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 output.positionCS = positionInputs.positionCS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
-                if(_PointsBuffer[0] == 2)
+                if(_PointsBuffer[0] == 0)
                 {
                     output.color = float4(0,0,0,0);
                 }
