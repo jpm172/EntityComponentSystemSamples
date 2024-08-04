@@ -16,8 +16,9 @@ using UnityEngine;
         public int MeshCount;
         public EntityCommandBuffer.ParallelWriter Ecb;
 
-        [ReadOnly]
-        public NativeArray<RenderBounds> MeshBounds;
+        [ReadOnly] public NativeArray<RenderBounds> MeshBounds;
+
+        [ReadOnly] public NativeHashMap<int, int> MeshMaterialMap;
 
         public void Execute(int index)
         {
@@ -27,7 +28,8 @@ using UnityEngine;
             Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
             // MeshBounds must be set according to the actual mesh for culling to work.
             int meshIndex = index % MeshCount;
-            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(meshIndex, meshIndex));
+            int materialIndex = MeshMaterialMap[meshIndex];
+            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(materialIndex, meshIndex));
             Ecb.SetComponent(index, e, MeshBounds[meshIndex]);
         }
 

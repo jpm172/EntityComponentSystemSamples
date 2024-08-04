@@ -16,27 +16,26 @@ public class LevelGenerator : MonoBehaviour
     private Vector2Int dimensions;
 
     [SerializeField]
-    private Material floorMaterial;
+    private Material[] floorMaterials;
 
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
     private int[] _levelLayout;
     public void GenerateLevel()
     {
-        
-        float totalTime = Time.realtimeSinceStartup;
         _levelLayout = new int[dimensions.x*dimensions.y];
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
         
         MakeFloors();
-        float startTime = Time.realtimeSinceStartup;
+
         MakeEntities();
-        Debug.Log( "Entities: " + (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-        Debug.Log( "total: " +(Time.realtimeSinceStartup - totalTime)*1000f + " ms" );
-        
     }
 
+    private void MakeWalls()
+    {
+        
+    }
     private void MakeFloors()
     {
         int blockSize = 64;
@@ -61,7 +60,7 @@ public class LevelGenerator : MonoBehaviour
                 LevelFloor newFloor = new LevelFloor
                 {
                     FloorMesh = floorMesh, 
-                    FloorMaterial = floorMaterial
+                    FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )]
                 };
                 
                 _floors.Add( newFloor  );
@@ -87,12 +86,30 @@ public class LevelGenerator : MonoBehaviour
 
         List<Material> matList = new List<Material>();
         List<Mesh> meshList = new List<Mesh>();
+
+        Dictionary<Material, int> materialMap = new Dictionary<Material, int>();
+        NativeHashMap<int, int> meshMaterialMap = new NativeHashMap<int, int>(_floors.Count, Allocator.TempJob);
+        
         
         //gather all the meshes/materials used
         foreach ( LevelFloor floor in _floors )
         {
-            matList.Add( floor.FloorMaterial );
+            
             meshList.Add( floor.FloorMesh );
+            
+            if ( !materialMap.ContainsKey( floor.FloorMaterial ) )
+            {
+                matList.Add( floor.FloorMaterial );
+                materialMap[floor.FloorMaterial] = matList.Count-1;
+
+                meshMaterialMap[meshList.Count - 1] = matList.Count - 1;
+            }
+            else
+            {
+                meshMaterialMap[meshList.Count - 1] = materialMap[floor.FloorMaterial];
+            }
+            
+            
         }
         
         //put them into the RenderMeshArray used for ECS
@@ -114,12 +131,14 @@ public class LevelGenerator : MonoBehaviour
             Prototype = floorEntity,
             Ecb = ecbJob.AsParallelWriter(),
             MeshCount = meshList.Count,
-            MeshBounds = bounds
+            MeshBounds = bounds,
+            MeshMaterialMap = meshMaterialMap
         };
 
         var spawnHandle = spawnJob.Schedule(_floors.Count, 128);
         bounds.Dispose(spawnHandle);
-
+        meshMaterialMap.Dispose( spawnHandle );
+        
         spawnHandle.Complete();
         
         
@@ -156,6 +175,7 @@ public struct LevelFloor
 {
     public Mesh FloorMesh;
     public Material FloorMaterial;
+    public Vector2 Position;
 }
 
 public struct LevelWall
