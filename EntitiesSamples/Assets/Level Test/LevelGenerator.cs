@@ -18,6 +18,9 @@ public class LevelGenerator : MonoBehaviour
     [SerializeField]
     private Material[] floorMaterials;
 
+    [SerializeField]
+    private Material wallMaterial;
+    
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
     private int[] _levelLayout;
@@ -28,15 +31,11 @@ public class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         
         MakeFloors();
-
+        MakeWalls();
         MakeEntities();
     }
 
     private void MakeWalls()
-    {
-        
-    }
-    private void MakeFloors()
     {
         int blockSize = 64;
         
@@ -53,9 +52,44 @@ public class LevelGenerator : MonoBehaviour
             {
                 MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
                 
-                Vector2Int floorDimensions = new Vector2Int(Random.Range( 1, 10 ), Random.RandomRange( 1,10 ));
+                Vector2Int floorDimensions = new Vector2Int(3,3);
+                Vector2Int position = new Vector2Int(x,y);
+                Mesh mesh = meshConstructor.ConstructMesh( floorDimensions, position, blockSize, solidPointField );
+                
+                LevelWall newWall = new LevelWall
+                {
+                   Mesh = mesh,
+                   Material = wallMaterial
+                };
+                
+                _walls.Add( newWall  );
+            }
+        }
+    }
+    
+    private void MakeFloors()
+    {
+        int blockSize = 64;
+        
+        int[] solidPointField = new int[blockSize*blockSize];
+        
+        for ( int n = 0; n < solidPointField.Length; n++ )
+        {
+            solidPointField[n] = 1;
+        }
+        
+        
+        
+        
+        for ( int x = 0; x < dimensions.x; x++ )
+        {
+            for ( int y = 0; y < dimensions.y; y++ )
+            {
+                MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
+                Vector2Int floorDimensions = new Vector2Int(Random.Range( 1, 10 ), Random.Range( 1,10 ));
                 Vector2Int position = new Vector2Int(x,y);
                 Mesh floorMesh = meshConstructor.ConstructMesh( floorDimensions, position, blockSize, solidPointField );
+                
                 
                 LevelFloor newFloor = new LevelFloor
                 {
@@ -78,6 +112,7 @@ public class LevelGenerator : MonoBehaviour
         EntityManager entityManager = world.EntityManager;
         EntityCommandBuffer ecbJob = new EntityCommandBuffer(Allocator.TempJob);
         
+        //RenderFilterSettings floorSettings = 
 
         RenderFilterSettings filterSettings = RenderFilterSettings.Default;
         filterSettings.ShadowCastingMode = ShadowCastingMode.Off;
@@ -88,29 +123,59 @@ public class LevelGenerator : MonoBehaviour
         List<Mesh> meshList = new List<Mesh>();
 
         Dictionary<Material, int> materialMap = new Dictionary<Material, int>();
-        NativeHashMap<int, int> meshMaterialMap = new NativeHashMap<int, int>(_floors.Count, Allocator.TempJob);
-        
+        Dictionary<Mesh, int> meshMap = new Dictionary<Mesh, int>();
+        //NativeHashMap<int, int> meshMaterialMap = new NativeHashMap<int, int>(_floors.Count, Allocator.TempJob);
+        NativeHashMap<int, EntityRenderInfo> entityRenderMap = new NativeHashMap<int, EntityRenderInfo>(_floors.Count+_walls.Count, Allocator.TempJob);
+
+        int entityCounter = 0;
         
         //gather all the meshes/materials used
         foreach ( LevelFloor floor in _floors )
         {
-            
-            meshList.Add( floor.FloorMesh );
-            
+            floor.FloorMaterial.renderQueue = 1;
+            if ( !meshMap.ContainsKey( floor.FloorMesh ) )
+            {
+                meshList.Add( floor.FloorMesh );
+                meshMap[floor.FloorMesh] = meshList.Count - 1;
+            }
+
             if ( !materialMap.ContainsKey( floor.FloorMaterial ) )
             {
                 matList.Add( floor.FloorMaterial );
                 materialMap[floor.FloorMaterial] = matList.Count-1;
+            }
 
-                meshMaterialMap[meshList.Count - 1] = matList.Count - 1;
-            }
-            else
+            EntityRenderInfo info = new EntityRenderInfo
             {
-                meshMaterialMap[meshList.Count - 1] = materialMap[floor.FloorMaterial];
-            }
+                MaterialIndex = materialMap[floor.FloorMaterial],
+                MeshIndex = meshMap[floor.FloorMesh]
+            };
+            entityRenderMap[entityCounter] = info;
             
-            
+            entityCounter++;
         }
+
+        
+        foreach ( LevelWall wall in _walls )
+        {
+            if ( !meshMap.ContainsKey( wall.Mesh ) )
+            {
+                meshList.Add( wall.Mesh );
+                meshMap[wall.Mesh] = meshList.Count - 1;
+            }
+            wall.Material.renderQueue = 2;
+            matList.Add( wall.Material );
+            
+            EntityRenderInfo info = new EntityRenderInfo
+            {
+                MaterialIndex = matList.Count-1,
+                MeshIndex = meshMap[wall.Mesh]
+            };
+            entityRenderMap[entityCounter] = info;
+            
+            entityCounter++;
+        }
+        
         
         //put them into the RenderMeshArray used for ECS
         RenderMeshArray renderMeshArray = new RenderMeshArray(matList.ToArray(), meshList.ToArray());
@@ -132,12 +197,12 @@ public class LevelGenerator : MonoBehaviour
             Ecb = ecbJob.AsParallelWriter(),
             MeshCount = meshList.Count,
             MeshBounds = bounds,
-            MeshMaterialMap = meshMaterialMap
+            EntityRenderMap = entityRenderMap
         };
 
-        var spawnHandle = spawnJob.Schedule(_floors.Count, 128);
+        var spawnHandle = spawnJob.Schedule(entityCounter, 128);
         bounds.Dispose(spawnHandle);
-        meshMaterialMap.Dispose( spawnHandle );
+        entityRenderMap.Dispose( spawnHandle );
         
         spawnHandle.Complete();
         
@@ -167,8 +232,13 @@ public class LevelGenerator : MonoBehaviour
 
         return prototype;
     }
-    
-    
+}
+
+
+public struct EntityRenderInfo
+{
+    public int MeshIndex;
+    public int MaterialIndex;
 }
 
 public struct LevelFloor
@@ -180,5 +250,7 @@ public struct LevelFloor
 
 public struct LevelWall
 {
-    
+    public Mesh Mesh;
+    public Material Material;
+    public Vector2 Position;
 }

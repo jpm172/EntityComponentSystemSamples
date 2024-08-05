@@ -18,7 +18,7 @@ using UnityEngine;
 
         [ReadOnly] public NativeArray<RenderBounds> MeshBounds;
 
-        [ReadOnly] public NativeHashMap<int, int> MeshMaterialMap;
+        [ReadOnly] public NativeHashMap<int, EntityRenderInfo> EntityRenderMap;
 
         public void Execute(int index)
         {
@@ -27,10 +27,13 @@ using UnityEngine;
             // Prototype has all correct components up front, can use SetComponent
             Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
             // MeshBounds must be set according to the actual mesh for culling to work.
-            int meshIndex = index % MeshCount;
-            int materialIndex = MeshMaterialMap[meshIndex];
-            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(materialIndex, meshIndex));
-            Ecb.SetComponent(index, e, MeshBounds[meshIndex]);
+            //int meshIndex = index % MeshCount;
+            //int materialIndex = MeshMaterialMap[meshIndex];
+
+            EntityRenderInfo info = EntityRenderMap[index];
+
+            Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(info.MaterialIndex, info.MeshIndex));
+            Ecb.SetComponent(index, e, MeshBounds[info.MeshIndex]);
         }
 
         public float4x4 ComputeTransform(int index)
