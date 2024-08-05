@@ -274,6 +274,7 @@ MonoBehaviour:
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
+  wallMaterial: {fileID: 2100000, guid: 8453732eaf06a0a4ca81204f242e5308, type: 2}
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0

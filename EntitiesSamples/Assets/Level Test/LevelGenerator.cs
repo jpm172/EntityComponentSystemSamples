@@ -41,7 +41,7 @@ public class LevelGenerator : MonoBehaviour
         
         int[] solidPointField = new int[blockSize*blockSize];
         
-        for ( int n = 0; n < solidPointField.Length; n++ )
+        for ( int n = 0; n < solidPointField.Length/2; n++ )
         {
             solidPointField[n] = 1;
         }
@@ -112,7 +112,6 @@ public class LevelGenerator : MonoBehaviour
         EntityManager entityManager = world.EntityManager;
         EntityCommandBuffer ecbJob = new EntityCommandBuffer(Allocator.TempJob);
         
-        //RenderFilterSettings floorSettings = 
 
         RenderFilterSettings filterSettings = RenderFilterSettings.Default;
         filterSettings.ShadowCastingMode = ShadowCastingMode.Off;
@@ -132,7 +131,7 @@ public class LevelGenerator : MonoBehaviour
         //gather all the meshes/materials used
         foreach ( LevelFloor floor in _floors )
         {
-            floor.FloorMaterial.renderQueue = 1;
+            //floor.FloorMaterial.renderQueue = SortingLayer.GetLayerValueFromName( "Floor" );
             if ( !meshMap.ContainsKey( floor.FloorMesh ) )
             {
                 meshList.Add( floor.FloorMesh );
@@ -156,6 +155,8 @@ public class LevelGenerator : MonoBehaviour
         }
 
         
+        //need to do the SortingGroup stuff via setting shader priority
+        //doing it in code is inconsistent
         foreach ( LevelWall wall in _walls )
         {
             if ( !meshMap.ContainsKey( wall.Mesh ) )
@@ -163,7 +164,8 @@ public class LevelGenerator : MonoBehaviour
                 meshList.Add( wall.Mesh );
                 meshMap[wall.Mesh] = meshList.Count - 1;
             }
-            wall.Material.renderQueue = 2;
+            
+            
             matList.Add( wall.Material );
             
             EntityRenderInfo info = new EntityRenderInfo
