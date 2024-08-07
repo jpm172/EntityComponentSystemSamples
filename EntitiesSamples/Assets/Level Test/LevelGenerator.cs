@@ -59,7 +59,8 @@ public class LevelGenerator : MonoBehaviour
                 LevelWall newWall = new LevelWall
                 {
                    Mesh = mesh,
-                   Material = wallMaterial
+                   Material = wallMaterial,
+                   PointField = solidPointField
                 };
                 
                 _walls.Add( newWall  );
@@ -154,7 +155,7 @@ public class LevelGenerator : MonoBehaviour
             entityCounter++;
         }
 
-        
+        /*
         //need to do the SortingGroup stuff via setting shader priority
         //doing it in code is inconsistent
         foreach ( LevelWall wall in _walls )
@@ -177,6 +178,7 @@ public class LevelGenerator : MonoBehaviour
             
             entityCounter++;
         }
+        */
         
         
         //put them into the RenderMeshArray used for ECS
@@ -188,16 +190,16 @@ public class LevelGenerator : MonoBehaviour
         };
 
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
+        Entity wallEntity = CreateBaseWallEntity( entityManager, renderMeshArray, renderMeshDescription );
         
         var bounds = new NativeArray<RenderBounds>(meshList.Count, Allocator.TempJob);
         for (int i = 0; i < bounds.Length; ++i)
             bounds[i] = new RenderBounds {Value = meshList[i].bounds.ToAABB()};
         
-        LevelSpawnJob spawnJob = new LevelSpawnJob
+        LevelSpawnUnmanagedJob spawnJob = new LevelSpawnUnmanagedJob
         {
             Prototype = floorEntity,
             Ecb = ecbJob.AsParallelWriter(),
-            MeshCount = meshList.Count,
             MeshBounds = bounds,
             EntityRenderMap = entityRenderMap
         };
@@ -234,6 +236,32 @@ public class LevelGenerator : MonoBehaviour
 
         return prototype;
     }
+    
+    private Entity CreateBaseWallEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
+    {
+        //create the base entity that will be used as a template for spawning the reset
+        Entity prototype = entityManager.CreateEntity();
+        
+        #if UNITY_EDITOR
+        entityManager.SetName( prototype, "Wall" );
+        #endif
+        
+        RenderMeshUtility.AddComponents(
+            prototype,
+            entityManager,
+            renderMeshDescription,
+            renderMeshArray,
+            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
+
+        entityManager.AddComponentData( prototype, new EntityCollider() );
+        entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
+        //entityManager.AddBuffer<DestructibleData>( prototype );
+        entityManager.AddComponentData( prototype, new BufferData() );
+        
+        
+        return prototype;
+    }
+    
 }
 
 
@@ -255,4 +283,5 @@ public struct LevelWall
     public Mesh Mesh;
     public Material Material;
     public Vector2 Position;
+    public int[] PointField;
 }

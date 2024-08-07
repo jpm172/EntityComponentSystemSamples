@@ -10,10 +10,9 @@ using UnityEngine;
 
 
     // Start is called before the first frame update
-    public struct LevelSpawnJob : IJobParallelFor
+    public struct LevelSpawnUnmanagedJob : IJobParallelFor
     {
         public Entity Prototype;
-        public int MeshCount;
         public EntityCommandBuffer.ParallelWriter Ecb;
 
         [ReadOnly] public NativeArray<RenderBounds> MeshBounds;
@@ -27,8 +26,6 @@ using UnityEngine;
             // Prototype has all correct components up front, can use SetComponent
             Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
             // MeshBounds must be set according to the actual mesh for culling to work.
-            //int meshIndex = index % MeshCount;
-            //int materialIndex = MeshMaterialMap[meshIndex];
 
             EntityRenderInfo info = EntityRenderMap[index];
 
