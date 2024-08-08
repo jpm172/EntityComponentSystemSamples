@@ -139,9 +139,9 @@ public class EntityMeshCreator : MonoBehaviour
             MeshBounds = bounds
         };
 
+        
         var spawnHandle = spawnJob.Schedule(EntityCount, 128);
         bounds.Dispose(spawnHandle);
-
         spawnHandle.Complete();
         
         

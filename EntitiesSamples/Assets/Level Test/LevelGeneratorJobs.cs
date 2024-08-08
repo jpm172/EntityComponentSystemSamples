@@ -14,7 +14,8 @@ using UnityEngine;
     {
         public Entity Prototype;
         public EntityCommandBuffer.ParallelWriter Ecb;
-
+        
+        
         [ReadOnly] public NativeArray<RenderBounds> MeshBounds;
 
         [ReadOnly] public NativeHashMap<int, EntityRenderInfo> EntityRenderMap;

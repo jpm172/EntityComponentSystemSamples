@@ -8,6 +8,7 @@ using Unity.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Mathematics;
+using Unity.Transforms;
 using Random = UnityEngine.Random;
 
 public class LevelGenerator : MonoBehaviour
@@ -155,7 +156,7 @@ public class LevelGenerator : MonoBehaviour
             entityCounter++;
         }
 
-        /*
+        
         //need to do the SortingGroup stuff via setting shader priority
         //doing it in code is inconsistent
         foreach ( LevelWall wall in _walls )
@@ -169,16 +170,17 @@ public class LevelGenerator : MonoBehaviour
             
             matList.Add( wall.Material );
             
+            
             EntityRenderInfo info = new EntityRenderInfo
             {
                 MaterialIndex = matList.Count-1,
                 MeshIndex = meshMap[wall.Mesh]
             };
-            entityRenderMap[entityCounter] = info;
             
+            entityRenderMap[entityCounter] = info;
             entityCounter++;
         }
-        */
+        
         
         
         //put them into the RenderMeshArray used for ECS
@@ -190,11 +192,13 @@ public class LevelGenerator : MonoBehaviour
         };
 
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
-        Entity wallEntity = CreateBaseWallEntity( entityManager, renderMeshArray, renderMeshDescription );
-        
+        CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
+
         var bounds = new NativeArray<RenderBounds>(meshList.Count, Allocator.TempJob);
         for (int i = 0; i < bounds.Length; ++i)
             bounds[i] = new RenderBounds {Value = meshList[i].bounds.ToAABB()};
+        
+        
         
         LevelSpawnUnmanagedJob spawnJob = new LevelSpawnUnmanagedJob
         {
@@ -204,7 +208,7 @@ public class LevelGenerator : MonoBehaviour
             EntityRenderMap = entityRenderMap
         };
 
-        var spawnHandle = spawnJob.Schedule(entityCounter, 128);
+        var spawnHandle = spawnJob.Schedule(entityCounter-_walls.Count, 128);
         bounds.Dispose(spawnHandle);
         entityRenderMap.Dispose( spawnHandle );
         
@@ -216,6 +220,48 @@ public class LevelGenerator : MonoBehaviour
         entityManager.DestroyEntity(floorEntity);
         
         
+    }
+
+    private void CreateWallEntities( NativeHashMap<int, EntityRenderInfo> renderMap, EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
+    {
+        int entityCountOffset = _floors.Count;
+        
+        for ( int i = 0; i < _walls.Count; i++ )
+        {
+            Entity prototype = entityManager.CreateEntity();
+            LevelWall wall = _walls[i];
+            
+            EntityRenderInfo info = renderMap[entityCountOffset+i];
+            
+#if UNITY_EDITOR
+            entityManager.SetName( prototype, "Wall" + (i+1) );
+#endif
+        
+            RenderMeshUtility.AddComponents(
+                prototype,
+                entityManager,
+                renderMeshDescription,
+                renderMeshArray,
+                MaterialMeshInfo.FromRenderMeshArrayIndices(info.MaterialIndex, info.MeshIndex));
+
+            entityManager.AddComponentData( prototype, new LocalToWorld {Value = float4x4.TRS(
+                new float3(0,0, 0),
+                quaternion.identity,
+                new float3(1))});
+            entityManager.AddComponentData( prototype, new EntityCollider() );
+            entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
+
+            entityManager.AddComponentData( prototype, new BufferData
+            {
+                PointField = wall.PointField,
+                Buffer = new ComputeBuffer( wall.PointField.Length,sizeof(int) )
+            } );
+            entityManager.GetComponentData<BufferData>(prototype).SetBuffer();
+            renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
+            
+
+
+        }
     }
 
     private Entity CreateBaseFloorEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
