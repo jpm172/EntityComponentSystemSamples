@@ -32,7 +32,8 @@ partial struct DestructibleStructureSystem : ISystem
             }
             data.SetBuffer();
             
-            //arr.GetMaterial( info.ValueRO ).SetBuffer( "_PointsBuffer", data.Buffer );
+            arr.GetMaterial( info.ValueRO ).SetBuffer( "_PointsBuffer", data.Buffer );
+            //arr.Materials[info.ValueRO.Material].SetBuffer( "_PointsBuffer", data.Buffer );
         }
     }
 

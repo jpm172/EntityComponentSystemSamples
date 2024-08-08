@@ -38,19 +38,18 @@ public class LevelGenerator : MonoBehaviour
 
     private void MakeWalls()
     {
-        int blockSize = 64;
         
-        int[] solidPointField = new int[blockSize*blockSize];
-        
-        for ( int n = 0; n < solidPointField.Length/2; n++ )
-        {
-            solidPointField[n] = 1;
-        }
-        
+        int blockSize = 4;
         for ( int x = 0; x < dimensions.x; x++ )
         {
             for ( int y = 0; y < dimensions.y; y++ )
             {
+                int[] solidPointField = new int[blockSize*blockSize];
+        
+                for ( int n = 0; n < solidPointField.Length/2; n++ )
+                {
+                    solidPointField[n] = 1;
+                }
                 MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
                 
                 Vector2Int floorDimensions = new Vector2Int(3,3);
@@ -168,7 +167,7 @@ public class LevelGenerator : MonoBehaviour
             }
             
             
-            matList.Add( wall.Material );
+            matList.Add( new Material(wall.Material) );
             
             
             EntityRenderInfo info = new EntityRenderInfo
