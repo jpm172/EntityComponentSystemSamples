@@ -88,6 +88,7 @@ public partial class SpawnColliderFromTriggerSystem : SystemBase
         entityManager.AddComponentData(prototypeA, new LocalToWorld());
 
         engineMeshA = renderMeshResources.MeshReferences[0];
+
         var colliderBlob =
             Unity.Physics.MeshCollider.Create(engineMeshA, CollisionFilter.Default, Material.Default); // Test function
         CreatedColliderBlobs.Add(colliderBlob);

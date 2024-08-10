@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Graphics;
+using Unity.Physics;
 using Unity.Jobs;
 using Unity.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
 
 public class LevelGenerator : MonoBehaviour
@@ -78,9 +80,6 @@ public class LevelGenerator : MonoBehaviour
         {
             solidPointField[n] = 1;
         }
-        
-        
-        
         
         for ( int x = 0; x < dimensions.x; x++ )
         {
@@ -191,14 +190,19 @@ public class LevelGenerator : MonoBehaviour
         };
 
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
+        BlobAssetReference<Unity.Physics.Collider> blob = Unity.Physics.BoxCollider.Create( new BoxGeometry { BevelRadius = .1f,
+            Center = new float3(0),
+            Orientation = new quaternion(1,1,1,1),
+            Size = new float3(1)} );
+        entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
+        
         CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
 
+        
         var bounds = new NativeArray<RenderBounds>(meshList.Count, Allocator.TempJob);
         for (int i = 0; i < bounds.Length; ++i)
             bounds[i] = new RenderBounds {Value = meshList[i].bounds.ToAABB()};
-        
-        
-        
+
         LevelSpawnUnmanagedJob spawnJob = new LevelSpawnUnmanagedJob
         {
             Prototype = floorEntity,
