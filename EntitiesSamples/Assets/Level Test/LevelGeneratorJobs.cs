@@ -23,22 +23,20 @@ using UnityEngine;
         public void Execute(int index)
         {
             var e = Ecb.Instantiate(index, Prototype);
+            EntityRenderInfo info = EntityRenderMap[index];
             
             // Prototype has all correct components up front, can use SetComponent
-            Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
-            // MeshBounds must be set according to the actual mesh for culling to work.
-
-            EntityRenderInfo info = EntityRenderMap[index];
+            Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(info)});
 
             Ecb.SetComponent(index, e, MaterialMeshInfo.FromRenderMeshArrayIndices(info.MaterialIndex, info.MeshIndex));
             Ecb.SetComponent(index, e, MeshBounds[info.MeshIndex]);
         }
 
-        public float4x4 ComputeTransform(int index)
+        public float4x4 ComputeTransform(EntityRenderInfo info)
         {
 
             float4x4 M = float4x4.TRS(
-                new float3(0,0, 0),
+                new float3(info.Position),
                 quaternion.identity,
                 new float3(1));
 

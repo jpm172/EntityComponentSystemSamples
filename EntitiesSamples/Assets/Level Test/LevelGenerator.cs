@@ -10,13 +10,17 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Mathematics;
 using Unity.Transforms;
+using Unity.VisualScripting;
 using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
 
-public class LevelGenerator : MonoBehaviour
+public partial class LevelGenerator : MonoBehaviour
 {
     [SerializeField]
-    private Vector2Int dimensions;
+    private Vector2Int dimensions;//dimensions of level in pixels
+    
+    [SerializeField]
+    private Vector2Int layoutDimensions;//dimensions of level in room nodes
 
     [SerializeField]
     private Material[] floorMaterials;
@@ -26,18 +30,71 @@ public class LevelGenerator : MonoBehaviour
     
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
-    private int[] _levelLayout;
+    private LevelRoom[] _rooms;
+    private NativeArray<int> _levelLayout;
+    
+    
+    
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        if ( !_levelLayout.IsCreated )
+            return;
+        
+        for ( int x = 0; x < dimensions.x; x++ )
+        {
+            for ( int y = 0; y < dimensions.y; y++ )
+            {
+                int index = x + y * dimensions.x;
+                if ( _levelLayout[index] > 0 )
+                {
+                    LevelRoom room = _rooms[_levelLayout[index] - 1];
+                    Vector3 pos = new Vector3(x,y);
+                    Gizmos.color = room.DebugColor;
+                    Gizmos.DrawCube( pos, Vector3.one );
+                }
+            }
+        }
+    }
+#endif
+
+
     public void GenerateLevel()
     {
-        _levelLayout = new int[dimensions.x*dimensions.y];
-        _floors = new List<LevelFloor>();
-        _walls = new List<LevelWall>();
+        InitializeLevel();
         
-        MakeFloors();
-        MakeWalls();
-        MakeEntities();
+        //MakeFloors();
+        //MakeWalls();
+        //MakeEntities();
     }
 
+    private void InitializeLevel()
+    {
+        int minSize = 20;
+        int count = layoutDimensions.x * layoutDimensions.y;
+
+        _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
+        _floors = new List<LevelFloor>();
+        _walls = new List<LevelWall>();
+        _rooms = new LevelRoom[count];
+        
+        
+        //create the rooms and seed them into the level layout
+
+        for ( int x = 0; x < layoutDimensions.x; x++ )
+        {
+            for ( int y = 0; y < layoutDimensions.y; y++ )
+            {
+                LevelRoom room = new LevelRoom(x+y+1, Random.Range( 2,6 ));
+                _rooms[x + y] = room;
+                _levelLayout[x + y] = room.Id;
+            }
+        }
+        
+
+        
+    }
+    
     private void MakeWalls()
     {
         
@@ -62,7 +119,8 @@ public class LevelGenerator : MonoBehaviour
                 {
                    Mesh = mesh,
                    Material = wallMaterial,
-                   PointField = solidPointField
+                   PointField = solidPointField,
+                   Position = position
                 };
                 
                 _walls.Add( newWall  );
@@ -94,230 +152,40 @@ public class LevelGenerator : MonoBehaviour
                 LevelFloor newFloor = new LevelFloor
                 {
                     FloorMesh = floorMesh, 
-                    FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )]
+                    FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
+                    Position = position
                 };
                 
                 _floors.Add( newFloor  );
             }
         }
-
-
-        
-        
     }
 
-    private void MakeEntities()
+    private void OnDestroy()
     {
-        World world = World.DefaultGameObjectInjectionWorld;
-        EntityManager entityManager = world.EntityManager;
-        EntityCommandBuffer ecbJob = new EntityCommandBuffer(Allocator.TempJob);
-        
-
-        RenderFilterSettings filterSettings = RenderFilterSettings.Default;
-        filterSettings.ShadowCastingMode = ShadowCastingMode.Off;
-        filterSettings.ReceiveShadows = false;
-        
-
-        List<Material> matList = new List<Material>();
-        List<Mesh> meshList = new List<Mesh>();
-
-        Dictionary<Material, int> materialMap = new Dictionary<Material, int>();
-        Dictionary<Mesh, int> meshMap = new Dictionary<Mesh, int>();
-        //NativeHashMap<int, int> meshMaterialMap = new NativeHashMap<int, int>(_floors.Count, Allocator.TempJob);
-        NativeHashMap<int, EntityRenderInfo> entityRenderMap = new NativeHashMap<int, EntityRenderInfo>(_floors.Count+_walls.Count, Allocator.TempJob);
-
-        int entityCounter = 0;
-        
-        //gather all the meshes/materials used
-        foreach ( LevelFloor floor in _floors )
-        {
-            //floor.FloorMaterial.renderQueue = SortingLayer.GetLayerValueFromName( "Floor" );
-            if ( !meshMap.ContainsKey( floor.FloorMesh ) )
-            {
-                meshList.Add( floor.FloorMesh );
-                meshMap[floor.FloorMesh] = meshList.Count - 1;
-            }
-
-            if ( !materialMap.ContainsKey( floor.FloorMaterial ) )
-            {
-                matList.Add( floor.FloorMaterial );
-                materialMap[floor.FloorMaterial] = matList.Count-1;
-            }
-
-            EntityRenderInfo info = new EntityRenderInfo
-            {
-                MaterialIndex = materialMap[floor.FloorMaterial],
-                MeshIndex = meshMap[floor.FloorMesh]
-            };
-            entityRenderMap[entityCounter] = info;
-            
-            entityCounter++;
-        }
-
-        
-        //need to do the SortingGroup stuff via setting shader priority
-        //doing it in code is inconsistent
-        foreach ( LevelWall wall in _walls )
-        {
-            if ( !meshMap.ContainsKey( wall.Mesh ) )
-            {
-                meshList.Add( wall.Mesh );
-                meshMap[wall.Mesh] = meshList.Count - 1;
-            }
-            
-            
-            matList.Add( new Material(wall.Material) );
-            
-            
-            EntityRenderInfo info = new EntityRenderInfo
-            {
-                MaterialIndex = matList.Count-1,
-                MeshIndex = meshMap[wall.Mesh]
-            };
-            
-            entityRenderMap[entityCounter] = info;
-            entityCounter++;
-        }
-        
-        
-        
-        //put them into the RenderMeshArray used for ECS
-        RenderMeshArray renderMeshArray = new RenderMeshArray(matList.ToArray(), meshList.ToArray());
-        RenderMeshDescription renderMeshDescription = new RenderMeshDescription
-        {
-            FilterSettings = filterSettings,
-            LightProbeUsage = LightProbeUsage.Off,
-        };
-
-        Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
-        BlobAssetReference<Unity.Physics.Collider> blob = Unity.Physics.BoxCollider.Create( new BoxGeometry { BevelRadius = .1f,
-            Center = new float3(0),
-            Orientation = new quaternion(1,1,1,1),
-            Size = new float3(1)} );
-        entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
-        
-        CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
-
-        
-        var bounds = new NativeArray<RenderBounds>(meshList.Count, Allocator.TempJob);
-        for (int i = 0; i < bounds.Length; ++i)
-            bounds[i] = new RenderBounds {Value = meshList[i].bounds.ToAABB()};
-
-        LevelSpawnUnmanagedJob spawnJob = new LevelSpawnUnmanagedJob
-        {
-            Prototype = floorEntity,
-            Ecb = ecbJob.AsParallelWriter(),
-            MeshBounds = bounds,
-            EntityRenderMap = entityRenderMap
-        };
-
-        var spawnHandle = spawnJob.Schedule(entityCounter-_walls.Count, 128);
-        bounds.Dispose(spawnHandle);
-        entityRenderMap.Dispose( spawnHandle );
-        
-        spawnHandle.Complete();
-        
-        
-        ecbJob.Playback(entityManager);
-        ecbJob.Dispose();
-        entityManager.DestroyEntity(floorEntity);
-        
-        
+        if(_levelLayout.IsCreated)
+            _levelLayout.Dispose();
     }
-
-    private void CreateWallEntities( NativeHashMap<int, EntityRenderInfo> renderMap, EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
-    {
-        int entityCountOffset = _floors.Count;
-        
-        for ( int i = 0; i < _walls.Count; i++ )
-        {
-            Entity prototype = entityManager.CreateEntity();
-            LevelWall wall = _walls[i];
-            
-            EntityRenderInfo info = renderMap[entityCountOffset+i];
-            
-#if UNITY_EDITOR
-            entityManager.SetName( prototype, "Wall" + (i+1) );
-#endif
-        
-            RenderMeshUtility.AddComponents(
-                prototype,
-                entityManager,
-                renderMeshDescription,
-                renderMeshArray,
-                MaterialMeshInfo.FromRenderMeshArrayIndices(info.MaterialIndex, info.MeshIndex));
-
-            entityManager.AddComponentData( prototype, new LocalToWorld {Value = float4x4.TRS(
-                new float3(0,0, 0),
-                quaternion.identity,
-                new float3(1))});
-            entityManager.AddComponentData( prototype, new EntityCollider() );
-            entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
-
-            entityManager.AddComponentData( prototype, new BufferData
-            {
-                PointField = wall.PointField,
-                Buffer = new ComputeBuffer( wall.PointField.Length,sizeof(int) )
-            } );
-            entityManager.GetComponentData<BufferData>(prototype).SetBuffer();
-            renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
-            
-
-
-        }
-    }
-
-    private Entity CreateBaseFloorEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
-    {
-        //create the base entity that will be used as a template for spawning the reset
-        Entity prototype = entityManager.CreateEntity();
-        
-        #if UNITY_EDITOR
-        entityManager.SetName( prototype, "Floor" );
-        #endif
-        
-        RenderMeshUtility.AddComponents(
-            prototype,
-            entityManager,
-            renderMeshDescription,
-            renderMeshArray,
-            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-
-        return prototype;
-    }
-    
-    private Entity CreateBaseWallEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
-    {
-        //create the base entity that will be used as a template for spawning the reset
-        Entity prototype = entityManager.CreateEntity();
-        
-        #if UNITY_EDITOR
-        entityManager.SetName( prototype, "Wall" );
-        #endif
-        
-        RenderMeshUtility.AddComponents(
-            prototype,
-            entityManager,
-            renderMeshDescription,
-            renderMeshArray,
-            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-
-        entityManager.AddComponentData( prototype, new EntityCollider() );
-        entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
-        //entityManager.AddBuffer<DestructibleData>( prototype );
-        entityManager.AddComponentData( prototype, new BufferData() );
-        
-        
-        return prototype;
-    }
-    
 }
 
 
-public struct EntityRenderInfo
+public struct LevelRoom
 {
-    public int MeshIndex;
-    public int MaterialIndex;
+    private int _wallThickness;
+    private int _id;
+    private Color _debugColor;
+
+    public int WallThickness => _wallThickness;
+    public int Id => _id;
+    public Color DebugColor => _debugColor;
+    
+
+    public LevelRoom( int id, int wallThickness )
+    {
+        _id = id;
+        _wallThickness = wallThickness;
+        _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
+    }
 }
 
 public struct LevelFloor
