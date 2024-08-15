@@ -69,6 +69,15 @@ public partial class LevelGenerator : MonoBehaviour
                 }
             }
         }
+/*
+        Gizmos.color = Color.black;
+        for ( int i = 0; i < layoutDimensions.y; i++)
+        {
+            LevelRoom room = _rooms[i * layoutDimensions.x];
+            Vector3 pos = new Vector3(room.Origin.x, room.Origin.y)/GameSettings.PixelsPerUnit;
+            Gizmos.DrawLine( pos, pos + (Vector3.right*100) );
+        }
+        */
     }
 #endif
 
@@ -83,7 +92,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
-        Random.seed = seed;
+        //Random.seed = seed;
         InitializeLevel();
         
         //MakeFloors();
@@ -156,10 +165,20 @@ public partial class LevelGenerator : MonoBehaviour
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
             int distance = yOffset - leftNeighbor.Origin.y;
-
+            
             if ( distance >= 0 )
             {
                 int downShift = -(distance + (size.y - minSize));
+                
+                //equal to the distance need to have the tops of the two rects align, plus anything past the minimum size requirement
+                int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
+
+                shift.y = Random.Range( downShift, upShift + 1 );
+            }
+            else
+            {
+                int downShift = -(distance + (size.y - minSize));
+                //equal to the distance need to have the tops of the two rects align, plus anything past the minimum size requirement
                 int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
 
                 shift.y = Random.Range( downShift, upShift + 1 );
