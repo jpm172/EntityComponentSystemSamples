@@ -127,9 +127,8 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 int index = x + y * layoutDimensions.x;
                 
-                //Vector2Int roomSize = new Vector2Int( Random.Range( minSize, maxSize+1 ), Random.Range( minSize, maxSize+1 ) );
-                Vector2Int roomSize = new Vector2Int( minSize, minSize  );
-                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, buffer, minSize, roomSize );
+                Vector2Int roomSize = new Vector2Int( Random.Range( minSize, maxSize+1 ), Random.Range( minSize, maxSize+1 ) );
+                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, buffer, minSize, maxSize, roomSize );
                 LevelRoom room = new LevelRoom(index+1, roomOrigin, roomSize, Random.Range( 2,6 ));
                 
                 _rooms[index] = room;
@@ -141,7 +140,7 @@ public partial class LevelGenerator : MonoBehaviour
         }
         
         //create the level array aand seed it with the rooms  
-        dimensions = new Vector2Int((maxSize*layoutDimensions.x) + (buffer*2*layoutDimensions.x) *2 , (maxSize*layoutDimensions.y) + (buffer*2*layoutDimensions.y) * 2 );
+        dimensions = new Vector2Int((maxSize*layoutDimensions.x) + (buffer*2*layoutDimensions.x) , (maxSize*layoutDimensions.y) + (buffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         for(int i = 0; i < _rooms.Length; i++)
         {
@@ -152,7 +151,7 @@ public partial class LevelGenerator : MonoBehaviour
     }
 
 
-    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int buffer, int minSize, Vector2Int size)
+    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int buffer, int minSize, int maxSize, Vector2Int size)
     {
         Vector2Int shift = new Vector2Int(0,0);
 
@@ -166,37 +165,36 @@ public partial class LevelGenerator : MonoBehaviour
             LevelRoom leftNeighbor = _rooms[index];
             int distance = yOffset - leftNeighbor.Origin.y;
             
-            if ( distance >= 0 )
-            {
-                int downShift = -(distance + (size.y - minSize));
-                
-                //equal to the distance need to have the tops of the two rects align, plus anything past the minimum size requirement
-                int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
-
-                shift.y = Random.Range( downShift, upShift + 1 );
-            }
-            else
-            {
-                int downShift = -(distance + (size.y - minSize));
-                //equal to the distance need to have the tops of the two rects align, plus anything past the minimum size requirement
-                int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
-
-                shift.y = Random.Range( downShift, upShift + 1 );
-            }
+            //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
+            int downShift = -(distance + (size.y - minSize));
+            //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
+            int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
+            shift.y = Random.Range( downShift, upShift + 1 );
         }
 
         if ( y == 0 )
         {
             shift.x = Random.Range( -buffer, buffer + 1 );
         }
+        else
+        {
+            int index = x + (y-1) * layoutDimensions.x;
+            LevelRoom bottomNeighbor = _rooms[index];
+            int distance = xOffset - bottomNeighbor.Origin.x;
+            
+            //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
+            int leftShift = -(distance + (size.x - minSize));
+            //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
+            int rightShift = bottomNeighbor.Size.x - (distance + size.x) + (size.x - minSize);
+            shift.x = Random.Range( leftShift, rightShift + 1 );
+        }
 
 
-        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - buffer, xOffset + buffer );
-        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - buffer, yOffset + buffer );
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - buffer, xOffset + (maxSize - size.x) + buffer );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - buffer, yOffset + (maxSize - size.y) + buffer );
         
-        
-        return new Vector2Int(xOffset, yOffset) + shift;
-        //return new Vector2Int(xResult, yResult) ;
+        //Debug.Log( $"{xResult}, {yResult}" );
+        return new Vector2Int(xResult, yResult) ;
     }
     
     private void DrawBox( int xOrigin, int yOrigin, int width, int height, ref LevelRoom room )
