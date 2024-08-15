@@ -270,8 +270,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2d2b27e012ffb4699bb5d2b121571b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dimensions: {x: 250, y: 250}
-  layoutDimensions: {x: 5, y: 5}
+  dimensions: {x: 0, y: 0}
+  layoutDimensions: {x: 2, y: 1}
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}

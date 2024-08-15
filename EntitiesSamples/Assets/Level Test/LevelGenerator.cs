@@ -16,6 +16,9 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator : MonoBehaviour
 {
+
+    [SerializeField] private int seed;
+    
     [SerializeField]
     private Vector2Int dimensions;//dimensions of level in pixels
     
@@ -80,6 +83,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
+        Random.seed = seed;
         InitializeLevel();
         
         //MakeFloors();
@@ -90,6 +94,7 @@ public partial class LevelGenerator : MonoBehaviour
     private void InitializeLevel()
     {
         int minSize = 20;
+        int maxSize = 60;
         int count = layoutDimensions.x * layoutDimensions.y;
 
         if ( _levelLayout.IsCreated )
@@ -102,7 +107,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         //create the rooms and seed them into the level layout
 
-        int buffer = 50;
+        int buffer = 20;
         int xOffset = buffer;
         
         for ( int x = 0; x < layoutDimensions.x; x++ )
@@ -112,20 +117,22 @@ public partial class LevelGenerator : MonoBehaviour
             for ( int y = 0; y < layoutDimensions.y; y++ )
             {
                 int index = x + y * layoutDimensions.x;
-                Vector2Int roomOrigin = new Vector2Int(xOffset, yOffset);
-                Vector2Int roomSize = new Vector2Int( Random.Range( minSize, buffer ), Random.Range( minSize, buffer ) );
+                
+                //Vector2Int roomSize = new Vector2Int( Random.Range( minSize, maxSize+1 ), Random.Range( minSize, maxSize+1 ) );
+                Vector2Int roomSize = new Vector2Int( minSize, minSize  );
+                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, buffer, minSize, roomSize );
                 LevelRoom room = new LevelRoom(index+1, roomOrigin, roomSize, Random.Range( 2,6 ));
                 
                 _rooms[index] = room;
                 
-                yOffset += buffer*2;
+                yOffset += maxSize + (buffer*2);
             }
             
-            xOffset += buffer*2;
+            xOffset += maxSize + (buffer*2);
         }
         
         //create the level array aand seed it with the rooms  
-        dimensions = new Vector2Int(buffer*layoutDimensions.x*2 + buffer , buffer*layoutDimensions.y*2 + buffer );
+        dimensions = new Vector2Int((maxSize*layoutDimensions.x) + (buffer*2*layoutDimensions.x) *2 , (maxSize*layoutDimensions.y) + (buffer*2*layoutDimensions.y) * 2 );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         for(int i = 0; i < _rooms.Length; i++)
         {
@@ -135,6 +142,44 @@ public partial class LevelGenerator : MonoBehaviour
         
     }
 
+
+    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int buffer, int minSize, Vector2Int size)
+    {
+        Vector2Int shift = new Vector2Int(0,0);
+
+        if ( x == 0 )
+        {
+            shift.y = Random.Range( -buffer, buffer + 1 );
+        }
+        else
+        {
+            int index = ( x - 1 ) + y * layoutDimensions.x;
+            LevelRoom leftNeighbor = _rooms[index];
+            int distance = yOffset - leftNeighbor.Origin.y;
+
+            if ( distance >= 0 )
+            {
+                int downShift = -(distance + (size.y - minSize));
+                int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
+
+                shift.y = Random.Range( downShift, upShift + 1 );
+            }
+        }
+
+        if ( y == 0 )
+        {
+            shift.x = Random.Range( -buffer, buffer + 1 );
+        }
+
+
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - buffer, xOffset + buffer );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - buffer, yOffset + buffer );
+        
+        
+        return new Vector2Int(xOffset, yOffset) + shift;
+        //return new Vector2Int(xResult, yResult) ;
+    }
+    
     private void DrawBox( int xOrigin, int yOrigin, int width, int height, ref LevelRoom room )
     {
         int start = xOrigin + yOrigin * dimensions.x;
@@ -147,7 +192,6 @@ public partial class LevelGenerator : MonoBehaviour
                 _levelLayout[start + index] = room.Id;
             }
         }
-
     }
     
     private void MakeWalls()
