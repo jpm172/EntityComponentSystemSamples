@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
@@ -37,8 +38,18 @@ public partial class LevelGenerator : MonoBehaviour
     
     
     private NativeArray<int> _levelLayout;
+
+
+    //seeding variables
+    private int _minRoomSeedSize = 20;
+    private int _maxRoomSeedSize = 60;
+    private int _seedBuffer = 20;
     
-    
+    //dijkstas variables
+    private Dictionary<int, List<LevelEdge>> _levelGraph;//stores the edge weights used for dijsktras
+    private int minEdgeWeight = 1;
+    [SerializeField]
+    private int maxEdgeWeight = 10;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -69,6 +80,22 @@ public partial class LevelGenerator : MonoBehaviour
                 }
             }
         }
+
+        Gizmos.color = Color.red;
+        for ( int i = 0; i < _rooms.Length; i++ )
+        {
+            if ( _levelGraph.ContainsKey( i ) )
+            {
+                foreach ( LevelEdge e in _levelGraph[i] )
+                {
+                    Vector3 source = (Vector2)_rooms[e.Source].Origin;
+                    Vector3 destination = (Vector2)_rooms[e.Destination].Origin;
+                    
+                    Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
+                }
+            }
+        }
+        
 /*
         Gizmos.color = Color.black;
         for ( int i = 0; i < layoutDimensions.y; i++)
@@ -92,18 +119,92 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
-        //Random.seed = seed;
+ 
+        Random.seed = seed;
         InitializeLevel();
-        
+        FindPath();
         //MakeFloors();
         //MakeWalls();
         //MakeEntities();
+        
     }
 
+    private void FindPath()
+    {
+        int INF = Int32.MaxValue;
+        int[] distance = new int[_rooms.Length];
+        LevelEdge[] pathEdges = new LevelEdge[_rooms.Length];
+        List<int> path = new List<int>();
+
+
+        //initialize the lists needed to run dijkstras alg
+        for ( int i = 0; i < distance.Length; i++ )
+        {
+            distance[i] = INF;
+        }
+        
+        //select a starting node
+        int startNode = Random.Range( 0, _rooms.Length );
+        //_graph[startNode].isStart = true;
+        distance[startNode] = 0;
+        
+        //run dijkstras algorithm until the path is found
+        while ( path.Count < _rooms.Length )
+        {
+            int min = INF;
+            int result = -1;
+
+            //pick the node with the smallest distance to reach
+            for ( int i = 0; i < distance.Length; i++ )
+            {
+                if ( distance[i] < min && !path.Contains( i ) )
+                {
+                    result = i;
+                    min = distance[i];
+                }
+            }
+
+
+            path.Add( result );
+            distance[result] = min;
+            
+            //look at each of the edges, update any new connections that are shorter than the ones previously found
+            foreach ( LevelEdge e in _levelGraph[result] )
+            {
+                //LevelRoom destination = _rooms[e.Destination];
+                //int index = (int) ((int)e.Destination.GraphPosition.x + e.Destination.GraphPosition.y * _width);
+
+                if ( min + e.Weight < distance[e.Destination] )
+                {
+                    distance[e.Destination] = min + e.Weight;
+                    pathEdges[e.Destination] = e;
+                }
+            }
+        }
+
+
+
+
+        //clear all path information in the graph
+        _levelGraph.Clear();
+        
+        
+        
+        
+        //update the graph to only contain the edges from the shortest path we just found
+        foreach ( LevelEdge e in pathEdges )
+        {
+            SetNeighbors( e.Source, e.Destination, e.Weight );
+            //e?.Source.AddEdge( e.Destination, e.Weight );
+            //e?.Destination.AddEdge( e.Source, e.Weight );
+        }
+        
+
+
+    }
+    
     private void InitializeLevel()
     {
-        int minSize = 20;
-        int maxSize = 60;
         int count = layoutDimensions.x * layoutDimensions.y;
 
         if ( _levelLayout.IsCreated )
@@ -112,35 +213,48 @@ public partial class LevelGenerator : MonoBehaviour
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
+        _levelGraph = new Dictionary<int, List<LevelEdge>>();
         
         
-        //create the rooms and seed them into the level layout
-
-        int buffer = 20;
-        int xOffset = buffer;
+        //create the rooms and randomly shuffle them around, but while making sure they are still aligned with their neighbors
+        int xOffset = _seedBuffer;
         
         for ( int x = 0; x < layoutDimensions.x; x++ )
         {
-            int yOffset = buffer;
+            int yOffset = _seedBuffer;
 
             for ( int y = 0; y < layoutDimensions.y; y++ )
             {
                 int index = x + y * layoutDimensions.x;
                 
-                Vector2Int roomSize = new Vector2Int( Random.Range( minSize, maxSize+1 ), Random.Range( minSize, maxSize+1 ) );
-                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, buffer, minSize, maxSize, roomSize );
-                LevelRoom room = new LevelRoom(index+1, roomOrigin, roomSize, Random.Range( 2,6 ));
+                //set the room's initial size and position
+                Vector2Int graphPosition = new Vector2Int(x,y);
+                Vector2Int roomSize = new Vector2Int( Random.Range( _minRoomSeedSize, _maxRoomSeedSize+1 ), Random.Range(_minRoomSeedSize, _maxRoomSeedSize+1 ) );
+                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, roomSize );
+                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, Random.Range( 2,6 ));
                 
                 _rooms[index] = room;
+
+                if ( x > 0 )
+                {
+                    int neighborIndex = ( x - 1 ) + y * layoutDimensions.x;
+                    SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
+                }
+
+                if ( y > 0 )
+                {
+                    int neighborIndex = x + (y - 1 ) * layoutDimensions.x;
+                    SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
+                }
                 
-                yOffset += maxSize + (buffer*2);
+                yOffset += _maxRoomSeedSize + (_seedBuffer*2);
             }
             
-            xOffset += maxSize + (buffer*2);
+            xOffset += _maxRoomSeedSize + (_seedBuffer*2);
         }
         
-        //create the level array aand seed it with the rooms  
-        dimensions = new Vector2Int((maxSize*layoutDimensions.x) + (buffer*2*layoutDimensions.x) , (maxSize*layoutDimensions.y) + (buffer*2*layoutDimensions.y) );
+        //create the level array and seed it with the rooms  
+        dimensions = new Vector2Int((_maxRoomSeedSize*layoutDimensions.x) + (_seedBuffer*2*layoutDimensions.x) , (_maxRoomSeedSize*layoutDimensions.y) + (_seedBuffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         for(int i = 0; i < _rooms.Length; i++)
         {
@@ -151,13 +265,29 @@ public partial class LevelGenerator : MonoBehaviour
     }
 
 
-    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int buffer, int minSize, int maxSize, Vector2Int size)
+    private void SetNeighbors( int room1, int room2, int weight )
+    {
+        //Debug.Log( $"Connecting rooms {room1} and {room2} with weight {weight}" );
+        if ( !_levelGraph.ContainsKey( room1 ) )
+        {
+            _levelGraph[room1] = new List<LevelEdge>();
+        }
+        _levelGraph[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
+        
+        if ( !_levelGraph.ContainsKey( room2 ) )
+        {
+            _levelGraph[room2] = new List<LevelEdge>();
+        }
+        _levelGraph[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
+    }
+    
+    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset,  Vector2Int size)
     {
         Vector2Int shift = new Vector2Int(0,0);
 
         if ( x == 0 )
         {
-            shift.y = Random.Range( -buffer, buffer + 1 );
+            shift.y = Random.Range( -_seedBuffer, _seedBuffer + (_maxRoomSeedSize - size.y)+ 1 );
         }
         else
         {
@@ -166,15 +296,15 @@ public partial class LevelGenerator : MonoBehaviour
             int distance = yOffset - leftNeighbor.Origin.y;
             
             //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
-            int downShift = -(distance + (size.y - minSize));
+            int downShift = -(distance + (size.y - _minRoomSeedSize));
             //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
-            int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - minSize);
+            int upShift = leftNeighbor.Size.y - (distance + size.y) + (size.y - _minRoomSeedSize);
             shift.y = Random.Range( downShift, upShift + 1 );
         }
 
         if ( y == 0 )
         {
-            shift.x = Random.Range( -buffer, buffer + 1 );
+            shift.x = Random.Range( -_seedBuffer, _seedBuffer + (_maxRoomSeedSize - size.x) + 1 );
         }
         else
         {
@@ -182,18 +312,17 @@ public partial class LevelGenerator : MonoBehaviour
             LevelRoom bottomNeighbor = _rooms[index];
             int distance = xOffset - bottomNeighbor.Origin.x;
             
-            //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
-            int leftShift = -(distance + (size.x - minSize));
-            //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
-            int rightShift = bottomNeighbor.Size.x - (distance + size.x) + (size.x - minSize);
+            //equal to the steps needed to have the left side of the rects to align, plus anything past the minimum size requirement
+            int leftShift = -(distance + (size.x - _minRoomSeedSize));
+            //equal to the steps needed to have the right side of the two rects align, plus anything past the minimum size requirement
+            int rightShift = bottomNeighbor.Size.x - (distance + size.x) + (size.x - _minRoomSeedSize);
             shift.x = Random.Range( leftShift, rightShift + 1 );
         }
 
 
-        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - buffer, xOffset + (maxSize - size.x) + buffer );
-        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - buffer, yOffset + (maxSize - size.y) + buffer );
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer, xOffset + (_maxRoomSeedSize - size.x) + _seedBuffer );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer, yOffset + (_maxRoomSeedSize - size.y) + _seedBuffer );
         
-        //Debug.Log( $"{xResult}, {yResult}" );
         return new Vector2Int(xResult, yResult) ;
     }
     
@@ -295,17 +424,20 @@ public struct LevelRoom
     private Color _debugColor;
     private Vector2Int _size;
     private Vector2Int _origin;
+    private Vector2Int _graphPosition;
 
     public Vector2Int Size => _size;
+    public Vector2Int GraphPosition => _graphPosition;
     public Vector2Int Origin => _origin;
     public int WallThickness => _wallThickness;
     public int Id => _id;
     public Color DebugColor => _debugColor;
     
 
-    public LevelRoom( int id, Vector2Int origin, Vector2Int size, int wallThickness )
+    public LevelRoom( int id, Vector2Int graphPosition, Vector2Int origin, Vector2Int size, int wallThickness )
     {
         _id = id;
+        _graphPosition = graphPosition;
         _origin = origin;
         _size = size;
         _wallThickness = wallThickness;
@@ -326,4 +458,11 @@ public struct LevelWall
     public Material Material;
     public Vector2 Position;
     public int[] PointField;
+}
+
+public struct LevelEdge
+{
+    public int Weight;
+    public int Source;
+    public int Destination;
 }
