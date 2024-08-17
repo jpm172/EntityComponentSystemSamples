@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -9,7 +10,57 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    // Start is called before the first frame update
+    [BurstCompile]
+    public struct LevelGrowRoomJob : IJobParallelFor
+    {
+        
+        [ReadOnly] public NativeArray<int> LevelLayout;
+        [ReadOnly] public Vector2Int LevelDimensions;
+        
+        [ReadOnly] public int RoomId;
+        [ReadOnly] public Vector2Int RoomOrigin;
+        [ReadOnly] public Vector2Int RoomSize;
+        [ReadOnly] public Vector2Int GrowthDirection;
+        public void Execute(int index)
+        {
+
+            int boundsX = index % RoomSize.x;
+            int boundsY = index / RoomSize.x;
+            
+            int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
+            
+            if ( LevelLayout[levelIndex] != RoomId )
+                return;
+            
+            int x = (levelIndex % LevelDimensions.x) + GrowthDirection.x;
+            int y = (levelIndex / LevelDimensions.x) + GrowthDirection.y;
+
+            int checkIndex = x + y * LevelDimensions.x;
+
+            
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0  )
+            {
+                LevelLayout[checkIndex] = RoomId;
+            }
+            
+            
+
+        }
+
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x >= 0 && x < LevelDimensions.x )
+                return true;
+        
+            if ( y >= 0 && y < LevelDimensions.y )
+                return true;
+        
+            return false;
+        }
+
+    }
+
+
     public struct LevelSpawnUnmanagedJob : IJobParallelFor
     {
         public Entity Prototype;

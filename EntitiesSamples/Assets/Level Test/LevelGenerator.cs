@@ -195,8 +195,12 @@ public partial class LevelGenerator : MonoBehaviour
         foreach ( LevelEdge e in pathEdges )
         {
             //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
-            if(e.Destination != e.Source)
+            if ( e.Destination != e.Source )
+            {
                 SetNeighbors( e.Source, e.Destination, e.Weight );
+                SetPathInfo( e.Source, e.Destination );
+            }
+                
         }
         
 
@@ -229,12 +233,13 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 //set the room's initial variables
                 Vector2Int roomSize = new Vector2Int( Random.Range( _minRoomSeedSize, _maxRoomSeedSize+1 ), Random.Range(_minRoomSeedSize, _maxRoomSeedSize+1 ) );
+                Vector2Int graphPosition = new Vector2Int(x,y);
                 Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, roomSize );
                 int wallThickness = Random.Range( 2, 6 );
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
                 
-                LevelRoom room = new LevelRoom(index+1, roomOrigin, roomSize, mat, wallThickness, growthType);
+                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, mat, wallThickness, growthType);
                 _rooms[index] = room;
 
                 //set the room's neighbors in preparation of dijkstras algorithm
@@ -266,7 +271,11 @@ public partial class LevelGenerator : MonoBehaviour
         
     }
 
-
+    private void SetPathInfo( int room1, int room2 )
+    {
+        
+    }
+    
     private void SetNeighbors( int room1, int room2, int weight )
     {
         //Debug.Log( $"Connecting rooms {room1} and {room2} with weight {weight}" );
@@ -435,53 +444,6 @@ public partial class LevelGenerator : MonoBehaviour
             _levelLayout.Dispose();
         }
             
-    }
-}
-
-
-public struct LevelRoom
-{
-    private int _wallThickness;
-    private LevelMaterial _material;
-    private LevelGrowthType _growthType;
-    
-    private int _id;
-    private bool _canGrow;
-    private Color _debugColor;
-    private Vector2Int _size;
-    private Vector2Int _origin;
-
-    public Vector2Int Size
-    {
-        get => _size;
-        set => _size = value;
-    }
-    public Vector2Int Origin => _origin;
-    
-    public bool CanGrow 
-    {
-        get => _canGrow;
-        set => _canGrow = value;
-    }
-
-    public LevelGrowthType GrowthType => _growthType;
-    public int WallThickness => _wallThickness;
-
-    public LevelMaterial Material => _material;
-    public int Id => _id;
-    public Color DebugColor => _debugColor;
-    
-
-    public LevelRoom( int id, Vector2Int origin, Vector2Int size, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
-    {
-        _id = id;
-        _material = mat;
-        _growthType = growthType;
-        _origin = origin;
-        _size = size;
-        _wallThickness = wallThickness;
-        _canGrow = true;
-        _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
     }
 }
 

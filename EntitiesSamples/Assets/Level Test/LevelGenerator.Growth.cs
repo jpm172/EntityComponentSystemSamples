@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Jobs;
 using UnityEngine;
 
 public partial class LevelGenerator
@@ -17,17 +18,21 @@ public partial class LevelGenerator
         
         //while ( counter < 5 ) 
         //{
-            GrowRoomAlongPath(counter);
+            LevelRoom room = _rooms[counter];
+            GrowRoomAlongPath(room);
             counter = ( counter + 1 ) %_rooms.Length;
         //}
     }
 
-    private void GrowRoomAlongPath( int roomIndex )
+    private void GrowRoomAlongPath( LevelRoom room )
     {
-        LevelRoom room = _rooms[roomIndex];
+
+        if ( !room.CanGrow )
+            return;
+        
         if ( room.GrowthType == LevelGrowthType.Normal )
         {
-            NormalGrowRoom( roomIndex );
+            NormalGrowRoom( room );
         }
         else if ( room.GrowthType == LevelGrowthType.Mold )
         {
@@ -37,12 +42,27 @@ public partial class LevelGenerator
 
     }
 
-    private void NormalGrowRoom( int roomIndex )
+    private void NormalGrowRoom( LevelRoom room )
     {
-        if ( !_rooms[roomIndex].CanGrow )
-            return;
+        Vector2Int growthDirection = Vector2Int.left;
+        
+        LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
+        {
+            GrowthDirection = growthDirection,
+            LevelDimensions = dimensions,
+            LevelLayout = _levelLayout,
+            RoomId = room.Id,
+            RoomSize = room.Size,
+            RoomOrigin = room.Origin
+        };
         
         
+        JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 32);
+
+// Wait for the job to complete
+        handle.Complete();
+        
+
     }
     
     
