@@ -1,10 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 public partial class LevelGenerator
 {
+    public int GrowIterations = 1; 
     private int counter = 0;
     public void GrowRooms()
     {
@@ -18,9 +21,13 @@ public partial class LevelGenerator
         
         //while ( counter < 5 ) 
         //{
+        for ( int i = 0; i < GrowIterations; i++ )
+        {
             LevelRoom room = _rooms[counter];
-            GrowRoomAlongPath(room);
-            counter = ( counter + 1 ) %_rooms.Length;
+            GrowRoomAlongPath( room );
+            counter = ( counter + 1 ) % _rooms.Length;
+        }
+
         //}
     }
 
@@ -44,7 +51,8 @@ public partial class LevelGenerator
 
     private void NormalGrowRoom( LevelRoom room )
     {
-        Vector2Int growthDirection = Vector2Int.left;
+        int2 growthDirection = new int2(-1, 0);
+        NativeQueue<bool> growthSuccess = new NativeQueue<bool>(Allocator.TempJob);
         
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
@@ -53,19 +61,33 @@ public partial class LevelGenerator
             LevelLayout = _levelLayout,
             RoomId = room.Id,
             RoomSize = room.Size,
-            RoomOrigin = room.Origin
+            RoomOrigin = room.Origin,
+            GrowthSuccess = growthSuccess.AsParallelWriter()
         };
         
         
         JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 32);
-
-// Wait for the job to complete
         handle.Complete();
+
+        if ( growthSuccess.Count > 0 )
+        {
+            ResizeRoom( room, growthDirection );
+        }
         
+        growthSuccess.Dispose();
 
     }
-    
-    
+
+
+    private void ResizeRoom( LevelRoom room, int2 growthDirection )
+    {
+        if ( growthDirection.x < 0 || growthDirection.y < 0 )
+        {
+            room.Origin += growthDirection;
+        }
+        
+        room.Size += math.abs( growthDirection );
+    }
     
     private void RandomGrow()
     {
@@ -82,16 +104,6 @@ public partial class LevelGenerator
 
         return true;
     }
-
-    private bool IsInBounds( int x, int y )
-    {
-        if ( x >= 0 && x < dimensions.x )
-            return true;
-        
-        if ( y >= 0 && y < dimensions.y )
-            return true;
-        
-        return false;
-    }
+    
     
 }

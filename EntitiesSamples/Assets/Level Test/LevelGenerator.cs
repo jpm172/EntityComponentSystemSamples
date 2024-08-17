@@ -89,10 +89,12 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 foreach ( LevelEdge e in _levelGraph[i] )
                 {
-                    Vector3 source = (Vector2)_rooms[e.Source].Origin;
-                    Vector3 destination = (Vector2)_rooms[e.Destination].Origin;
+                    
+                    Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y);
+                    Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y);
                     
                     Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
+                    
                 }
             }
         }
@@ -232,9 +234,9 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * layoutDimensions.x;
                 
                 //set the room's initial variables
-                Vector2Int roomSize = new Vector2Int( Random.Range( _minRoomSeedSize, _maxRoomSeedSize+1 ), Random.Range(_minRoomSeedSize, _maxRoomSeedSize+1 ) );
-                Vector2Int graphPosition = new Vector2Int(x,y);
-                Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, roomSize );
+                int2 roomSize = new int2( Random.Range( _minRoomSeedSize, _maxRoomSeedSize+1 ), Random.Range(_minRoomSeedSize, _maxRoomSeedSize+1 ) );
+                int2 graphPosition = new int2(x,y);
+                int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, roomSize );
                 int wallThickness = Random.Range( 2, 6 );
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
@@ -292,9 +294,9 @@ public partial class LevelGenerator : MonoBehaviour
         _levelGraph[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
     }
     
-    private Vector2Int GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset,  Vector2Int size)
+    private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset,  int2 size)
     {
-        Vector2Int shift = new Vector2Int(0,0);
+        int2 shift = new int2(0,0);
 
         if ( x == 0 )
         {
@@ -334,7 +336,7 @@ public partial class LevelGenerator : MonoBehaviour
         int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer, xOffset + (_maxRoomSeedSize - size.x) + _seedBuffer );
         int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer, yOffset + (_maxRoomSeedSize - size.y) + _seedBuffer );
         
-        return new Vector2Int(xResult, yResult) ;
+        return new int2(xResult, yResult) ;
     }
     
     private void DrawBox( int xOrigin, int yOrigin, int width, int height, ref LevelRoom room )

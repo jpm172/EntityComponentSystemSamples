@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class LevelRoom 
 {
@@ -11,18 +13,22 @@ public class LevelRoom
     private int _id;
     private bool _canGrow;
     private Color _debugColor;
-    private Vector2Int _size;
-    private Vector2Int _origin;
-    private Vector2Int _graphPosition;
+    private int2 _size;
+    private int2 _origin;
+    private int2 _graphPosition;
 
-    public Vector2Int Size
+    public int2 Size
     {
         get => _size;
         set => _size = value;
     }
-    public Vector2Int Origin => _origin;
+    public int2 Origin
+    {
+        get => _origin;
+        set => _origin = value;
+    }
 
-    public Vector2Int GraphPosition => _graphPosition;
+    public int2 GraphPosition => _graphPosition;
 
     public bool CanGrow 
     {
@@ -40,7 +46,7 @@ public class LevelRoom
     public Color DebugColor => _debugColor;
     
 
-    public LevelRoom( int id, Vector2Int graphPosition, Vector2Int origin, Vector2Int size, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
+    public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
     {
         _id = id;
         _material = mat;
