@@ -51,6 +51,7 @@ public partial class LevelGenerator : MonoBehaviour
     [SerializeField]
     private int maxEdgeWeight = 10;
     
+
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
@@ -121,13 +122,19 @@ public partial class LevelGenerator : MonoBehaviour
     {
  
         Random.seed = seed;
+        
         InitializeLevel();
+        
         FindPath();
+        
+        //GrowRooms();
         //MakeFloors();
         //MakeWalls();
         //MakeEntities();
         
     }
+
+    
 
     private void FindPath()
     {
@@ -145,7 +152,6 @@ public partial class LevelGenerator : MonoBehaviour
         
         //select a starting node
         int startNode = Random.Range( 0, _rooms.Length );
-        //_graph[startNode].isStart = true;
         distance[startNode] = 0;
         
         //run dijkstras algorithm until the path is found
@@ -181,22 +187,16 @@ public partial class LevelGenerator : MonoBehaviour
                 }
             }
         }
-
-
-
-
+        
         //clear all path information in the graph
         _levelGraph.Clear();
-        
-        
-        
         
         //update the graph to only contain the edges from the shortest path we just found
         foreach ( LevelEdge e in pathEdges )
         {
-            SetNeighbors( e.Source, e.Destination, e.Weight );
-            //e?.Source.AddEdge( e.Destination, e.Weight );
-            //e?.Destination.AddEdge( e.Source, e.Weight );
+            //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
+            if(e.Destination != e.Source)
+                SetNeighbors( e.Source, e.Destination, e.Weight );
         }
         
 
@@ -227,20 +227,22 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 int index = x + y * layoutDimensions.x;
                 
-                //set the room's initial size and position
-                Vector2Int graphPosition = new Vector2Int(x,y);
+                //set the room's initial variables
                 Vector2Int roomSize = new Vector2Int( Random.Range( _minRoomSeedSize, _maxRoomSeedSize+1 ), Random.Range(_minRoomSeedSize, _maxRoomSeedSize+1 ) );
                 Vector2Int roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, roomSize );
-                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, Random.Range( 2,6 ));
+                int wallThickness = Random.Range( 2, 6 );
+                LevelMaterial mat = GetRandomRoomMaterial();
+                LevelGrowthType growthType = LevelGrowthType.Normal;
                 
+                LevelRoom room = new LevelRoom(index+1, roomOrigin, roomSize, mat, wallThickness, growthType);
                 _rooms[index] = room;
 
+                //set the room's neighbors in preparation of dijkstras algorithm
                 if ( x > 0 )
                 {
                     int neighborIndex = ( x - 1 ) + y * layoutDimensions.x;
                     SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
                 }
-
                 if ( y > 0 )
                 {
                     int neighborIndex = x + (y - 1 ) * layoutDimensions.x;
@@ -340,6 +342,26 @@ public partial class LevelGenerator : MonoBehaviour
         }
     }
     
+    private LevelMaterial GetRandomRoomMaterial()
+    {
+        int types = Enum.GetNames(typeof(LevelMaterial)).Length;
+        int rand = Random.Range( 0, types-1 );
+
+        switch ( rand )
+        {
+            case 0:
+                return LevelMaterial.Drywall;
+            case 1:
+                return LevelMaterial.Brick;
+            default:
+                return LevelMaterial.Drywall;
+        }
+    }
+    
+    
+    
+    
+    
     private void MakeWalls()
     {
         
@@ -420,27 +442,45 @@ public partial class LevelGenerator : MonoBehaviour
 public struct LevelRoom
 {
     private int _wallThickness;
+    private LevelMaterial _material;
+    private LevelGrowthType _growthType;
+    
     private int _id;
+    private bool _canGrow;
     private Color _debugColor;
     private Vector2Int _size;
     private Vector2Int _origin;
-    private Vector2Int _graphPosition;
 
-    public Vector2Int Size => _size;
-    public Vector2Int GraphPosition => _graphPosition;
+    public Vector2Int Size
+    {
+        get => _size;
+        set => _size = value;
+    }
     public Vector2Int Origin => _origin;
+    
+    public bool CanGrow 
+    {
+        get => _canGrow;
+        set => _canGrow = value;
+    }
+
+    public LevelGrowthType GrowthType => _growthType;
     public int WallThickness => _wallThickness;
+
+    public LevelMaterial Material => _material;
     public int Id => _id;
     public Color DebugColor => _debugColor;
     
 
-    public LevelRoom( int id, Vector2Int graphPosition, Vector2Int origin, Vector2Int size, int wallThickness )
+    public LevelRoom( int id, Vector2Int origin, Vector2Int size, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
     {
         _id = id;
-        _graphPosition = graphPosition;
+        _material = mat;
+        _growthType = growthType;
         _origin = origin;
         _size = size;
         _wallThickness = wallThickness;
+        _canGrow = true;
         _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
     }
 }
