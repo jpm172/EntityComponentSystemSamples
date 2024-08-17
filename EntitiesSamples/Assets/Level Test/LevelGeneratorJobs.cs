@@ -13,8 +13,7 @@ using UnityEngine;
     [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
-        [NativeDisableParallelForRestriction]
-        public NativeArray<int> LevelLayout;
+        [ReadOnly] public NativeArray<int> LevelLayout;
         [ReadOnly] public Vector2Int LevelDimensions;
         
         [ReadOnly] public int RoomId;
@@ -22,7 +21,7 @@ using UnityEngine;
         [ReadOnly] public int2 RoomSize;
         [ReadOnly] public int2 GrowthDirection;
 
-        public NativeQueue<bool>.ParallelWriter GrowthSuccess;
+        public NativeList<int>.ParallelWriter NewCells;
         public void Execute(int index)
         {
 
@@ -42,8 +41,7 @@ using UnityEngine;
             
             if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0  )
             {
-                GrowthSuccess.Enqueue( true );
-                LevelLayout[checkIndex] = RoomId;
+                NewCells.AddNoResize( checkIndex );
             }
             
             
@@ -64,6 +62,21 @@ using UnityEngine;
 
     }
 
+    public struct LevelApplyGrowthResultJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> LevelLayout;
+
+        [ReadOnly] public int RoomId;
+
+        [ReadOnly] public NativeList<int> NewCells;
+        public void Execute(int index)
+        {
+            int levelIndex = NewCells[index];
+            LevelLayout[levelIndex] = RoomId;
+        }
+
+    }
 
     public struct LevelSpawnUnmanagedJob : IJobParallelFor
     {

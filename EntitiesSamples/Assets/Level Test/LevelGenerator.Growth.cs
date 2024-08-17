@@ -52,7 +52,8 @@ public partial class LevelGenerator
     private void NormalGrowRoom( LevelRoom room )
     {
         int2 growthDirection = new int2(-1, 0);
-        NativeQueue<bool> growthSuccess = new NativeQueue<bool>(Allocator.TempJob);
+        int listSize = math.max( room.Size.x, room.Size.y );
+        NativeList<int> newCells = new NativeList<int>(listSize, Allocator.TempJob);
         
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
@@ -62,19 +63,31 @@ public partial class LevelGenerator
             RoomId = room.Id,
             RoomSize = room.Size,
             RoomOrigin = room.Origin,
-            GrowthSuccess = growthSuccess.AsParallelWriter()
+            NewCells = newCells.AsParallelWriter()
         };
         
         
         JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 32);
         handle.Complete();
 
-        if ( growthSuccess.Count > 0 )
+        if ( newCells.Length > 0 )
         {
             ResizeRoom( room, growthDirection );
+            LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
+            {
+                LevelLayout = _levelLayout,
+                NewCells = newCells,
+                RoomId = room.Id
+            };
+            
+            JobHandle applyHandle = applyJob.Schedule(newCells.Length, 32);
+            applyHandle.Complete();
         }
         
-        growthSuccess.Dispose();
+        
+        
+        
+        newCells.Dispose();
 
     }
 
