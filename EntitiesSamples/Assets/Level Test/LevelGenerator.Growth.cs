@@ -68,6 +68,7 @@ public partial class LevelGenerator
         
         
         JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 32);
+        //JobHandle handle = growRoomJob.Schedule(4, 32);
         handle.Complete();
 
         if ( newCells.Length > 0 )

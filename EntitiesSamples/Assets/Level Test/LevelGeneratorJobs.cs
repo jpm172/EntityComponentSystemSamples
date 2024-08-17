@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    [BurstCompile]
+    //[BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
@@ -39,7 +39,7 @@ using UnityEngine;
             int checkIndex = x + y * LevelDimensions.x;
 
             
-            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0  )
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, 10, 5 ) )
             {
                 NewCells.AddNoResize( checkIndex );
             }
@@ -48,6 +48,40 @@ using UnityEngine;
 
         }
 
+
+        private bool IsValidGrowthCell(int x, int y, int distance, int threshold)
+        {
+            int2 perpendicular = math.abs( GrowthDirection.yx );
+            int2 startPos = new int2(x,y) - GrowthDirection;//the original cell we started at before adding grow direction
+            
+            
+            int count = 0;
+            for ( int i = -distance; i <= distance; i++ )
+            {
+                int2 curPos = startPos + (perpendicular * i);
+                int index = curPos.x + curPos.y * LevelDimensions.x;
+
+                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index] != RoomId )
+                {
+                    count = 0;
+                    continue;
+                }
+                
+                curPos += GrowthDirection;
+                index = curPos.x + curPos.y * LevelDimensions.x;
+
+                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
+                {
+                    count++;
+                    if ( count >= threshold )
+                        return true;
+                }
+            }
+
+
+            return false;
+        }
+        
         private bool IsInBounds( int x, int y )
         {
             if ( x < 0 || x >= LevelDimensions.x )
@@ -60,6 +94,8 @@ using UnityEngine;
             return true;
         }
 
+        
+        
     }
 
     public struct LevelApplyGrowthResultJob : IJobParallelFor
