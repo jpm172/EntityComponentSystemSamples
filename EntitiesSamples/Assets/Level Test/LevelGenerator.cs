@@ -71,7 +71,11 @@ public partial class LevelGenerator : MonoBehaviour
                 Vector3 pos = (new Vector3(room.Origin.x, room.Origin.y) + new Vector3(room.Size.x, room.Size.y)/2)/GameSettings.PixelsPerUnit;
                 Vector3 roomSize = new Vector3( room.Size.x, room.Size.y ) / GameSettings.PixelsPerUnit;
                 
+                Gizmos.color = Color.black;
+                Gizmos.DrawCube( pos, roomSize );
+                
                 Gizmos.color = room.DebugColor;
+                roomSize = new Vector3( room.Size.x-room.WallThickness, room.Size.y-room.WallThickness ) / GameSettings.PixelsPerUnit;
                 Gizmos.DrawCube( pos, roomSize );
             }
 
@@ -274,7 +278,6 @@ public partial class LevelGenerator : MonoBehaviour
 
         
         
-        int adjustedMinSize = _minRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         
         int xOffset = _seedBuffer;
@@ -288,7 +291,7 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * layoutDimensions.x;
                 
                 //set the room's initial variables
-                int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
+                int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );//
                 //int wallThickness = _minWallThickness;
                 /*
                 int2 roomSize = new int2( 
@@ -365,18 +368,22 @@ public partial class LevelGenerator : MonoBehaviour
         {
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
-            int maxWall = math.max( wallThickness, leftNeighbor.WallThickness );
-            int distance = yOffset - leftNeighbor.Origin.y;
-
-            int required = _minRoomSeedSize + (2*maxWall);
             
-            int extraSteps = size.y - required;
+            int wallAdjust = 0;
+            if ( wallThickness < leftNeighbor.WallThickness )
+                wallAdjust = leftNeighbor.WallThickness - wallThickness;
+            
+            int distance = yOffset - leftNeighbor.Origin.y ;
+
+            int required = _minRoomSeedSize + (2*wallThickness);
+            
+            int extraSteps = size.y - required - wallAdjust;
             
             
             //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
-            int downShift = -(distance + extraSteps);
+            int downShift = -(distance + extraSteps );
             //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
-            int upShift = leftNeighbor.Size.y - (distance + size.y) + extraSteps;
+            int upShift = leftNeighbor.Size.y - ( distance + size.y ) + extraSteps;
             shift.y = Random.Range( downShift, upShift + 1 );
         }
 
@@ -388,12 +395,16 @@ public partial class LevelGenerator : MonoBehaviour
         {
             int index = x + (y-1) * layoutDimensions.x;
             LevelRoom bottomNeighbor = _rooms[index];
-            int maxWall = math.max( wallThickness, bottomNeighbor.WallThickness );
+            
+            int wallAdjust = 0;
+            if ( wallThickness < bottomNeighbor.WallThickness )
+                wallAdjust = bottomNeighbor.WallThickness - wallThickness;
+            
             int distance = xOffset - bottomNeighbor.Origin.x;
             
-            int required = _minRoomSeedSize + (2*maxWall);
+            int required = _minRoomSeedSize + (2*wallThickness) ;
             
-            int extraSteps = size.x - required;
+            int extraSteps = size.x - required - wallAdjust;
             //Debug.Log( extraSteps );
             
             //equal to the steps needed to have the left side of the rects to align, plus anything past the minimum size requirement
@@ -536,20 +547,18 @@ public partial class LevelGenerator : MonoBehaviour
 
     private bool IsAlignedWithRoom( LevelRoom room1, LevelRoom room2 )
     {
-        
-        int distance =  ( room1.Origin - room2.Origin ).y;
-        int sizeDiff = room1.Size.y - room2.Size.y;
-        if ( distance > 0 )
+        int count = 0;
+        for ( int y = room1.Origin.y; y < room1.Origin.y + room1.Size.y; y++ )
         {
-            int maxWall = math.max( room1.WallThickness, room2.WallThickness );
-            int overlap = room1.Size.y - distance - sizeDiff;
-
-
-            Debug.Log( overlap  );
+            if ( y >= room2.Origin.y && y < room2.Origin.y + room2.Size.y )
+            {
+                count++;
+            }
         }
         
+        Debug.Log( $"{count}: {room1.Size}, {room1.WallThickness}" );
         
-        return true;
+        return count >= _minRoomSeedSize + (room1.WallThickness*2);
     }
     
     private void OnDestroy()
