@@ -10,13 +10,14 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    //[BurstCompile]
+    [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
         [ReadOnly] public Vector2Int LevelDimensions;
         
         [ReadOnly] public int RoomId;
+        [ReadOnly] public int WallThickness;
         [ReadOnly] public int2 RoomOrigin;
         [ReadOnly] public int2 RoomSize;
         [ReadOnly] public int2 GrowthDirection;

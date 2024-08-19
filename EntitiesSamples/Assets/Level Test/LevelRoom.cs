@@ -11,11 +11,27 @@ public class LevelRoom
     private LevelGrowthType _growthType; 
     
     private int _id;
-    private bool _canGrow;
+    //private bool _canGrow;
     private Color _debugColor;
     private int2 _size;
     private int2 _origin;
     private int2 _graphPosition;
+
+    private List<int2> _xGrowthDirections;
+    private List<int2> _yGrowthDirections;
+
+
+    public List<int2> XGrowthDirections
+    {
+        get => _xGrowthDirections;
+        set => _xGrowthDirections = value;
+    }
+
+    public List<int2> YGrowthDirections
+    {
+        get => _yGrowthDirections;
+        set => _yGrowthDirections = value;
+    }
 
     public int2 Size
     {
@@ -30,11 +46,7 @@ public class LevelRoom
 
     public int2 GraphPosition => _graphPosition;
 
-    public bool CanGrow 
-    {
-        get => _canGrow;
-        set => _canGrow = value;
-    }
+    public bool CanGrow => CheckCanGrow();
 
     public LevelGrowthType GrowthType => _growthType;
     public int WallThickness => _wallThickness;
@@ -55,7 +67,14 @@ public class LevelRoom
         _origin = origin;
         _size = size;
         _wallThickness = wallThickness;
-        _canGrow = true;
+        _xGrowthDirections = new List<int2>();
+        _yGrowthDirections = new List<int2>();
+        
         _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
+    }
+
+    private bool CheckCanGrow()
+    {
+        return (_xGrowthDirections.Count + _yGrowthDirections.Count) > 0;
     }
 }

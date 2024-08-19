@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public partial class LevelGenerator
 {
@@ -46,12 +47,24 @@ public partial class LevelGenerator
             //TODO implement mold growth
         }
             
+    }
 
+    private int2 GetRandomGrowthDirection( LevelRoom room )
+    {
+        if ( room.XGrowthDirections.Count > 0 )
+        {
+            int randX = Random.Range( 0, room.XGrowthDirections.Count );
+            return room.XGrowthDirections[randX];
+        }
+        
+        int randY = Random.Range( 0, room.YGrowthDirections.Count );
+        return room.YGrowthDirections[randY];
     }
 
     private void NormalGrowRoom( LevelRoom room )
     {
-        int2 growthDirection = new int2(-1, 0);
+        //int2 growthDirection = new int2(-1, 0);
+        int2 growthDirection = GetRandomGrowthDirection( room );
         int listSize = math.max( room.Size.x, room.Size.y );
         NativeList<int> newCells = new NativeList<int>(listSize, Allocator.TempJob);
         
@@ -61,6 +74,7 @@ public partial class LevelGenerator
             LevelDimensions = dimensions,
             LevelLayout = _levelLayout,
             RoomId = room.Id,
+            WallThickness = room.WallThickness,
             RoomSize = room.Size,
             RoomOrigin = room.Origin,
             NewCells = newCells.AsParallelWriter()
