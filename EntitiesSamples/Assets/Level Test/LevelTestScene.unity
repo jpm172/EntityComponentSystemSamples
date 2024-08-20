@@ -277,7 +277,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
   wallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
-  useSeed: 0
+  useSeed: 1
   maxEdgeWeight: 10
   DraftLook: 0
   GrowIterations: 1

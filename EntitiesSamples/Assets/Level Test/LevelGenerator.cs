@@ -371,10 +371,9 @@ public partial class LevelGenerator : MonoBehaviour
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
             
-            int wallAdjust = 0;//if the neighbors wall is thicker than our wall, it could interfere with the opening if pushed up against the wall
-                                //so if the neighbor's wall is thicker than our wall, adjust to move it out of the way and keep any potential edge case openings clear
-            if ( wallThickness < leftNeighbor.WallThickness )
-                wallAdjust = leftNeighbor.WallThickness - wallThickness;
+            //if the neighbors wall is thicker than our wall, it could interfere with the opening if pushed up against the wall
+            //so if the neighbor's wall is thicker than our wall, adjust to move it out of the way and keep any potential edge case openings clear
+            int wallAdjust = wallThickness > leftNeighbor.WallThickness ? 0 : leftNeighbor.WallThickness - wallThickness;
             
             int distance = yOffset - leftNeighbor.Origin.y ;
             
@@ -396,9 +395,9 @@ public partial class LevelGenerator : MonoBehaviour
             int index = x + (y-1) * layoutDimensions.x;
             LevelRoom bottomNeighbor = _rooms[index];
             
-            int wallAdjust = 0;
-            if ( wallThickness < bottomNeighbor.WallThickness )
-                wallAdjust = bottomNeighbor.WallThickness - wallThickness;
+            //if the neighbors wall is thicker than our wall, it could interfere with the opening if pushed up against the wall
+            //so if the neighbor's wall is thicker than our wall, adjust to move it out of the way and keep any potential edge case openings clear
+            int wallAdjust = wallThickness > bottomNeighbor.WallThickness ? 0 : bottomNeighbor.WallThickness - wallThickness;
             
             int distance = xOffset - bottomNeighbor.Origin.x;
 
