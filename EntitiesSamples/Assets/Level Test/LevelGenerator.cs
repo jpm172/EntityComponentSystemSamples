@@ -43,7 +43,7 @@ public partial class LevelGenerator : MonoBehaviour
     //seeding variables
     public bool useSeed;
     private int _minWallThickness = 1;
-    private int _maxWallThickness = 6;
+    private int _maxWallThickness = 200;
     private int _minRoomSeedSize = 20;
     private int _maxRoomSeedSize = 60;
     private int _seedBuffer = 20;
@@ -149,6 +149,8 @@ public partial class LevelGenerator : MonoBehaviour
     public void GenerateLevel()
     {
 
+        //I THINK I ALWAYS NEED TO ADD WALL ADJUST???
+        
         if ( useSeed )
             Random.seed = seed;
         
@@ -291,16 +293,16 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * layoutDimensions.x;
                 
                 //set the room's initial variables
-                int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
+                //int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
                 //int wallThickness = _minWallThickness;
-                //int wallThickness = (x+y)%2 + 1;
-                
+                int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
+                /*
                 int2 roomSize = new int2( 
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ),
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ) 
                     );
-                    
-                //int2 roomSize = new int2(_minRoomSeedSize + (wallThickness*2), _minRoomSeedSize + (wallThickness*2));
+                    */
+                int2 roomSize = new int2(_minRoomSeedSize + (wallThickness*2), _minRoomSeedSize + (wallThickness*2));
                 
                 int2 graphPosition = new int2(x,y);
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, wallThickness, roomSize );
@@ -383,7 +385,7 @@ public partial class LevelGenerator : MonoBehaviour
             int downShift = -(distance + extraSteps );
             //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
             int upShift = leftNeighbor.Size.y - ( distance + size.y ) + extraSteps;
-            shift.y = Random.Range( downShift, upShift + 1 );
+            shift.y = Random.Range( downShift, upShift + 1 );//todo what if upshift is negative, what does hte +1 need to be?
         }
 
         if ( y == 0 )
