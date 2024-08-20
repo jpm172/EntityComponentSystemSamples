@@ -75,8 +75,15 @@ public partial class LevelGenerator : MonoBehaviour
                 Gizmos.DrawCube( pos, roomSize );
                 
                 Gizmos.color = room.DebugColor;
-                roomSize = new Vector3( room.Size.x-room.WallThickness, room.Size.y-room.WallThickness ) / GameSettings.PixelsPerUnit;
+                roomSize = new Vector3( room.Size.x-(room.WallThickness*2), room.Size.y-(room.WallThickness*2 )) / GameSettings.PixelsPerUnit;
                 Gizmos.DrawCube( pos, roomSize );
+
+                if ( room.GraphPosition.x == 0 && room.GraphPosition.y == 0 )
+                {
+                    Gizmos.color = Color.red;
+                    Vector3 linePos = new Vector3( room.Origin.x, room.Origin.y ) / GameSettings.PixelsPerUnit;
+                    Gizmos.DrawLine( linePos, linePos + Vector3.up*1000 );
+                }
             }
 
             return;
@@ -148,9 +155,6 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
-
-        //I THINK I ALWAYS NEED TO ADD WALL ADJUST???
-        
         if ( useSeed )
             Random.seed = seed;
         
@@ -281,12 +285,13 @@ public partial class LevelGenerator : MonoBehaviour
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
+        int adjustedBuffer = _seedBuffer + _maxWallThickness;
         
-        int xOffset = _seedBuffer;
+        int xOffset = adjustedBuffer;
         //create the rooms and randomly shuffle them around, but while making sure they are still aligned with their neighbors
         for ( int x = 0; x < layoutDimensions.x; x++ )
         {
-            int yOffset = _seedBuffer;
+            int yOffset = adjustedBuffer;
 
             for ( int y = 0; y < layoutDimensions.y; y++ )
             {
@@ -302,7 +307,7 @@ public partial class LevelGenerator : MonoBehaviour
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ) 
                     );
                     */
-                int2 roomSize = new int2(_minRoomSeedSize + (wallThickness*2), _minRoomSeedSize + (wallThickness*2));
+                int2 roomSize = new int2(_maxRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2));
                 
                 int2 graphPosition = new int2(x,y);
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, wallThickness, roomSize );
@@ -324,14 +329,14 @@ public partial class LevelGenerator : MonoBehaviour
                     SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
                 }
                 
-                yOffset += adjustedMaxSize + (_seedBuffer*2) ;
+                yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
             }
             
-            xOffset += adjustedMaxSize + (_seedBuffer*2) ;
+            xOffset += adjustedMaxSize + (adjustedBuffer*2) ;
         }
         
         //create the level array and seed it with the rooms  
-        dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (_seedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (_seedBuffer*2*layoutDimensions.y) );
+        dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         for(int i = 0; i < _rooms.Length; i++)
         {
@@ -362,7 +367,6 @@ public partial class LevelGenerator : MonoBehaviour
         int2 shift = new int2(0,0);
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
-        int adjustedMinSize = _minRoomSeedSize + ( 2 * wallThickness );
 
         if ( x == 0 )
         {
@@ -373,18 +377,16 @@ public partial class LevelGenerator : MonoBehaviour
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
             
-            //if the neighbors wall is thicker than our wall, it could interfere with the opening if pushed up against the wall
-            //so if the neighbor's wall is thicker than our wall, adjust to move it out of the way and keep any potential edge case openings clear
-            int wallAdjust = wallThickness > leftNeighbor.WallThickness ? 0 : leftNeighbor.WallThickness - wallThickness;
+            int walkable = size.y - 2 * wallThickness;
+            int walkableNeighbor = leftNeighbor.Size.y - 2 * leftNeighbor.WallThickness;
+            int distance = (yOffset + wallThickness) - (leftNeighbor.Origin.y + leftNeighbor.WallThickness);
             
-            int distance = yOffset - leftNeighbor.Origin.y ;
-            
-            int extraSteps = size.y - adjustedMinSize - wallAdjust;
+            int extraSteps = walkable - _minRoomSeedSize;
             
             //equal to the steps needed to have the bottoms of the rects to align, plus anything past the minimum size requirement
             int downShift = -(distance + extraSteps );
             //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
-            int upShift = leftNeighbor.Size.y - ( distance + size.y ) + extraSteps;
+            int upShift = walkableNeighbor - ( distance + walkable ) + extraSteps;
             shift.y = Random.Range( downShift, upShift + 1 );//todo what if upshift is negative, what does hte +1 need to be?
         }
 
@@ -397,24 +399,22 @@ public partial class LevelGenerator : MonoBehaviour
             int index = x + (y-1) * layoutDimensions.x;
             LevelRoom bottomNeighbor = _rooms[index];
             
-            //if the neighbors wall is thicker than our wall, it could interfere with the opening if pushed up against the wall
-            //so if the neighbor's wall is thicker than our wall, adjust to move it out of the way and keep any potential edge case openings clear
-            int wallAdjust = wallThickness > bottomNeighbor.WallThickness ? 0 : bottomNeighbor.WallThickness - wallThickness;
-            
-            int distance = xOffset - bottomNeighbor.Origin.x;
+            int walkable = size.x - 2 * wallThickness;
+            int walkableNeighbor = bottomNeighbor.Size.x - 2 * bottomNeighbor.WallThickness;
+            int distance = (xOffset + wallThickness) - (bottomNeighbor.Origin.x + bottomNeighbor.WallThickness);
 
-            int extraSteps = size.x - adjustedMinSize - wallAdjust;
+            int extraSteps = walkable - _minRoomSeedSize;
 
             //equal to the steps needed to have the left side of the rects to align, plus anything past the minimum size requirement
             int leftShift = -(distance + extraSteps);
             //equal to the steps needed to have the right side of the two rects align, plus anything past the minimum size requirement
-            int rightShift = bottomNeighbor.Size.x - (distance + size.x) + extraSteps;
-            shift.x = Random.Range( leftShift, rightShift + 1 );
+            int rightShift = walkableNeighbor - (distance + walkable) + extraSteps;
+            shift.x = Random.Range( leftShift, rightShift + 1 ); //todo what if rightshift is negative, what does hte +1 need to be?
         }
 
 
-        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer, xOffset + (adjustedMaxSize - size.x) + _seedBuffer );
-        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer, yOffset + (adjustedMaxSize - size.y) + _seedBuffer );
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer - _maxWallThickness, xOffset + (adjustedMaxSize - size.x) + _seedBuffer + _maxWallThickness );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer - _maxWallThickness, yOffset + (adjustedMaxSize - size.y) + _seedBuffer + _maxWallThickness );
         
         return new int2(xResult, yResult) ;
     }
