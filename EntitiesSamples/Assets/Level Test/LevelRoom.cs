@@ -14,6 +14,7 @@ public class LevelRoom
     //private bool _canGrow;
     private Color _debugColor;
     private int2 _size;
+    private int2 _sizeRatio;
     private int2 _origin;
     private int2 _graphPosition;
 
@@ -44,6 +45,8 @@ public class LevelRoom
         set => _origin = value;
     }
 
+    public int2 SizeRatio => _sizeRatio;
+
     public int2 GraphPosition => _graphPosition;
 
     public bool CanGrow => CheckCanGrow();
@@ -58,7 +61,7 @@ public class LevelRoom
     public Color DebugColor => _debugColor;
     
 
-    public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
+    public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, LevelGrowthType growthType )
     {
         _id = id;
         _material = mat;
@@ -66,6 +69,7 @@ public class LevelRoom
         _graphPosition = graphPosition;
         _origin = origin;
         _size = size;
+        _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;
         _xGrowthDirections = new List<int2>();
         _yGrowthDirections = new List<int2>();

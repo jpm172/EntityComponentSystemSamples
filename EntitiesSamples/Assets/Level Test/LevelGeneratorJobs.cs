@@ -17,10 +17,10 @@ using UnityEngine;
         [ReadOnly] public Vector2Int LevelDimensions;
         
         [ReadOnly] public int RoomId;
-        [ReadOnly] public int WallThickness;
         [ReadOnly] public int2 RoomOrigin;
         [ReadOnly] public int2 RoomSize;
         [ReadOnly] public int2 GrowthDirection;
+        [ReadOnly] public int required;
 
         public NativeList<int>.ParallelWriter NewCells;
         public void Execute(int index)
@@ -39,15 +39,12 @@ using UnityEngine;
 
             int checkIndex = x + y * LevelDimensions.x;
 
-            
-            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, 10, 5 ) )
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, required, required ) )
             {
                 NewCells.AddNoResize( checkIndex );
             }
-            
-            
-
         }
+        
 
 
         private bool IsValidGrowthCell(int x, int y, int distance, int threshold)
@@ -105,14 +102,52 @@ using UnityEngine;
         public NativeArray<int> LevelLayout;
 
         [ReadOnly] public int RoomId;
+        [ReadOnly] public Vector2Int LevelDimensions;
 
         [ReadOnly] public NativeList<int> NewCells;
+        
+        public NativeQueue<int>.ParallelWriter Neighbors;
         public void Execute(int index)
         {
             int levelIndex = NewCells[index];
             LevelLayout[levelIndex] = RoomId;
+            
+            int x = levelIndex % LevelDimensions.x;
+            int y = levelIndex / LevelDimensions.x;
+
+            CheckNeighbor( x + 1, y );
+            CheckNeighbor( x - 1, y );
+            CheckNeighbor( x, y + 1 );
+            CheckNeighbor( x, y - 1 );
+
         }
 
+        private void CheckNeighbor( int x, int y )
+        {
+            if ( !IsInBounds( x, y ) )
+                return;
+
+            int index = x + y * LevelDimensions.x;
+            if ( LevelLayout[index] > 0 && LevelLayout[index] != RoomId )
+            {
+                Neighbors.Enqueue( LevelLayout[index] );
+            }
+
+        }
+
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+        
     }
 
     public struct LevelSpawnUnmanagedJob : IJobParallelFor

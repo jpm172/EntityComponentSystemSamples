@@ -52,9 +52,7 @@ public partial class LevelGenerator : MonoBehaviour
     private int _maxRoomSeedSize = 60;
     [SerializeField]
     private int _seedBuffer = 20;
-    
-    
-    
+
     //dijkstas variables
     private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
     private int minEdgeWeight = 1;
@@ -148,7 +146,7 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
 
-        /*
+        
         Gizmos.color = Color.red;
         for ( int i = 0; i < _rooms.Length; i++ )
         {
@@ -157,15 +155,15 @@ public partial class LevelGenerator : MonoBehaviour
                 foreach ( LevelEdge e in _edgeDictionary[i] )
                 {
                     
-                    Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y);
-                    Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y);
+                    Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y) + new Vector3(_rooms[e.Source].Size.x, _rooms[e.Source].Size.y)/2;
+                    Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y)+ new Vector3(_rooms[e.Destination].Size.x, _rooms[e.Destination].Size.y)/2;;
                     
                     Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
                     
                 }
             }
         }
-        */
+        
         
 
         Gizmos.color = Color.black;
@@ -195,7 +193,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         
         InitializeLevel();
-        VerifySeeds();
+        //VerifySeeds();
         
         FindPath();
         
@@ -334,25 +332,21 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * layoutDimensions.x;
                 
                 //set the room's initial variables
-                //int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
-                int wallThickness = _maxWallThickness;
+                int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
                 //int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
-                /*
+                
                 int2 roomSize = new int2( 
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ),
-                    Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ) 
-                    );
-                    */
-                int2 roomSize = new int2(_maxRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2));
+                    Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ) );
                 
+                int2 roomSizeRatio = new int2( Random.Range( 1, 11 ), Random.Range( 1, 11 ) );
                 int2 graphPosition = new int2(x,y);
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, wallThickness, roomSize );
-                
-                
+
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
                 
-                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, mat, wallThickness, growthType);
+                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, growthType);
                 _rooms[index] = room;
 
                 //set the room's neighbors in preparation of dijkstras algorithm
@@ -403,7 +397,6 @@ public partial class LevelGenerator : MonoBehaviour
     private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
     {
         
-
         int2 shift = new int2(0,0);
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -411,16 +404,6 @@ public partial class LevelGenerator : MonoBehaviour
         if ( x == 0 )
         {
             shift.y = Random.Range( -(_seedBuffer+wallThickness),  _seedBuffer + wallThickness + (adjustedMaxSize - size.x)+ 1 );
-/*
-            if ( y % 2 == 0 )
-            {
-                shift.y =  _seedBuffer + wallThickness + (adjustedMaxSize - size.x);
-            }
-            else
-            {
-                shift.y =  -(_seedBuffer+wallThickness);
-            }
-            */
         }
         else
         {
@@ -469,8 +452,8 @@ public partial class LevelGenerator : MonoBehaviour
         }
 
 
-        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer - _maxWallThickness, xOffset + (adjustedMaxSize - size.x) + _seedBuffer + _maxWallThickness );
-        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer - _maxWallThickness, yOffset + (adjustedMaxSize - size.y) + _seedBuffer + _maxWallThickness );
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer - wallThickness, xOffset + (adjustedMaxSize - size.x) + _seedBuffer + wallThickness );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer - wallThickness, yOffset + (adjustedMaxSize - size.y) + _seedBuffer + wallThickness );
         
         return new int2(xResult, yResult) ;
     }
