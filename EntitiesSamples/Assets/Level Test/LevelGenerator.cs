@@ -42,11 +42,18 @@ public partial class LevelGenerator : MonoBehaviour
 
     //seeding variables
     public bool useSeed;
+    [SerializeField]
     private int _minWallThickness = 1;
+    [SerializeField]
     private int _maxWallThickness = 200;
+    [SerializeField]
     private int _minRoomSeedSize = 20;
+    [SerializeField]
     private int _maxRoomSeedSize = 60;
+    [SerializeField]
     private int _seedBuffer = 20;
+    
+    
     
     //dijkstas variables
     private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
@@ -66,6 +73,11 @@ public partial class LevelGenerator : MonoBehaviour
 
         if ( DraftLook )
         {
+            Gizmos.color = Color.white;
+            Vector3 levelPos = new Vector3(dimensions.x, dimensions.y)/ (2*GameSettings.PixelsPerUnit);
+            Vector3 levelSize = new Vector3( dimensions.x, dimensions.y ) / GameSettings.PixelsPerUnit;
+            Gizmos.DrawCube( levelPos, levelSize );
+            
             foreach ( LevelRoom room in _rooms )
             {
                 Vector3 pos = (new Vector3(room.Origin.x, room.Origin.y) + new Vector3(room.Size.x, room.Size.y)/2)/GameSettings.PixelsPerUnit;
@@ -85,6 +97,29 @@ public partial class LevelGenerator : MonoBehaviour
                     Gizmos.DrawLine( linePos, linePos + Vector3.up*1000 );
                 }
             }
+
+            /*
+            int adjustedBuffer = _seedBuffer + _maxWallThickness;
+            int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
+            
+            Vector3 bufferSize = new Vector3(adjustedBuffer, adjustedBuffer)/GameSettings.PixelsPerUnit;
+            Gizmos.color = Color.black;
+            int xOffset = adjustedBuffer;
+            for ( int x = 0; x < layoutDimensions.x; x++ )
+            {
+                int yOffset = adjustedBuffer;
+                for ( int y = 0; y < layoutDimensions.y; y++ )
+                {
+                    yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
+                    
+                    
+                    Vector3 pos = new Vector3(xOffset,yOffset)/GameSettings.PixelsPerUnit;
+                    Gizmos.DrawWireCube( pos + bufferSize/2, bufferSize );
+                    
+                }
+                xOffset += adjustedMaxSize + (adjustedBuffer*2) ;
+            }
+            */
 
             return;
         }
@@ -157,6 +192,7 @@ public partial class LevelGenerator : MonoBehaviour
     {
         if ( useSeed )
             Random.seed = seed;
+        
         
         InitializeLevel();
         VerifySeeds();
@@ -299,8 +335,8 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 //set the room's initial variables
                 //int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
-                //int wallThickness = _minWallThickness;
-                int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
+                int wallThickness = _maxWallThickness;
+                //int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
                 /*
                 int2 roomSize = new int2( 
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ),
@@ -311,6 +347,8 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 int2 graphPosition = new int2(x,y);
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, wallThickness, roomSize );
+                
+                
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
                 
@@ -364,13 +402,25 @@ public partial class LevelGenerator : MonoBehaviour
     
     private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
     {
+        
+
         int2 shift = new int2(0,0);
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
 
         if ( x == 0 )
         {
-            shift.y = Random.Range( -_seedBuffer, _seedBuffer + (adjustedMaxSize - size.y)+ 1 );
+            shift.y = Random.Range( -(_seedBuffer+wallThickness),  _seedBuffer + wallThickness + (adjustedMaxSize - size.x)+ 1 );
+/*
+            if ( y % 2 == 0 )
+            {
+                shift.y =  _seedBuffer + wallThickness + (adjustedMaxSize - size.x);
+            }
+            else
+            {
+                shift.y =  -(_seedBuffer+wallThickness);
+            }
+            */
         }
         else
         {
@@ -387,12 +437,14 @@ public partial class LevelGenerator : MonoBehaviour
             int downShift = -(distance + extraSteps );
             //equal to the steps needed to have the tops of the two rects align, plus anything past the minimum size requirement
             int upShift = walkableNeighbor - ( distance + walkable ) + extraSteps;
-            shift.y = Random.Range( downShift, upShift + 1 );//todo what if upshift is negative, what does hte +1 need to be?
+            
+            int inclusive = upShift >= 0 ? 1 : -1;
+            shift.y = Random.Range( downShift, upShift + inclusive );//todo what if upshift is negative, what does hte +1 need to be?
         }
 
         if ( y == 0 )
         {
-            shift.x = Random.Range( -_seedBuffer, _seedBuffer + (adjustedMaxSize - size.x) + 1 );
+            shift.x = Random.Range( -(_seedBuffer+wallThickness), _seedBuffer + wallThickness + (adjustedMaxSize - size.x) + 1 );
         }
         else
         {
@@ -409,7 +461,11 @@ public partial class LevelGenerator : MonoBehaviour
             int leftShift = -(distance + extraSteps);
             //equal to the steps needed to have the right side of the two rects align, plus anything past the minimum size requirement
             int rightShift = walkableNeighbor - (distance + walkable) + extraSteps;
-            shift.x = Random.Range( leftShift, rightShift + 1 ); //todo what if rightshift is negative, what does hte +1 need to be?
+
+            int inclusive = rightShift >= 0 ? 1 : -1;
+            shift.x = Random.Range( leftShift, rightShift + inclusive ); 
+            
+            
         }
 
 
