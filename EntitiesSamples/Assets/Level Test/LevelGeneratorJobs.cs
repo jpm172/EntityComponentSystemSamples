@@ -46,12 +46,13 @@ using UnityEngine;
         }
         
 
-
+        //returns true if:
+        //-the cell we started at belongs to the room
+        //-it has at least (threshold) empty cells perpendicular to it that are connected to the room within (distance) units
         private bool IsValidGrowthCell(int x, int y, int distance, int threshold)
         {
             int2 perpendicular = math.abs( GrowthDirection.yx );
             int2 startPos = new int2(x,y) - GrowthDirection;//the original cell we started at before adding grow direction
-            
             
             int count = 0;
             for ( int i = -distance; i <= distance; i++ )
@@ -76,7 +77,6 @@ using UnityEngine;
                 }
             }
 
-
             return false;
         }
         
@@ -91,11 +91,9 @@ using UnityEngine;
         
             return true;
         }
-
-        
-        
     }
 
+    [BurstCompile]
     public struct LevelApplyGrowthResultJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
@@ -149,6 +147,81 @@ using UnityEngine;
         }
         
     }
+
+    [BurstCompile]
+    public struct LevelAnalyzeNormalRoom : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<int> LevelLayout;
+        [ReadOnly] public Vector2Int LevelDimensions;
+        
+        [ReadOnly] public int RoomId;
+        [ReadOnly] public int2 RoomOrigin;
+        [ReadOnly] public int2 RoomSize;
+
+
+        public NativeQueue<int>.ParallelWriter Corners;
+        public void Execute(int index)
+        {
+
+            int boundsX = index % RoomSize.x;
+            int boundsY = index / RoomSize.x;
+            
+            int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
+            
+            if ( LevelLayout[levelIndex] != RoomId )
+                return;
+            
+            int x = levelIndex % LevelDimensions.x;
+            int y = levelIndex / LevelDimensions.x;
+
+            int checkIndex = x + y * LevelDimensions.x;
+
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == RoomId && IsCorner( x,y ) )
+            {
+                Corners.Enqueue( 1 );
+            }
+        }
+
+
+        private bool IsCorner( int x, int y )
+        {
+            int cnt = 0;
+
+            cnt += IsNotRoom( x - 1, y - 1 );
+            cnt += IsNotRoom( x - 1, y + 1 );
+            cnt += IsNotRoom( x + 1, y - 1 );
+            cnt += IsNotRoom( x + 1, y + 1 );
+
+            return cnt == 1;
+        }
+        
+        private int IsNotRoom( int x, int y )
+        {
+            if ( !IsInBounds( x, y ) )
+                return 1;
+
+            int index = x + y * LevelDimensions.x;
+            if ( LevelLayout[index] != RoomId )
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+    }
+
 
     public struct LevelSpawnUnmanagedJob : IJobParallelFor
     {
