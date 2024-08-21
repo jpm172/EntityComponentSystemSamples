@@ -302,7 +302,29 @@ public partial class LevelGenerator : MonoBehaviour
     }
 
 
-    
+    public void MakeRoomMeshes()
+    {
+        foreach ( LevelRoom room in _rooms )
+        {
+            NativeQueue<MeshStrip> meshStrips = new NativeQueue<MeshStrip>(Allocator.TempJob);
+
+            MakeMeshStripsJob stripJob = new MakeMeshStripsJob
+            {
+                LevelLayout = _levelLayout,
+                LevelDimensions = dimensions,
+                RoomId = room.Id,
+                RoomOrigin = room.Origin,
+                RoomSize = room.Size,
+                Strips = meshStrips.AsParallelWriter()
+            };
+            
+            JobHandle applyHandle = stripJob.Schedule(room.Size.x, 16);
+            applyHandle.Complete();
+            
+
+            meshStrips.Dispose();
+        }
+    }
     
     private void InitializeLevel()
     {

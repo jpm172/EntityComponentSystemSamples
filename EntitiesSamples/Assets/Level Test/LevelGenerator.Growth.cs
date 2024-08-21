@@ -14,6 +14,7 @@ public partial class LevelGenerator
     private int _totalSteps = 0;
     public void GrowRooms()
     {
+        //TODO: PATHLESS GROWING: Grow the rooms randomly and everytime a new connection is made, run dijkstras on the connection matrix to see if we're done
         MainPathGrow();
     }
 
@@ -253,7 +254,7 @@ public partial class LevelGenerator
             ResizeRoom( room, growthDirection );
 
             NativeQueue<int> newNeighbors = new NativeQueue<int>(Allocator.TempJob);
-            
+
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
                 LevelLayout = _levelLayout,
@@ -276,7 +277,7 @@ public partial class LevelGenerator
                     {
                         int2 neigborDir = math.abs(_rooms[edge.Destination].GraphPosition - _rooms[edge.Source].GraphPosition);
                         //make sure that it is the actual neighbor associated with the direction
-                        //(ie if we grow down and happen to connect with a portion of the room to the right, dont mark that as a finished connection for the path)
+                        //(ie if we grow down and happen to connect with a portion of the room to the right, dont mark that as a finished connection in the path)
                         bool directionMatch = neigborDir.x == math.abs( growthDirection.x ) && neigborDir.y == math.abs( growthDirection.y );
                         
                         if ( edge.Destination == neighborIndex && directionMatch )
