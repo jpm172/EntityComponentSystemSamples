@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator
 {
-
+    public int steps;
     private int _cornerLimit = 6;
     private int _counter = 0;
     private int _totalSteps = 0;
@@ -151,24 +151,23 @@ public partial class LevelGenerator
     private void MainPathGrow()
     {
         _totalSteps = 0;
-        while ( !IsFinishedGrowing() )
+        bool hasPath = false;
+        while ( !hasPath )
         {
             LevelRoom room = _rooms[_counter];
-
+            int connections = _edgeDictionary[_counter].Count;
             GrowRoomPath( room );
+
+
+            if ( connections != _edgeDictionary[_counter].Count )
+            {
+                hasPath = HasPath( _counter );
+            }
+            
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
         }
-
-        //once done with the main path, reset the growth variables for random growth
-        int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
-        int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};
         
-        foreach ( LevelRoom room in _rooms )
-        {
-            room.XGrowthDirections.AddRange( xGrow );
-            room.YGrowthDirections.AddRange( yGrow );
-        }
         
     }
     
@@ -273,19 +272,19 @@ public partial class LevelGenerator
                 while ( !newNeighbors.IsEmpty() )
                 {
                     int neighborIndex = newNeighbors.Dequeue()-1;
-                    foreach ( LevelEdge edge in _edgeDictionary[room.Index] )
+                    
+
+                    LevelEdge check = new LevelEdge
                     {
-                        int2 neigborDir = math.abs(_rooms[edge.Destination].GraphPosition - _rooms[edge.Source].GraphPosition);
-                        //make sure that it is the actual neighbor associated with the direction
-                        //(ie if we grow down and happen to connect with a portion of the room to the right, dont mark that as a finished connection in the path)
-                        bool directionMatch = neigborDir.x == math.abs( growthDirection.x ) && neigborDir.y == math.abs( growthDirection.y );
-                        
-                        if ( edge.Destination == neighborIndex && directionMatch )
-                        {
-                            removeDirection = true;
-                        }
-                            
+                        Source = room.Index,
+                        Destination = neighborIndex
+                    };
+                    if ( !_edgeDictionary[room.Index].Contains( check ) )
+                    {
+                        SetNeighbors( room.Index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
                     }
+                    
+                        
                 }
             }
             

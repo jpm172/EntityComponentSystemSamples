@@ -195,9 +195,6 @@ public partial class LevelGenerator : MonoBehaviour
         InitializeLevel();
         //VerifySeeds();
         
-        FindPath();
-        
-        SetGrowthInfo();
         
         //GrowRooms();
         //MakeFloors();
@@ -234,7 +231,7 @@ public partial class LevelGenerator : MonoBehaviour
         }
     }
 
-    private void FindPath()
+    private bool HasPath(int startNode)
     {
         int INF = Int32.MaxValue;
         int[] distance = new int[_rooms.Length];
@@ -247,9 +244,6 @@ public partial class LevelGenerator : MonoBehaviour
         {
             distance[i] = INF;
         }
-        
-        //select a starting node
-        int startNode = Random.Range( 0, _rooms.Length );
         distance[startNode] = 0;
         
         //run dijkstras algorithm until the path is found
@@ -266,6 +260,11 @@ public partial class LevelGenerator : MonoBehaviour
                     result = i;
                     min = distance[i];
                 }
+            }
+
+            if ( result == -1 )
+            {
+                return false;
             }
 
 
@@ -286,8 +285,12 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
         
-        //clear all path information in the graph
+        //reset all path information in the graph
         _edgeDictionary.Clear();
+        foreach ( LevelRoom room in _rooms )
+        {
+            _edgeDictionary[room.Index] = new List<LevelEdge>();
+        }
         
         //update the graph to only contain the edges from the shortest path we just found
         foreach ( LevelEdge e in pathEdges )
@@ -295,10 +298,14 @@ public partial class LevelGenerator : MonoBehaviour
             //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
             if ( e.Destination != e.Source )
             {
+                
                 SetNeighbors( e.Source, e.Destination, e.Weight );
             }
                 
         }
+        
+
+        return true;
     }
 
 
@@ -370,18 +377,15 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, growthType);
                 _rooms[index] = room;
-
-                //set the room's neighbors in preparation of dijkstras algorithm
-                if ( x > 0 )
-                {
-                    int neighborIndex = ( x - 1 ) + y * layoutDimensions.x;
-                    SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
-                }
-                if ( y > 0 )
-                {
-                    int neighborIndex = x + (y - 1 ) * layoutDimensions.x;
-                    SetNeighbors( index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
-                }
+                _edgeDictionary[index] = new List<LevelEdge>();
+                
+                //add all growth directions to the room
+                int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
+                int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};
+                
+                room.XGrowthDirections.AddRange( xGrow );
+                room.YGrowthDirections.AddRange( yGrow );
+                
                 
                 yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
             }
@@ -402,17 +406,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void SetNeighbors( int room1, int room2, int weight )
     {
-        //Debug.Log( $"Connecting rooms {room1} and {room2} with weight {weight}" );
-        if ( !_edgeDictionary.ContainsKey( room1 ) )
-        {
-            _edgeDictionary[room1] = new List<LevelEdge>();
-        }
         _edgeDictionary[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
-        
-        if ( !_edgeDictionary.ContainsKey( room2 ) )
-        {
-            _edgeDictionary[room2] = new List<LevelEdge>();
-        }
         _edgeDictionary[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
     }
     
@@ -698,7 +692,18 @@ public struct LevelWall
 
 public struct LevelEdge
 {
-    public int Weight;
     public int Source;
     public int Destination;
+    public int Weight;
+
+
+    public override bool Equals( object obj )
+    {
+        if ( obj == null )
+            return false;
+
+        LevelEdge edge = (LevelEdge) obj;
+
+        return ( edge.Source == Source && edge.Destination == Destination );
+    }
 }
