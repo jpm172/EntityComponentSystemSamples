@@ -104,7 +104,7 @@ using UnityEngine;
 
         [ReadOnly] public NativeList<int> NewCells;
         
-        public NativeQueue<int>.ParallelWriter Neighbors;
+        public NativeQueue<LevelConnection>.ParallelWriter Neighbors;
         public void Execute(int index)
         {
             int levelIndex = NewCells[index];
@@ -113,14 +113,16 @@ using UnityEngine;
             int x = levelIndex % LevelDimensions.x;
             int y = levelIndex / LevelDimensions.x;
 
-            CheckNeighbor( x + 1, y );
-            CheckNeighbor( x - 1, y );
-            CheckNeighbor( x, y + 1 );
-            CheckNeighbor( x, y - 1 );
+            int2 origin = new int2(x,y);
+            
+            CheckNeighbor( x + 1, y, origin );
+            CheckNeighbor( x - 1, y, origin );
+            CheckNeighbor( x, y + 1, origin );
+            CheckNeighbor( x, y - 1, origin );
 
         }
 
-        private void CheckNeighbor( int x, int y )
+        private void CheckNeighbor( int x, int y, int2 origin )
         {
             if ( !IsInBounds( x, y ) )
                 return;
@@ -128,7 +130,8 @@ using UnityEngine;
             int index = x + y * LevelDimensions.x;
             if ( LevelLayout[index] > 0 && LevelLayout[index] != RoomId )
             {
-                Neighbors.Enqueue( LevelLayout[index] );
+                LevelConnection connect = new LevelConnection{Origin = origin, RoomId = LevelLayout[index]};
+                Neighbors.Enqueue( connect );
             }
 
         }
@@ -147,6 +150,70 @@ using UnityEngine;
         }
         
     }
+
+    public struct LevelConnection
+    {
+        public int2 Origin;
+        public int RoomId;
+    }
+
+
+    [BurstCompile]
+    public struct LevelAnalyzeConnection : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<int> LevelLayout;
+        [ReadOnly] public Vector2Int LevelDimensions;
+
+        [ReadOnly] public int Required;
+        [ReadOnly] public int RoomId;
+        [ReadOnly] public int NeighborId;
+        [ReadOnly] public NativeArray<LevelConnection> Connections;
+        
+        public NativeQueue<LevelConnection>.ParallelWriter ValidConnections;
+
+        public void Execute(int index)
+        {
+            if ( Connections[index].RoomId != NeighborId )
+                return;
+            
+            int2 cell = Connections[index].Origin;
+
+            if ( NearbyCells( cell ) > Required )//TODO: need to gridwalk to find path, cant just look at new connections 
+            {
+                ValidConnections.Enqueue( new LevelConnection{Origin = cell, RoomId = NeighborId} );
+            }
+
+        }
+
+        public int NearbyCells(int2 cell)
+        {
+            int count = 0;
+            foreach ( LevelConnection c in Connections )
+            {
+                if ( c.RoomId == NeighborId && math.distance( cell, c.Origin ) < 20 )
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+        
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+    }
+
+
 
     [BurstCompile]
     public struct LevelAnalyzeNormalRoom : IJobParallelFor

@@ -188,6 +188,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
+        _counter = 0;
         if ( useSeed )
             Random.seed = seed;
         
@@ -298,7 +299,6 @@ public partial class LevelGenerator : MonoBehaviour
             //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
             if ( e.Destination != e.Source )
             {
-                
                 SetNeighbors( e.Source, e.Destination, e.Weight );
             }
                 
@@ -363,6 +363,7 @@ public partial class LevelGenerator : MonoBehaviour
                 //set the room's initial variables
                 int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
                 //int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
+                int weight = Random.Range( minEdgeWeight, maxEdgeWeight + 1 );
                 
                 int2 roomSize = new int2( 
                     Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ),
@@ -375,7 +376,7 @@ public partial class LevelGenerator : MonoBehaviour
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
                 
-                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, growthType);
+                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _edgeDictionary[index] = new List<LevelEdge>();
                 

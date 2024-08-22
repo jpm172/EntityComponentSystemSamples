@@ -10,11 +10,11 @@ public partial class LevelGenerator
 {
     public int steps;
     private int _cornerLimit = 6;
+    public int ConnectRequired;
     private int _counter = 0;
     private int _totalSteps = 0;
     public void GrowRooms()
     {
-        //TODO: PATHLESS GROWING: Grow the rooms randomly and everytime a new connection is made, run dijkstras on the connection matrix to see if we're done
         MainPathGrow();
     }
 
@@ -87,7 +87,7 @@ public partial class LevelGenerator
         {
             ResizeRoom( room, growthDirection );
 
-            NativeQueue<int> newNeighbors = new NativeQueue<int>(Allocator.TempJob);
+            NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
             
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
@@ -252,7 +252,8 @@ public partial class LevelGenerator
         {
             ResizeRoom( room, growthDirection );
 
-            NativeQueue<int> newNeighbors = new NativeQueue<int>(Allocator.TempJob);
+            NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
+            //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
 
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
@@ -266,26 +267,33 @@ public partial class LevelGenerator
             JobHandle applyHandle = applyJob.Schedule(newCells.Length, 32);
             applyHandle.Complete();
 
+            
             if ( newNeighbors.Count > 0 )
             {
+                HashSet<int> checkedNeighbors = new HashSet<int>();
+                NativeArray<LevelConnection> neighborArray = newNeighbors.ToArray( Allocator.TempJob );
                 //go through each neighbor, and if it belongs to a room that is part of the main path, that mark this growth direction as finished
-                while ( !newNeighbors.IsEmpty() )
+                for ( int i = 0; i < neighborArray.Length; i++ )
                 {
-                    int neighborIndex = newNeighbors.Dequeue()-1;
-                    
+                    int neighborIndex = neighborArray[i].RoomId-1;
+                    if(checkedNeighbors.Contains( neighborIndex ))
+                        continue;
 
+                    checkedNeighbors.Add( neighborIndex );
+                    
                     LevelEdge check = new LevelEdge
                     {
                         Source = room.Index,
                         Destination = neighborIndex
                     };
-                    if ( !_edgeDictionary[room.Index].Contains( check ) )
+                    if ( !_edgeDictionary[room.Index].Contains( check ) && IsValidConnection(room, _rooms[neighborIndex], neighborArray))
                     {
-                        SetNeighbors( room.Index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
+                        //SetNeighbors( room.Index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
+                        SetNeighbors( room.Index, neighborIndex, room.Weight );
                     }
-                    
-                        
                 }
+
+                neighborArray.Dispose();
             }
             
             newNeighbors.Dispose();
@@ -309,6 +317,30 @@ public partial class LevelGenerator
         }
 
         newCells.Dispose();
+    }
+
+    private bool IsValidConnection(LevelRoom room1, LevelRoom room2, NativeArray<LevelConnection> connections)
+    {
+        
+        NativeQueue<LevelConnection> validConnections = new NativeQueue<LevelConnection>(Allocator.TempJob); 
+        LevelAnalyzeConnection analyzeJob  = new LevelAnalyzeConnection
+        {
+            LevelLayout = _levelLayout,
+            LevelDimensions = dimensions,
+            Connections = connections,
+            ValidConnections =  validConnections.AsParallelWriter(),
+            RoomId = room1.Id,
+            NeighborId = room2.Id,
+            Required = ConnectRequired
+        };
+        
+        JobHandle handle = analyzeJob.Schedule(connections.Length, 16);
+        handle.Complete();
+
+        bool result = validConnections.Count > 0;
+        validConnections.Dispose();
+
+        return result;
     }
 
 
