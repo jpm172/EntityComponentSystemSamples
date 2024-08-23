@@ -363,7 +363,7 @@ public partial class LevelGenerator
             RoomId = room1.Id,
             NeighborId = room2.Id,
             Required = _minRoomSeedSize + 2*math.max( room1.WallThickness, room2.WallThickness )
-        };
+        }; 
         
         JobHandle handle = analyzeJob.Schedule(connections.Length*4, 16);
         handle.Complete();
