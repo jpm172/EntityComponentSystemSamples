@@ -130,10 +130,20 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * dimensions.x;
                 if ( _levelLayout[index] > 0 )
                 {
-                    LevelRoom room = _rooms[_levelLayout[index] - 1];
+                    if ( _levelLayout[index] > _rooms.Length )
+                    {
+                        LevelRoom room = _rooms[_levelLayout[index] - _rooms.Length - 1];
+                        Gizmos.color = room.DebugColor *new Color(.3f, .3f, .3f,1);
+                    }
+                    else
+                    {
+                        LevelRoom room = _rooms[_levelLayout[index] - 1];
+                        Gizmos.color = room.DebugColor;
+                    }
+                    
                     Vector3 pos = new Vector3(x,y)/GameSettings.PixelsPerUnit;
                     
-                    Gizmos.color = room.DebugColor;
+                    
                     Gizmos.DrawCube( pos, size );
                     //Gizmos.DrawWireCube( pos,size );
                 }
@@ -188,6 +198,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
+
         _counter = 0;
         if ( useSeed )
             Random.seed = seed;
@@ -308,6 +319,28 @@ public partial class LevelGenerator : MonoBehaviour
         return true;
     }
 
+    public void PaintWalls()
+    {
+        foreach ( LevelRoom room in _rooms )
+        {
+            int roomWallId = room.Id + _rooms.Length;
+
+            LevelPaintWallsJob analyzeJob  = new LevelPaintWallsJob
+            {
+                LevelLayout = _levelLayout,
+                LevelDimensions = dimensions,
+                RoomOrigin = room.Origin,
+                RoomSize = room.Size,
+                RoomId = room.Id,
+                WallId = roomWallId,
+                WallThickness = room.WallThickness
+                
+            };
+        
+            JobHandle handle = analyzeJob.Schedule(room.Size.x*room.Size.y, 64);
+            handle.Complete();
+        }
+    }
 
     public void MakeRoomMeshes()
     {

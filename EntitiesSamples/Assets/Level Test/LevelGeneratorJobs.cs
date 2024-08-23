@@ -169,36 +169,119 @@ using UnityEngine;
         [ReadOnly] public int NeighborId;
         [ReadOnly] public NativeArray<LevelConnection> Connections;
         
+        
         public NativeQueue<LevelConnection>.ParallelWriter ValidConnections;
 
         public void Execute(int index)
         {
-            if ( Connections[index].RoomId != NeighborId )
+            int arrIndex = index / 4;
+            if ( Connections[arrIndex].RoomId != NeighborId )
                 return;
             
-            int2 cell = Connections[index].Origin;
+            int2 cell = Connections[arrIndex].Origin;
+            int dir = index % 4;
 
-            if ( NearbyCells( cell ) > Required )//TODO: need to gridwalk to find path, cant just look at new connections 
+            if ( dir == 0 && GetHorizontalSpan( cell, -1 ) >= Required )
             {
-                ValidConnections.Enqueue( new LevelConnection{Origin = cell, RoomId = NeighborId} );
+                ValidConnections.Enqueue( Connections[arrIndex] );
+            }
+            else if ( dir == 1 && GetHorizontalSpan( cell, 1 ) >= Required )
+            {
+                ValidConnections.Enqueue( Connections[arrIndex] );
+            }
+            else if ( dir == 2 && GetVerticalSpan( cell, -1 ) >= Required )
+            {
+                ValidConnections.Enqueue( Connections[arrIndex] );
+            }
+            else if ( dir == 3 && GetVerticalSpan( cell, 1 ) >= Required )
+            {
+                ValidConnections.Enqueue( Connections[arrIndex] );
             }
 
         }
 
-        public int NearbyCells(int2 cell)
+
+        private float GetHorizontalSpan( int2 cell, int dir )
         {
-            int count = 0;
-            foreach ( LevelConnection c in Connections )
+            int2 curCell = cell;
+            bool foundCell = true;
+            float distance = 0;
+            while ( foundCell && distance < Required )
             {
-                if ( c.RoomId == NeighborId && math.distance( cell, c.Origin ) < 20 )
+                foundCell = false;
+                for ( int y = -1; y <= 1; y++ )
                 {
-                    count++;
+                    if ( IsRoomCell( curCell.x + dir, curCell.y + y ) && RadiusCheck( curCell.x + dir, curCell.y + y ) )
+                    {
+                        curCell.x += dir;
+                        curCell.y += y;
+                        distance = math.distance( cell, curCell );
+                        foundCell = true;
+                    }
+                }
+                
+            }
+            
+            return distance;
+        }
+
+        private float GetVerticalSpan( int2 cell, int dir )
+        {
+            int2 curCell = cell;
+            bool foundCell = true;
+            float distance = 0;
+            while ( foundCell && distance < Required )
+            {
+                foundCell = false;
+                for ( int x = -1; x <= 1; x++ )
+                {
+                    if ( IsRoomCell( curCell.x + x, curCell.y + dir ) && RadiusCheck( curCell.x + x, curCell.y + dir ) )
+                    {
+                        curCell.x += x;
+                        curCell.y += dir;
+                        distance = math.distance( cell, curCell );
+                        foundCell = true;
+                    }
+                }
+                
+            }
+            
+            return distance;
+        }
+        
+        private bool RadiusCheck(int cellX, int cellY)
+        {
+            for ( int x = -1; x <= 1; x++ )
+            {
+                for ( int y = -1; y <= 1; y++ )
+                {
+                    if ( IsNeighborCell( cellX + x, cellY + y ) )
+                        return true;
                 }
             }
 
-            return count;
+            return false;
         }
         
+        private bool IsRoomCell( int x, int y )
+        {
+            if ( !IsInBounds( x, y ) )
+                return false;
+
+            int index = x + y * LevelDimensions.x;
+
+            return LevelLayout[index] == RoomId;
+        }
+        
+        private bool IsNeighborCell( int x, int y )
+        {
+            if ( !IsInBounds( x, y ) )
+                return false;
+
+            int index = x + y * LevelDimensions.x;
+
+            return LevelLayout[index] == NeighborId;
+        }
         
         private bool IsInBounds( int x, int y )
         {
@@ -289,6 +372,73 @@ using UnityEngine;
         }
     }
 
+
+    [BurstCompile]
+    public struct LevelPaintWallsJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> LevelLayout;
+        
+        [ReadOnly] public Vector2Int LevelDimensions;
+        
+        [ReadOnly] public int RoomId;
+        [ReadOnly] public int WallId;
+        [ReadOnly] public int WallThickness;
+        [ReadOnly] public int2 RoomOrigin;
+        [ReadOnly] public int2 RoomSize;
+        
+        public void Execute(int index)
+        {
+
+            int boundsX = index % RoomSize.x;
+            int boundsY = index / RoomSize.x;
+            
+            int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
+            
+            if ( LevelLayout[levelIndex] != RoomId )
+                return;
+            
+            int x = levelIndex % LevelDimensions.x;
+            int y = levelIndex / LevelDimensions.x;
+            
+
+            if ( IsWall( x, y ) )
+            {
+                LevelLayout[levelIndex] = WallId;
+            }
+            
+        }
+
+
+        private bool IsWall( int cellX, int cellY )
+        {
+            for ( int x = -WallThickness; x <= WallThickness; x++ )
+            {
+                for ( int y = -WallThickness; y <= WallThickness; y++ )
+                {
+                    if ( !IsInBounds( cellX + x, cellY + y ) )
+                        return true;
+                    int index = ( cellX + x ) + ( cellY + y ) * LevelDimensions.x;
+                    if ( LevelLayout[index] != RoomId && LevelLayout[index] != WallId )
+                        return true;
+                }
+            }
+
+            return false;
+        }
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+    }
 
     public struct LevelSpawnUnmanagedJob : IJobParallelFor
     {

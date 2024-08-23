@@ -13,9 +13,20 @@ public partial class LevelGenerator
     public int ConnectRequired;
     private int _counter = 0;
     private int _totalSteps = 0;
+
+    public bool StepWiseGrow;
+    public int GrowSteps;
     public void GrowRooms()
     {
-        MainPathGrow();
+        if ( StepWiseGrow )
+        {
+            StepMainPathGrow();
+        }
+        else
+        {
+            MainPathGrow();
+        }
+        
     }
 
     public void RandomGrowRooms()
@@ -146,13 +157,33 @@ public partial class LevelGenerator
 
         newCells.Dispose();
     }
-    
+
+    private void StepMainPathGrow()
+    {
+        _totalSteps = 0;
+        bool hasPath = false;
+        while ( _totalSteps < GrowSteps )
+        {
+            LevelRoom room = _rooms[_counter];
+            int connections = _edgeDictionary[_counter].Count;
+            GrowRoomPath( room );
+
+
+            if ( connections != _edgeDictionary[_counter].Count )
+            {
+                hasPath = HasPath( _counter );
+            }
+
+            _counter = ( _counter + 1 ) % _rooms.Length;
+            _totalSteps++;
+        }
+    }
     
     private void MainPathGrow()
     {
         _totalSteps = 0;
         bool hasPath = false;
-        while ( !hasPath )
+        while ( !hasPath  )
         {
             LevelRoom room = _rooms[_counter];
             int connections = _edgeDictionary[_counter].Count;
@@ -331,10 +362,10 @@ public partial class LevelGenerator
             ValidConnections =  validConnections.AsParallelWriter(),
             RoomId = room1.Id,
             NeighborId = room2.Id,
-            Required = ConnectRequired
+            Required = _minRoomSeedSize + 2*math.max( room1.WallThickness, room2.WallThickness )
         };
         
-        JobHandle handle = analyzeJob.Schedule(connections.Length, 16);
+        JobHandle handle = analyzeJob.Schedule(connections.Length*4, 16);
         handle.Complete();
 
         bool result = validConnections.Count > 0;
