@@ -20,7 +20,7 @@ using UnityEngine;
         [ReadOnly] public int2 RoomOrigin;
         [ReadOnly] public int2 RoomSize;
         [ReadOnly] public int2 GrowthDirection;
-        [ReadOnly] public int required;
+        [ReadOnly] public int Required;
 
         public NativeList<int>.ParallelWriter NewCells;
         public void Execute(int index)
@@ -39,7 +39,7 @@ using UnityEngine;
 
             int checkIndex = x + y * LevelDimensions.x;
 
-            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, required, required ) )
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required, Required ) )
             {
                 NewCells.AddNoResize( checkIndex );
             }

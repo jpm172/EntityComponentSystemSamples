@@ -80,7 +80,7 @@ public partial class LevelGenerator
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
             GrowthDirection = growthDirection,
-            required = _minRoomSeedSize,
+            Required = _minRoomSeedSize + room.WallThickness*2,
             LevelDimensions = dimensions,
             LevelLayout = _levelLayout,
             RoomId = room.Id,
@@ -265,7 +265,7 @@ public partial class LevelGenerator
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
             GrowthDirection = growthDirection,
-            required = _minRoomSeedSize,
+            Required = _minRoomSeedSize + (room.WallThickness*2),
             LevelDimensions = dimensions,
             LevelLayout = _levelLayout,
             RoomId = room.Id,
