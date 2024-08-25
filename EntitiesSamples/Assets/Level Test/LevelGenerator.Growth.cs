@@ -8,9 +8,7 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator
 {
-    public int steps;
     private int _cornerLimit = 6;
-    public int ConnectRequired;
     private int _counter = 0;
     private int _totalSteps = 0;
 
@@ -56,7 +54,6 @@ public partial class LevelGenerator
     
     private void GrowRoomRandom( LevelRoom room )
     {
-
         if ( !room.CanGrow )
             return;
         
@@ -73,9 +70,8 @@ public partial class LevelGenerator
     private void NormalGrowRandom( LevelRoom room )
     {
         int2 growthDirection = GetRandomGrowthDirection( room );
-
-        int listSize = math.max( room.Size.x, room.Size.y );
-        NativeList<int> newCells = new NativeList<int>(listSize, Allocator.TempJob);
+        
+        NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
         
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
@@ -94,24 +90,26 @@ public partial class LevelGenerator
         handle.Complete();
 
         bool removeDirection = false;
-        if ( newCells.Length > 0 )
+        if ( newCells.Count > 0 )
         {
             ResizeRoom( room, growthDirection );
 
             NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
+            NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
             
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
                 Neighbors = newNeighbors.AsParallelWriter(),
-                NewCells = newCells,
+                NewCells = newCellsArray,
                 RoomId = room.Id
             };
             
-            JobHandle applyHandle = applyJob.Schedule(newCells.Length, 32);
+            JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
             applyHandle.Complete();
             newNeighbors.Dispose();
+            newCellsArray.Dispose();
             
             NativeQueue<int> corners = new NativeQueue<int>(Allocator.TempJob);
             
@@ -212,7 +210,15 @@ public partial class LevelGenerator
         
         if ( room.GrowthType == LevelGrowthType.Normal )
         {
-            NormalGrowPath( room );
+            int2 growthDirection = GetRandomGrowthDirection( room );
+            for ( int n = 0; n < _minRoomSeedSize; n++ )
+            {
+                int2 sizeBefore = room.Size;
+                NormalGrowPath( room, growthDirection );
+                
+                if(room.Size.Equals( sizeBefore ))
+                    break;
+            }
         }
         else if ( room.GrowthType == LevelGrowthType.Mold )
         {
@@ -255,13 +261,10 @@ public partial class LevelGenerator
         
     }
 
-    private void NormalGrowPath( LevelRoom room )
+    private void NormalGrowPath( LevelRoom room, int2 growthDirection )
     {
-        int2 growthDirection = GetRandomGrowthDirection( room );
-
-        int listSize = math.max( room.Size.x, room.Size.y );
-        NativeList<int> newCells = new NativeList<int>(listSize, Allocator.TempJob);
         
+        NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
             GrowthDirection = growthDirection,
@@ -279,31 +282,34 @@ public partial class LevelGenerator
         handle.Complete();
 
         bool removeDirection = false;
-        if ( newCells.Length > 0 )
+        //if we added cells, playback the results to paint them onto the level
+        if ( newCells.Count > 0 )
         {
             ResizeRoom( room, growthDirection );
-
             NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
 
+            NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
+            
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
                 Neighbors = newNeighbors.AsParallelWriter(),
-                NewCells = newCells,
+                NewCells = newCellsArray,
                 RoomId = room.Id
             };
             
-            JobHandle applyHandle = applyJob.Schedule(newCells.Length, 32);
+            JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
             applyHandle.Complete();
+            newCellsArray.Dispose();
 
             
             if ( newNeighbors.Count > 0 )
             {
                 HashSet<int> checkedNeighbors = new HashSet<int>();
                 NativeArray<LevelConnection> neighborArray = newNeighbors.ToArray( Allocator.TempJob );
-                //go through each neighbor, and if it belongs to a room that is part of the main path, that mark this growth direction as finished
+                //go through each neighbor, and if it can form a valid connection to the neighbor, mark it as a new edge in the level
                 for ( int i = 0; i < neighborArray.Length; i++ )
                 {
                     int neighborIndex = neighborArray[i].RoomId-1;
@@ -319,7 +325,6 @@ public partial class LevelGenerator
                     };
                     if ( !_edgeDictionary[room.Index].Contains( check ) && IsValidConnection(room, _rooms[neighborIndex], neighborArray))
                     {
-                        //SetNeighbors( room.Index, neighborIndex, Random.Range( minEdgeWeight, maxEdgeWeight+1 ) );
                         SetNeighbors( room.Index, neighborIndex, room.Weight );
                     }
                 }

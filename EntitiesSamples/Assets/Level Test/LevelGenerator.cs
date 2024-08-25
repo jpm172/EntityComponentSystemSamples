@@ -62,6 +62,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     //gizmos variables
     public bool DraftLook;
+    public bool UseMeshes;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -121,6 +122,17 @@ public partial class LevelGenerator : MonoBehaviour
 
             return;
         }
+
+        if ( UseMeshes )
+        {
+            foreach ( LevelRoom room in _rooms )
+            {
+                //int2 roomPos = room.Origin + room.Size / 2;
+                //Vector3 pos = new Vector3( roomPos.x, roomPos.y ) / GameSettings.PixelsPerUnit;
+                Gizmos.DrawMesh(  room.Mesh );
+            }
+            return;
+        }
         
         Vector3 size = Vector3.one / GameSettings.PixelsPerUnit;
         for ( int x = 0; x < dimensions.x; x++ )
@@ -173,17 +185,6 @@ public partial class LevelGenerator : MonoBehaviour
                 }
             }
         }
-        
-        
-
-        Gizmos.color = Color.black;
-        for ( int i = 0; i < layoutDimensions.y; i++)
-        {
-            LevelRoom room = _rooms[i * layoutDimensions.x];
-            Vector3 pos = new Vector3(room.Origin.x, room.Origin.y)/GameSettings.PixelsPerUnit;
-            Gizmos.DrawLine( pos, pos + (Vector3.right*100) );
-        }
-        
     }
 #endif
 
@@ -344,25 +345,11 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void MakeRoomMeshes()
     {
+        
         foreach ( LevelRoom room in _rooms )
         {
-            NativeQueue<MeshStrip> meshStrips = new NativeQueue<MeshStrip>(Allocator.TempJob);
-
-            MakeMeshStripsJob stripJob = new MakeMeshStripsJob
-            {
-                LevelLayout = _levelLayout,
-                LevelDimensions = dimensions,
-                RoomId = room.Id,
-                RoomOrigin = room.Origin,
-                RoomSize = room.Size,
-                Strips = meshStrips.AsParallelWriter()
-            };
-            
-            JobHandle applyHandle = stripJob.Schedule(room.Size.x, 16);
-            applyHandle.Complete();
-            
-
-            meshStrips.Dispose();
+            StripMeshConstructor meshConstructor = new StripMeshConstructor();
+            room.Mesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room );
         }
     }
     

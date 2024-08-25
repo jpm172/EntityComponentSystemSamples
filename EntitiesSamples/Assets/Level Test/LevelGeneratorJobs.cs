@@ -22,7 +22,7 @@ using UnityEngine;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int Required;
 
-        public NativeList<int>.ParallelWriter NewCells;
+        public NativeQueue<int>.ParallelWriter NewCells;
         public void Execute(int index)
         {
 
@@ -41,7 +41,7 @@ using UnityEngine;
 
             if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required, Required ) )
             {
-                NewCells.AddNoResize( checkIndex );
+                NewCells.Enqueue( checkIndex );
             }
         }
         
@@ -123,7 +123,7 @@ using UnityEngine;
         [ReadOnly] public int RoomId;
         [ReadOnly] public Vector2Int LevelDimensions;
 
-        [ReadOnly] public NativeList<int> NewCells;
+        [ReadOnly] public NativeArray<int> NewCells;
         
         public NativeQueue<LevelConnection>.ParallelWriter Neighbors;
         public void Execute(int index)

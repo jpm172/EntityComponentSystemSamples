@@ -12,7 +12,6 @@ public class LevelRoom
     private LevelGrowthType _growthType; 
     
     private int _id;
-    //private bool _canGrow;
     private Color _debugColor;
     private int2 _size;
     private int2 _sizeRatio;
@@ -21,8 +20,11 @@ public class LevelRoom
 
     private List<int2> _xGrowthDirections;
     private List<int2> _yGrowthDirections;
+    private Dictionary<int, List<LevelConnection>> _roomConnections;
 
 
+    public Mesh Mesh;
+    
     public List<int2> XGrowthDirections
     {
         get => _xGrowthDirections;
