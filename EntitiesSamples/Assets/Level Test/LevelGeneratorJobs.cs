@@ -53,17 +53,16 @@ using UnityEngine;
         {
             int2 perpendicular = math.abs( GrowthDirection.yx );
             int2 startPos = new int2(x,y) - GrowthDirection;//the original cell we started at before adding grow direction
-            
-            int count = 0;
-            for ( int i = -distance; i <= distance; i++ )
+
+            int countBelow = 0;
+            for ( int i = 1; i <= distance; i++ )
             {
-                int2 curPos = startPos + (perpendicular * i);
+                int2 curPos = startPos - (perpendicular * i);
                 int index = curPos.x + curPos.y * LevelDimensions.x;
 
                 if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index] != RoomId )
                 {
-                    count = 0;
-                    continue;
+                    break;
                 }
                 
                 curPos += GrowthDirection;
@@ -71,15 +70,37 @@ using UnityEngine;
 
                 if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
                 {
-                    count++;
-                    if ( count >= threshold )
+                    countBelow++;
+                    if ( countBelow + 1 >= threshold )
+                        return true;
+                }
+            }
+
+            int countAbove = 0;
+            for ( int i = 1; i <= distance; i++ )
+            {
+                int2 curPos = startPos + (perpendicular * i);
+                int index = curPos.x + curPos.y * LevelDimensions.x;
+
+                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index] != RoomId )
+                {
+                    break;
+                }
+                
+                curPos += GrowthDirection;
+                index = curPos.x + curPos.y * LevelDimensions.x;
+
+                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
+                {
+                    countAbove++;
+                    if ( countAbove  + countBelow + 1 >= threshold )
                         return true;
                 }
             }
 
             return false;
         }
-        
+
         private bool IsInBounds( int x, int y )
         {
             if ( x < 0 || x >= LevelDimensions.x )
