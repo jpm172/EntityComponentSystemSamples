@@ -127,9 +127,26 @@ public partial class LevelGenerator : MonoBehaviour
         {
             foreach ( LevelRoom room in _rooms )
             {
+                Gizmos.color = room.DebugColor;
                 //int2 roomPos = room.Origin + room.Size / 2;
                 //Vector3 pos = new Vector3( roomPos.x, roomPos.y ) / GameSettings.PixelsPerUnit;
+                //Gizmos.DrawWireMesh(  room.Mesh );
                 Gizmos.DrawMesh(  room.Mesh );
+                
+                if ( _edgeDictionary.ContainsKey( room.Index ) )
+                {
+                    Gizmos.color = Color.red;
+                    foreach ( LevelEdge e in _edgeDictionary[room.Index] )
+                    {
+                    
+                        Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y) + new Vector3(_rooms[e.Source].Size.x, _rooms[e.Source].Size.y)/2;
+                        Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y)+ new Vector3(_rooms[e.Destination].Size.x, _rooms[e.Destination].Size.y)/2;;
+                    
+                        Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
+                    
+                    }
+                }
+                
             }
             return;
         }
@@ -346,7 +363,7 @@ public partial class LevelGenerator : MonoBehaviour
     public void MakeRoomMeshes()
     {
         
-        foreach ( LevelRoom room in _rooms )
+        foreach ( LevelRoom room in _rooms )//todo: room meshes are 1 pixel taller than they should be
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
             room.Mesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room );
