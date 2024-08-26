@@ -325,10 +325,10 @@ public partial class LevelGenerator
             if ( localMinima.Count + localMaxima.Count > 0 )
             {
                 if(room.Id == 3)
-                    Debug.Log( room.Size );
+                    Debug.Log( $"{room.Bounds} : {room.Size}" );
                 ResizeRoom( room, localMinima, localMaxima );
                 if(room.Id == 3)
-                    Debug.Log( room.Size );
+                    Debug.Log( $"{room.Bounds} : {room.Size}" );
             }
 
             localMaxima.Dispose();
