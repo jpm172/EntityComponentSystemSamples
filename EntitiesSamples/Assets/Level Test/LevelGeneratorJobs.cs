@@ -30,7 +30,11 @@ using UnityEngine;
             
             //int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
             int levelIndex = RoomOrigin.x + boundsX  +  ( (RoomOrigin.y + boundsY) * LevelDimensions.x );
-            
+
+            if ( new int4( RoomOrigin, RoomOrigin + RoomSize - new int2(1,1) ).Equals( new int4( 135, 0, 269, 89 ) ) )
+            {
+                
+            }
             
             if ( LevelLayout[levelIndex] != RoomId )
                 return;
@@ -77,11 +81,18 @@ using UnityEngine;
                 curPos += GrowthDirection;
                 index = curPos.x + curPos.y * LevelDimensions.x;
 
+                if(LevelLayout[index] == 2)
+                    Debug.Log( curPos );
+                
                 if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
                 {
                     countBelow++;
                     if ( countBelow + 1 >= threshold )
                         return true;
+                }
+                else
+                {
+                    break;
                 }
             }
 
@@ -104,6 +115,10 @@ using UnityEngine;
                     countAbove++;
                     if ( countAbove + countBelow + 1 >= threshold )
                         return true;
+                }
+                else
+                {
+                    break;
                 }
             }
 
