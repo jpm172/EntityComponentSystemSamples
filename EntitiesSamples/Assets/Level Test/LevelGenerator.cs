@@ -216,7 +216,6 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
-
         _counter = 0;
         if ( useSeed )
             Random.seed = seed;

@@ -21,10 +21,6 @@ public class LevelGeneratorEditor : Editor
         {
             level.GrowRooms();
         }
-        if (GUILayout.Button("Random Grow Rooms")) 
-        {
-            level.RandomGrowRooms();
-        }
         if (GUILayout.Button("Make Room Meshes")) 
         {
             level.MakeRoomMeshes();

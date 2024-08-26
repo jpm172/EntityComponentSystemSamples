@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    [BurstCompile]
+    //[BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
@@ -22,25 +22,35 @@ using UnityEngine;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int Required;
 
-        public NativeQueue<int>.ParallelWriter NewCells;
+        public NativeQueue<LevelCell>.ParallelWriter NewCells;
         public void Execute(int index)
         {
             int boundsX = index % RoomSize.x;
             int boundsY = index / RoomSize.x;
             
-            int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
-
+            //int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
+            int levelIndex = RoomOrigin.x + boundsX  +  ( (RoomOrigin.y + boundsY) * LevelDimensions.x );
+            
+            
             if ( LevelLayout[levelIndex] != RoomId )
                 return;
             
-            int x = (levelIndex % LevelDimensions.x) + GrowthDirection.x;
-            int y = (levelIndex / LevelDimensions.x) + GrowthDirection.y;
-
-            int checkIndex = x + y * LevelDimensions.x;
+            //int x = (levelIndex % LevelDimensions.x) + GrowthDirection.x;
+            //int y = (levelIndex / LevelDimensions.x) + GrowthDirection.y;
+            int x = RoomOrigin.x + boundsX + GrowthDirection.x;
+            int y =  RoomOrigin.y + boundsY + GrowthDirection.y;
+            
+            int checkIndex = x + (y * LevelDimensions.x);
 
             if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required ) )
             {
-                NewCells.Enqueue( checkIndex );
+                LevelCell c = new LevelCell
+                {
+                    Cell = new int2(x,y),
+                    Index = checkIndex
+                };
+                //NewCells.Enqueue( checkIndex );
+                NewCells.Enqueue( c );
             }
         }
         
@@ -113,6 +123,12 @@ using UnityEngine;
         }
     }
 
+public struct LevelCell
+{
+    public int2 Cell;
+    public int Index;
+}
+
     [BurstCompile]
     public struct LevelApplyGrowthResultJob : IJobParallelFor
     {
@@ -123,20 +139,25 @@ using UnityEngine;
         [ReadOnly] public int RoomId;
         [ReadOnly] public Vector2Int LevelDimensions;
 
-        [ReadOnly] public NativeArray<int> NewCells;
+        [ReadOnly] public NativeArray<LevelCell> NewCells;
         
         public NativeQueue<LevelConnection>.ParallelWriter Neighbors;
         public NativeQueue<int2>.ParallelWriter LocalMinima;
         public NativeQueue<int2>.ParallelWriter LocalMaxima;
         public void Execute(int index)
         {
-            int levelIndex = NewCells[index];
-            LevelLayout[levelIndex] = RoomId;
+            //int levelIndex = NewCells[index];
+            LevelCell levelCell = NewCells[index];
+            //LevelLayout[levelIndex] = RoomId;
+            LevelLayout[levelCell.Index] = RoomId;
             
             
-            int x = levelIndex % LevelDimensions.x;
-            int y = levelIndex / LevelDimensions.x;
+            //int x = levelCell.Index % LevelDimensions.x;
+            //int y = levelCell.Index / LevelDimensions.x;
 
+            int x = levelCell.Cell.x;
+            int y = levelCell.Cell.y;
+            
             int2 origin = new int2(x,y);
             CheckBounds( origin );
             

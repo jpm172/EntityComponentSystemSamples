@@ -12,6 +12,8 @@ public partial class LevelGenerator
     private int _counter = 0;
     private int _totalSteps = 0;
 
+    public bool breakPoint = false;
+    
     public bool StepWiseGrow;
     public int GrowSteps;
     public void GrowRooms()
@@ -59,7 +61,7 @@ public partial class LevelGenerator
         
         if ( room.GrowthType == LevelGrowthType.Normal )
         {
-            NormalGrowRandom( room );
+            //NormalGrowRandom( room );
         }
         else if ( room.GrowthType == LevelGrowthType.Mold )
         {
@@ -67,6 +69,7 @@ public partial class LevelGenerator
         }
     }
     
+    /*
     private void NormalGrowRandom( LevelRoom room )
     {
         Debug.Log( "need to setup resizing for random" );
@@ -157,6 +160,7 @@ public partial class LevelGenerator
 
         newCells.Dispose();
     }
+*/
 
     private void StepMainPathGrow()
     {
@@ -209,14 +213,15 @@ public partial class LevelGenerator
 
     private void GrowRoomPath( LevelRoom room )
     {
-
+        
         if ( !room.CanGrow )
             return;
         
         if ( room.GrowthType == LevelGrowthType.Normal )
         {
             int2 growthDirection = GetRandomGrowthDirection( room );
-            for ( int n = 0; n < _minRoomSeedSize; n++ )
+            //for ( int n = 0; n < _minRoomSeedSize; n++ )
+            for( int n = 0; n < 1; n++ )
             {
                 int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
                 
@@ -269,8 +274,11 @@ public partial class LevelGenerator
 
     private void NormalGrowPath( LevelRoom room, int2 growthDirection )
     {
+        if(breakPoint)
+        {}
         
-        NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
+        //NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
+        NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
             GrowthDirection = growthDirection,
@@ -296,7 +304,8 @@ public partial class LevelGenerator
             NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
 
-            NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
+            //NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
+            NativeArray<LevelCell> newCellsArray = newCells.ToArray( Allocator.TempJob );
             
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
@@ -315,7 +324,11 @@ public partial class LevelGenerator
 
             if ( localMinima.Count + localMaxima.Count > 0 )
             {
+                if(room.Id == 3)
+                    Debug.Log( room.Size );
                 ResizeRoom( room, localMinima, localMaxima );
+                if(room.Id == 3)
+                    Debug.Log( room.Size );
             }
 
             localMaxima.Dispose();
