@@ -127,6 +127,7 @@ using UnityEngine;
         [NativeDisableParallelForRestriction]
         public NativeArray<int> LevelLayout;
 
+        [ReadOnly] public int4 RoomBounds;
         [ReadOnly] public int RoomId;
         [ReadOnly] public Vector2Int LevelDimensions;
 
@@ -145,12 +146,32 @@ using UnityEngine;
             int y = levelIndex / LevelDimensions.x;
 
             int2 origin = new int2(x,y);
+            CheckBounds( origin );
             
             CheckNeighbor( x + 1, y, origin );
             CheckNeighbor( x - 1, y, origin );
             CheckNeighbor( x, y + 1, origin );
             CheckNeighbor( x, y - 1, origin );
 
+        }
+
+        private void CheckBounds( int2 cell )
+        {
+            if ( RoomId == 3 )
+            {
+                
+            }
+            
+            if ( cell.x < RoomBounds.x || cell.y < RoomBounds.y )
+            {
+                LocalMinima.Enqueue( math.min( cell, RoomBounds.xy ) );
+            }
+            
+            if ( cell.x > RoomBounds.z || cell.y > RoomBounds.w )
+            {
+                LocalMaxima.Enqueue( math.max( cell, RoomBounds.zw ) );
+            }
+            
         }
 
         private void CheckNeighbor( int x, int y, int2 origin )

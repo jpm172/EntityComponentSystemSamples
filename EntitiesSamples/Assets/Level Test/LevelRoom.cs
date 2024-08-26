@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 
 public class LevelRoom 
 {
+    private static readonly int2 Int2One = new int2(1,1);
     private int _wallThickness;
     private int _weight;
     private LevelMaterial _material;
@@ -14,9 +15,7 @@ public class LevelRoom
     private int _id;
     private Color _debugColor;
     private int4 _bounds;
-    private int2 _size;
     private int2 _sizeRatio;
-    private int2 _origin;
     private int2 _graphPosition;
 
     private List<int2> _xGrowthDirections;
@@ -38,15 +37,14 @@ public class LevelRoom
         set => _yGrowthDirections = value;
     }
 
-    public int2 Size
+    public int2 Size=> _bounds.zw - _bounds.xy + Int2One;
+
+    public int2 Origin => _bounds.xy;
+
+    public int4 Bounds//(X,Y,Z,W)
     {
-        get => _size;
-        set => _size = value;
-    }
-    public int2 Origin
-    {
-        get => _origin;
-        set => _origin = value;
+        get => _bounds;
+        set => _bounds = value;
     }
 
     public int2 SizeRatio => _sizeRatio;
@@ -69,13 +67,11 @@ public class LevelRoom
 
     public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, int weight, LevelGrowthType growthType )
     {
-        int4 bounds = new int4(origin, origin+size);
         _id = id;
         _material = mat;
         _growthType = growthType;
         _graphPosition = graphPosition;
-        _origin = origin;
-        _size = size;
+        _bounds = new int4(origin, origin+size - Int2One);
         _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;
         _weight = weight;

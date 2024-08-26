@@ -362,6 +362,11 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void MakeRoomMeshes()
     {
+        
+        int2 value1 = new int2( -1, 3 );
+        int2 value2 = new int2( 1, -3 );
+        //Debug.Log(math.min( value1, value2 ) );
+        
         return;
         foreach ( LevelRoom room in _rooms )//todo: room meshes are 1 pixel taller than they should be
         {
@@ -437,7 +442,7 @@ public partial class LevelGenerator : MonoBehaviour
         for(int i = 0; i < _rooms.Length; i++)
         {
             LevelRoom room = _rooms[i];
-            DrawBox( room.Origin.x, room.Origin.y, room.Size.x, room.Size.y, ref room );
+            DrawBox( room.Origin.x, room.Origin.y, room.Size.x, room.Size.y, room );
         }
         
     }
@@ -512,7 +517,7 @@ public partial class LevelGenerator : MonoBehaviour
         return new int2(xResult, yResult) ;
     }
     
-    private void DrawBox( int xOrigin, int yOrigin, int width, int height, ref LevelRoom room )
+    private void DrawBox( int xOrigin, int yOrigin, int width, int height, LevelRoom room )
     {
         int start = xOrigin + yOrigin * dimensions.x;
 
@@ -522,9 +527,12 @@ public partial class LevelGenerator : MonoBehaviour
             for ( int y = 0; y < height; y++ )
             {
                 int index = x + y * dimensions.x;
+                //_levelLayout[start + index] = room.Id;
+                
                 if(draw)
                     _levelLayout[start + index] = room.Id;
                 draw = !draw;
+                
             }
         }
     }

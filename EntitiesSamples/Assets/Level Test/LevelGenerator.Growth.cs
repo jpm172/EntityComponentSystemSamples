@@ -69,6 +69,8 @@ public partial class LevelGenerator
     
     private void NormalGrowRandom( LevelRoom room )
     {
+        Debug.Log( "need to setup resizing for random" );
+        return;
         int2 growthDirection = GetRandomGrowthDirection( room );
         
         NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
@@ -92,7 +94,7 @@ public partial class LevelGenerator
         bool removeDirection = false;
         if ( newCells.Count > 0 )
         {
-            ResizeRoom( room, growthDirection );
+            //ResizeRoom( room, growthDirection );
 
             NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
             NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
@@ -217,8 +219,9 @@ public partial class LevelGenerator
             for ( int n = 0; n < _minRoomSeedSize; n++ )
             {
                 int2 sizeBefore = room.Size;
+                //Debug.Log( room.Bounds );
                 NormalGrowPath( room, growthDirection );
-
+                //Debug.Log( room.Bounds );
                 if ( room.Size.Equals( sizeBefore ) )
                     return;
             }
@@ -288,8 +291,9 @@ public partial class LevelGenerator
         //if we added cells, playback the results to paint them onto the level
         if ( newCells.Count > 0 )
         {
-            ResizeRoom( room, growthDirection );
             NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
+            NativeQueue<int2> localMinima = new NativeQueue<int2>(Allocator.TempJob);
+            NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
 
             NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
@@ -299,12 +303,23 @@ public partial class LevelGenerator
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
                 Neighbors = newNeighbors.AsParallelWriter(),
+                LocalMinima = localMinima.AsParallelWriter(),
+                LocalMaxima = localMaxima.AsParallelWriter(),
                 NewCells = newCellsArray,
-                RoomId = room.Id
+                RoomId = room.Id,
+                RoomBounds = room.Bounds
             };
             
             JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
             applyHandle.Complete();
+
+            if ( localMinima.Count + localMaxima.Count > 0 )
+            {
+                ResizeRoom( room, localMinima, localMaxima );
+            }
+
+            localMaxima.Dispose();
+            localMinima.Dispose();
             newCellsArray.Dispose();
 
             
@@ -383,14 +398,21 @@ public partial class LevelGenerator
     }
 
 
-    private void ResizeRoom( LevelRoom room, int2 growthDirection )
+    private void ResizeRoom( LevelRoom room,  NativeQueue<int2> localMinima,  NativeQueue<int2> localMaxima )
     {
-        if ( growthDirection.x < 0 || growthDirection.y < 0 )
+        int2 minima = room.Bounds.xy;
+        int2 maxima = room.Bounds.zw;
+        while ( localMinima.TryDequeue( out int2 value ) )
         {
-            room.Origin += growthDirection;
+            minima = math.min( value, minima );
+        }
+
+        while ( localMaxima.TryDequeue( out int2 value ) )
+        {
+            maxima = math.max( value, maxima );
         }
         
-        room.Size += math.abs( growthDirection );
+        room.Bounds = new int4(minima,maxima);
     }
     
     

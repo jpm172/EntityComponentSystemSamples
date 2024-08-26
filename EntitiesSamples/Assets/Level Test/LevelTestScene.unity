@@ -280,14 +280,14 @@ MonoBehaviour:
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 5
-  _minRoomSeedSize: 20
+  _minRoomSeedSize: 1
   _maxRoomSeedSize: 30
   _seedBuffer: 20
   maxEdgeWeight: 10
   DraftLook: 0
   UseMeshes: 0
-  StepWiseGrow: 0
-  GrowSteps: 10
+  StepWiseGrow: 1
+  GrowSteps: 1
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0
