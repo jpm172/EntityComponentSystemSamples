@@ -15,12 +15,22 @@ public struct MakeMeshStripsJob : IJobParallelFor
     [ReadOnly] public int2 RoomOrigin;
     [ReadOnly] public int2 RoomSize;
     
-    //public NativeQueue<MeshStrip>.ParallelWriter Strips;
     public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter Strips;
     public void Execute( int index )
     {
         int levelIndex = ((RoomOrigin.x + index) + ( RoomOrigin.y * LevelDimensions.x ));
 
+        if ( !IsInBounds( RoomOrigin.x + index, RoomOrigin.y ) )
+        {
+            Debug.Log( "OOB!" );
+            return;
+        }
+
+        if ( levelIndex < 0 )
+        {
+            
+        }
+        
         //makes vertical strips
         bool hasStrip = false;
         int2 stripStart = new int2(0,0);
@@ -54,13 +64,27 @@ public struct MakeMeshStripsJob : IJobParallelFor
             MeshStrip newStrip = new MeshStrip
             {
                 Start = stripStart,
-                End = new int2( stripStart.x, RoomSize.y )
+                End = new int2( stripStart.x, RoomSize.y-1 )
             };
             //Strips.Enqueue(  );
             Strips.Add( index, newStrip );
         }
         
     }
+    
+    
+    private bool IsInBounds( int x, int y )
+    {
+        if ( x < 0 || x >= LevelDimensions.x )
+            return false;
+            
+            
+        if ( y < 0 || y >= LevelDimensions.y )
+            return false;
+        
+        return true;
+    }
+    
 }
 
 

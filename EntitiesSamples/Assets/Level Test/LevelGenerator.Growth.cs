@@ -175,6 +175,7 @@ public partial class LevelGenerator
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
         }
+        MakeRoomMeshes();
     }
     
     private void MainPathGrow()
@@ -197,6 +198,8 @@ public partial class LevelGenerator
             _totalSteps++;
         }
         
+        MakeRoomMeshes();
+        
         
     }
     
@@ -215,9 +218,9 @@ public partial class LevelGenerator
             {
                 int2 sizeBefore = room.Size;
                 NormalGrowPath( room, growthDirection );
-                
-                if(room.Size.Equals( sizeBefore ))
-                    break;
+
+                if ( room.Size.Equals( sizeBefore ) )
+                    return;
             }
         }
         else if ( room.GrowthType == LevelGrowthType.Mold )

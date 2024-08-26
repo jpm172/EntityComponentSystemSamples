@@ -75,8 +75,7 @@ public class StripMeshConstructor
     
     private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, LevelRoom room)
     {
-
-        //Debug.Log( strips.Count );
+        
         NativeArray<int> keys = mergedStrips.GetKeyArray( Allocator.TempJob );
 
 

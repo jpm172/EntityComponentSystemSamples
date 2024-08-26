@@ -362,7 +362,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void MakeRoomMeshes()
     {
-        
+        return;
         foreach ( LevelRoom room in _rooms )//todo: room meshes are 1 pixel taller than they should be
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
@@ -516,12 +516,15 @@ public partial class LevelGenerator : MonoBehaviour
     {
         int start = xOrigin + yOrigin * dimensions.x;
 
+        bool draw = false;
         for ( int x = 0; x < width; x++ )
         {
             for ( int y = 0; y < height; y++ )
             {
                 int index = x + y * dimensions.x;
-                _levelLayout[start + index] = room.Id;
+                if(draw)
+                    _levelLayout[start + index] = room.Id;
+                draw = !draw;
             }
         }
     }

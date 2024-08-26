@@ -13,6 +13,7 @@ public class LevelRoom
     
     private int _id;
     private Color _debugColor;
+    private int4 _bounds;
     private int2 _size;
     private int2 _sizeRatio;
     private int2 _origin;
@@ -21,7 +22,7 @@ public class LevelRoom
     private List<int2> _xGrowthDirections;
     private List<int2> _yGrowthDirections;
     private Dictionary<int, List<LevelConnection>> _roomConnections;
-
+    
 
     public Mesh Mesh;
     
@@ -68,6 +69,7 @@ public class LevelRoom
 
     public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, int weight, LevelGrowthType growthType )
     {
+        int4 bounds = new int4(origin, origin+size);
         _id = id;
         _material = mat;
         _growthType = growthType;

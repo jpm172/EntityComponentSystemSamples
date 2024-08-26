@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    [BurstCompile]
+    //s[BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
@@ -25,11 +25,18 @@ using UnityEngine;
         public NativeQueue<int>.ParallelWriter NewCells;
         public void Execute(int index)
         {
-
+            
+                
             int boundsX = index % RoomSize.x;
             int boundsY = index / RoomSize.x;
             
             int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
+
+            if ( levelIndex < 0 )
+            {
+                Debug.Log( RoomId );
+                return;
+            }
             
             if ( LevelLayout[levelIndex] != RoomId )
                 return;
@@ -126,10 +133,13 @@ using UnityEngine;
         [ReadOnly] public NativeArray<int> NewCells;
         
         public NativeQueue<LevelConnection>.ParallelWriter Neighbors;
+        public NativeQueue<int2>.ParallelWriter LocalMinima;
+        public NativeQueue<int2>.ParallelWriter LocalMaxima;
         public void Execute(int index)
         {
             int levelIndex = NewCells[index];
             LevelLayout[levelIndex] = RoomId;
+            
             
             int x = levelIndex % LevelDimensions.x;
             int y = levelIndex / LevelDimensions.x;
