@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    //s[BurstCompile]
+    [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
@@ -189,11 +189,6 @@ using UnityEngine;
         
     }
 
-    public struct LevelConnection
-    {
-        public int2 Origin;
-        public int RoomId;
-    }
 
 
     [BurstCompile]

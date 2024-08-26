@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 
+[BurstCompile]
 public struct MakeMeshStripsJob : IJobParallelFor
 {
     [ReadOnly] public NativeArray<int> LevelLayout;
@@ -87,14 +89,9 @@ public struct MakeMeshStripsJob : IJobParallelFor
     
 }
 
-
+[BurstCompile]
 public struct MergeMeshStripsJob : IJobParallelFor
 {
-
-    [ReadOnly] public int RoomId;
-    [ReadOnly] public int2 RoomOrigin;
-    [ReadOnly] public int2 RoomSize;
-
     [ReadOnly] public NativeParallelMultiHashMap<int, MeshStrip> Strips;
     
     public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter MergedStrips;

@@ -128,17 +128,17 @@ public partial class LevelGenerator : MonoBehaviour
             foreach ( LevelRoom room in _rooms )
             {
                 Gizmos.color = room.DebugColor;
-                //int2 roomPos = room.Origin + room.Size / 2;
-                //Vector3 pos = new Vector3( roomPos.x, roomPos.y ) / GameSettings.PixelsPerUnit;
-                //Gizmos.DrawWireMesh(  room.Mesh );
                 Gizmos.DrawMesh(  room.Mesh );
                 
+                Gizmos.color = Color.black;
+                Gizmos.DrawWireMesh(  room.Mesh );
+                
+
                 if ( _edgeDictionary.ContainsKey( room.Index ) )
                 {
                     Gizmos.color = Color.red;
                     foreach ( LevelEdge e in _edgeDictionary[room.Index] )
                     {
-                    
                         Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y) + new Vector3(_rooms[e.Source].Size.x, _rooms[e.Source].Size.y)/2;
                         Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y)+ new Vector3(_rooms[e.Destination].Size.x, _rooms[e.Destination].Size.y)/2;;
                     
@@ -522,12 +522,13 @@ public partial class LevelGenerator : MonoBehaviour
             for ( int y = 0; y < height; y++ )
             {
                 int index = x + y * dimensions.x;
-                //_levelLayout[start + index] = room.Id;
-                
-                if(draw)
+                if ( draw )
+                {
                     _levelLayout[start + index] = room.Id;
+                }
+
                 draw = !draw;
-                
+
             }
         }
     }
@@ -750,4 +751,10 @@ public struct LevelEdge
 
         return ( edge.Source == Source && edge.Destination == Destination );
     }
+}
+
+public struct LevelConnection
+{
+    public int2 Origin;
+    public int RoomId;
 }
