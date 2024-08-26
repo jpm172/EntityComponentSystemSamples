@@ -220,8 +220,9 @@ public partial class LevelGenerator
         if ( room.GrowthType == LevelGrowthType.Normal )
         {
             int2 growthDirection = GetRandomGrowthDirection( room );
-            //for ( int n = 0; n < _minRoomSeedSize; n++ )
-            for( int n = 0; n < 1; n++ )
+            
+            //for( int n = 0; n < 1; n++ )
+            for ( int n = 0; n < _minRoomSeedSize; n++ )
             {
                 int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
                 

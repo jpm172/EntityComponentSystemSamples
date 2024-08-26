@@ -1,17 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
-using Unity.Entities;
-using Unity.Entities.Graphics;
-using Unity.Physics;
 using Unity.Jobs;
-using Unity.Rendering;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Unity.Mathematics;
-using Unity.Transforms;
-using Unity.VisualScripting;
 using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
 
@@ -63,6 +55,7 @@ public partial class LevelGenerator : MonoBehaviour
     //gizmos variables
     public bool DraftLook;
     public bool UseMeshes;
+    public bool UseWireMeshes;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -123,16 +116,21 @@ public partial class LevelGenerator : MonoBehaviour
             return;
         }
 
-        if ( UseMeshes )
+        if ( UseMeshes || UseWireMeshes )
         {
             foreach ( LevelRoom room in _rooms )
             {
-                Gizmos.color = room.DebugColor;
-                Gizmos.DrawMesh(  room.Mesh );
-                
-                Gizmos.color = Color.black;
-                Gizmos.DrawWireMesh(  room.Mesh );
-                
+                if ( UseMeshes )
+                {
+                    Gizmos.color = room.DebugColor;
+                    Gizmos.DrawMesh(  room.Mesh );
+                }
+
+                if ( UseWireMeshes )
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawWireMesh(  room.Mesh );
+                }
 
                 if ( _edgeDictionary.ContainsKey( room.Index ) )
                 {
@@ -524,12 +522,15 @@ public partial class LevelGenerator : MonoBehaviour
             for ( int y = 0; y < height; y++ )
             {
                 int index = x + y * dimensions.x;
+                _levelLayout[start + index] = room.Id;
+                /*
                 if ( draw )
                 {
                     _levelLayout[start + index] = room.Id;
                 }
 
                 draw = !draw;
+                */
 
             }
         }
