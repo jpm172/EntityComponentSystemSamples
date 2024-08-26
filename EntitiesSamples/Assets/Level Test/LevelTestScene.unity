@@ -280,7 +280,7 @@ MonoBehaviour:
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 5
-  _minRoomSeedSize: 1
+  _minRoomSeedSize: 20
   _maxRoomSeedSize: 30
   _seedBuffer: 20
   maxEdgeWeight: 10

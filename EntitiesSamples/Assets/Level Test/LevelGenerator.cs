@@ -363,12 +363,7 @@ public partial class LevelGenerator : MonoBehaviour
     public void MakeRoomMeshes()
     {
         
-        int2 value1 = new int2( -1, 3 );
-        int2 value2 = new int2( 1, -3 );
-        //Debug.Log(math.min( value1, value2 ) );
-        
-        return;
-        foreach ( LevelRoom room in _rooms )//todo: room meshes are 1 pixel taller than they should be
+        foreach ( LevelRoom room in _rooms )
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
             room.Mesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room );

@@ -25,19 +25,11 @@ using UnityEngine;
         public NativeQueue<int>.ParallelWriter NewCells;
         public void Execute(int index)
         {
-            
-                
             int boundsX = index % RoomSize.x;
             int boundsY = index / RoomSize.x;
             
             int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
 
-            if ( levelIndex < 0 )
-            {
-                Debug.Log( RoomId );
-                return;
-            }
-            
             if ( LevelLayout[levelIndex] != RoomId )
                 return;
             
@@ -46,7 +38,7 @@ using UnityEngine;
 
             int checkIndex = x + y * LevelDimensions.x;
 
-            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required, Required ) )
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required ) )
             {
                 NewCells.Enqueue( checkIndex );
             }
@@ -56,13 +48,13 @@ using UnityEngine;
         //returns true if:
         //-the cell we started at belongs to the room
         //-it has at least (threshold) empty cells perpendicular to it that are connected to the room within (distance) units
-        private bool IsValidGrowthCell(int x, int y, int distance, int threshold)
+        private bool IsValidGrowthCell(int x, int y, int threshold)
         {
             int2 perpendicular = math.abs( GrowthDirection.yx );
             int2 startPos = new int2(x,y) - GrowthDirection;//the original cell we started at before adding grow direction
 
             int countBelow = 0;
-            for ( int i = 1; i <= distance; i++ )
+            for ( int i = 1; i <= threshold; i++ )
             {
                 int2 curPos = startPos - (perpendicular * i);
                 int index = curPos.x + curPos.y * LevelDimensions.x;
@@ -84,7 +76,7 @@ using UnityEngine;
             }
 
             int countAbove = 0;
-            for ( int i = 1; i <= distance; i++ )
+            for ( int i = 1; i <= threshold; i++ )
             {
                 int2 curPos = startPos + (perpendicular * i);
                 int index = curPos.x + curPos.y * LevelDimensions.x;
@@ -100,7 +92,7 @@ using UnityEngine;
                 if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
                 {
                     countAbove++;
-                    if ( countAbove  + countBelow + 1 >= threshold )
+                    if ( countAbove + countBelow + 1 >= threshold )
                         return true;
                 }
             }
@@ -157,11 +149,6 @@ using UnityEngine;
 
         private void CheckBounds( int2 cell )
         {
-            if ( RoomId == 3 )
-            {
-                
-            }
-            
             if ( cell.x < RoomBounds.x || cell.y < RoomBounds.y )
             {
                 LocalMinima.Enqueue( math.min( cell, RoomBounds.xy ) );
@@ -193,7 +180,6 @@ using UnityEngine;
         {
             if ( x < 0 || x >= LevelDimensions.x )
                 return false;
-            
             
             if ( y < 0 || y >= LevelDimensions.y )
                 return false;
