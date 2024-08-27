@@ -286,7 +286,9 @@ MonoBehaviour:
   maxEdgeWeight: 10
   DraftLook: 0
   UseMeshes: 0
-  StepWiseGrow: 1
+  UseWireMeshes: 0
+  breakPoint: 0
+  StepWiseGrow: 0
   GrowSteps: 492
 --- !u!4 &791758686
 Transform:
