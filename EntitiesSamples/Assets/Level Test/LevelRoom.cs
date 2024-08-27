@@ -1,10 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class LevelRoom 
+public class LevelRoom: IDisposable
 {
     private static readonly int2 Int2One = new int2(1,1);
     private int _wallThickness;
@@ -14,17 +16,22 @@ public class LevelRoom
     
     private int _id;
     private Color _debugColor;
-    private int4 _bounds;
+    private IntBounds _bounds;
     private int2 _sizeRatio;
     private int2 _graphPosition;
 
     private List<int2> _xGrowthDirections;
     private List<int2> _yGrowthDirections;
+    private NativeList<LevelCell> _cells;
+    
     private Dictionary<int, List<LevelConnection>> _roomConnections;
     
 
     public Mesh Mesh;
-    
+
+
+    public NativeList<LevelCell> Cells => _cells;
+
     public List<int2> XGrowthDirections
     {
         get => _xGrowthDirections;
@@ -36,17 +43,16 @@ public class LevelRoom
         get => _yGrowthDirections;
         set => _yGrowthDirections = value;
     }
+    
 
-    public int2 Size=> _bounds.zw - _bounds.xy + Int2One;
-
-    public int2 Origin => _bounds.xy;
-
-    public int4 Bounds//(X,Y,Z,W)
+    public IntBounds Bounds//(X,Y,Z,W)
     {
         get => _bounds;
         set => _bounds = value;
     }
 
+    public int2 Origin => _bounds.Origin;
+    public int2 Size => _bounds.Size;
     public int2 SizeRatio => _sizeRatio;
 
     public int2 GraphPosition => _graphPosition;
@@ -71,7 +77,13 @@ public class LevelRoom
         _material = mat;
         _growthType = growthType;
         _graphPosition = graphPosition;
-        _bounds = new int4(origin, origin+size - Int2One);
+        
+        _cells = new NativeList<LevelCell>(10, Allocator.Persistent);
+        _cells.Add( new LevelCell(origin, origin+size) );
+        //_bounds = new IntBounds(origin, origin+size - Int2One);
+        _bounds = new IntBounds(origin, origin+size);
+        
+        
         _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;
         _weight = weight;
@@ -81,8 +93,17 @@ public class LevelRoom
         _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
     }
 
+    
+    
+    
     private bool CheckCanGrow()
     {
         return (_xGrowthDirections.Count + _yGrowthDirections.Count) > 0;
+    }
+
+    public void Dispose()
+    {
+        if(_cells.IsCreated)
+            _cells.Dispose();
     }
 }

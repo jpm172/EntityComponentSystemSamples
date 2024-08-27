@@ -17,18 +17,7 @@ public class LevelGeneratorEditor : Editor
         {
             level.GenerateLevel();
         }
-        if (GUILayout.Button("Grow Rooms")) 
-        {
-            level.GrowRooms();
-        }
-        if (GUILayout.Button("Make Room Meshes")) 
-        {
-            level.MakeRoomMeshes();
-        }
-        if (GUILayout.Button("Paint Walls")) 
-        {
-            level.PaintWalls();
-        }
+
         
 
     }

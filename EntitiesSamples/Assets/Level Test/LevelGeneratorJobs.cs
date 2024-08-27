@@ -9,7 +9,7 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
-
+/*
     [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
@@ -131,11 +131,6 @@ using UnityEngine;
         }
     }
 
-public struct LevelCell
-{
-    public int2 Cell;
-    public int Index;
-}
 
     [BurstCompile]
     public struct LevelApplyGrowthResultJob : IJobParallelFor
@@ -536,4 +531,5 @@ public struct LevelCell
         }
 
     }
+    */
 
