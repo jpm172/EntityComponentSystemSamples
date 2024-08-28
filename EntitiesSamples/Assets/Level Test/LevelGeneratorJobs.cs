@@ -10,22 +10,83 @@ using Unity.Transforms;
 using UnityEngine;
 
 
+[BurstCompile]
 public struct BroadPhaseQueryJob : IJobParallelFor
 {
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
     [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
-    [ReadOnly] public IntBounds RoomBounds;
     [ReadOnly] public int RoomId;
 
-    public NativeList<int>.ParallelWriter Collisions;
+    public NativeQueue<LevelBroadCollision>.ParallelWriter Collisions;
     
     public void Execute( int index )
     {
         int otherId = index + 1;
         IntBounds otherBounds = BroadPhaseBounds[otherId];
-            
-        if(RoomBounds.Contains( otherBounds ))
-            Collisions.AddNoResize( otherId );
+        CheckCollisions( otherId, otherBounds );
     }
+    
+    
+    private void CheckCollisions( int otherId, IntBounds otherBounds )
+    {
+        NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
+        
+        while ( cells.MoveNext() )
+        {
+            if ( cells.Current.Bounds.Contains( otherBounds ) )
+            {
+                LevelBroadCollision newCol = new LevelBroadCollision
+                {
+                    CollisionRoomId = otherId,
+                    OriginCell = cells.Current
+                };
+                Collisions.Enqueue( newCol );
+            }
+        }
+    }
+    
+}
+
+
+public struct NarrowPhaseQueryJob : IJobParallelFor
+{
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
+    [ReadOnly] public NativeList<int> Collisions;
+    [ReadOnly] public IntBounds CellBounds;
+    [ReadOnly] public int RoomId;
+
+    public NativeQueue<LevelCollision>.ParallelWriter NarrowCollisions;
+    public void Execute( int index )
+    {
+        int otherId = Collisions[index];
+        
+        CheckCollisions( otherId  );
+
+    }
+
+    private void CheckCollisions( int otherId )
+    {
+        NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( otherId );
+        
+        while ( cells.MoveNext() )
+        {
+            if ( CellBounds.Contains( cells.Current.Bounds ) )
+            {
+                LevelCollision newCol = new LevelCollision
+                {
+                    CollisionRoomId = otherId,
+                    CollisionCell = cells.Current
+                };
+                NarrowCollisions.Enqueue( newCol );
+            }
+        }
+    }
+}
+
+public struct LevelBroadCollision
+{
+    public int CollisionRoomId;
+    public LevelCell OriginCell;
 }
 
 /*

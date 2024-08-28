@@ -28,8 +28,12 @@ public partial class LevelGenerator : MonoBehaviour
     private List<LevelWall> _walls;
     private LevelRoom[] _rooms;
 
+    //cell variables
     private NativeHashMap<int, IntBounds> _broadPhaseBounds;
+    private NativeParallelMultiHashMap<int, LevelCell> _narrowPhaseBounds;
 
+    private int _nextCellId = 1;
+    
     //seeding variables
     public bool useSeed;
     [SerializeField]
@@ -42,6 +46,7 @@ public partial class LevelGenerator : MonoBehaviour
     private int _maxRoomSeedSize = 60;
     [SerializeField]
     private int _seedBuffer = 20;
+
 
     //dijkstas variables
     private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
@@ -109,15 +114,20 @@ public partial class LevelGenerator : MonoBehaviour
         
         foreach ( LevelRoom room in _rooms )
         {
-            foreach ( LevelCell cell in room.Cells )
+
+            NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
+
+            while ( cells.MoveNext() )
             {
-                 Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
-                 pos /= GameSettings.PixelsPerUnit;
-                 Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                LevelCell cell = cells.Current;
+                Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                pos /= GameSettings.PixelsPerUnit;
+                Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
                  
-                 Gizmos.color = room.DebugColor;
-                 Gizmos.DrawCube( pos, size );
+                Gizmos.color = room.DebugColor;
+                Gizmos.DrawCube( pos, size );
             }
+            
         }
 
         /*
@@ -152,6 +162,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void GenerateLevel()
     {
+        _nextCellId = 1;
         _counter = 0;
         if ( useSeed )
             Random.seed = seed;
@@ -350,8 +361,9 @@ public partial class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+
+        _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
-        
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;
@@ -380,7 +392,9 @@ public partial class LevelGenerator : MonoBehaviour
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _edgeDictionary[index] = new List<LevelEdge>();
+                
                 _broadPhaseBounds[room.Id] = room.Bounds;
+                AddCell( room, room.Bounds.Bounds );
 
                 //add all growth directions to the room
                 int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
@@ -388,14 +402,18 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 room.XGrowthDirections.AddRange( xGrow );
                 room.YGrowthDirections.AddRange( yGrow );
-                
-                
             }
             
         }
         
         //create the level array and seed it with the rooms  
         dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
+    }
+
+    private void AddCell(LevelRoom room, int4 cellBounds)
+    {
+        _narrowPhaseBounds.Add( room.Id, new LevelCell(_nextCellId, cellBounds) );
+        _nextCellId++;
     }
     
 
@@ -655,10 +673,7 @@ public partial class LevelGenerator : MonoBehaviour
     private void CleanUp()
     {
         _broadPhaseBounds.Dispose();
-        foreach ( LevelRoom room in _rooms )
-        {
-            room.Dispose();
-        }
+        _narrowPhaseBounds.Dispose();
     }
 }
 

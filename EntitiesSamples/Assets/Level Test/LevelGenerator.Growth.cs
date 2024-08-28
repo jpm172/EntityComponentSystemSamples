@@ -29,11 +29,6 @@ public void GrowRooms()
 }
 
 
-
-
-
-
-
 private void MainGrow()
 {
     _totalSteps = 0;
@@ -89,23 +84,53 @@ private void GrowRoom( LevelRoom room )
 
 private void NormalGrow( LevelRoom room, int2 growthDirection )
 {
-
-    NativeList<int> collisions = new NativeList<int>(_rooms.Length, Allocator.TempJob);
+    
+    
+    NativeQueue<LevelBroadCollision> collisions = new NativeQueue<LevelBroadCollision>( Allocator.TempJob);
     BroadPhaseQueryJob broadPhase = new BroadPhaseQueryJob
     {
-        RoomBounds = room.Bounds,
         RoomId = room.Id,
         BroadPhaseBounds = _broadPhaseBounds,
+        NarrowPhaseBounds = _narrowPhaseBounds,
         Collisions = collisions.AsParallelWriter()
     };
     
     JobHandle broadPhaseHandle = broadPhase.Schedule(_rooms.Length, 8);
     broadPhaseHandle.Complete();
 
-    foreach ( int col in collisions )
+
+    if ( collisions.Count > 0 )
     {
-        Debug.Log( $"{room.Id} collided with {col}" );
+        foreach ( int col in collisions )
+        {
+            Debug.Log( $"{room.Id} collided with {col}" );
+        }
+        
+        NativeQueue<LevelCollision> narrowCollisions = new NativeQueue<LevelCollision>(Allocator.TempJob);
+        
+        NarrowPhaseQueryJob narrowPhase = new NarrowPhaseQueryJob
+        {
+            Collisions = collisions,
+            CellBounds = room.Bounds,
+            NarrowCollisions = narrowCollisions.AsParallelWriter(),
+            NarrowPhaseBounds = _narrowPhaseBounds,
+            RoomId = room.Id
+        };
+        
+        JobHandle narrowPhaseHandle = broadPhase.Schedule(collisions.Length, 32);
+        narrowPhaseHandle.Complete();
+
+        if ( narrowCollisions.Count > 0 )
+        {
+            while ( narrowCollisions.TryDequeue( out LevelCollision col ) )
+            {
+                Debug.Log( $"Collided with -> {col.CollisionRoomId}:{col.CollisionCell}" );
+            }
+        }
+
+        narrowCollisions.Dispose();
     }
+    
     
     collisions.Dispose();
     /*

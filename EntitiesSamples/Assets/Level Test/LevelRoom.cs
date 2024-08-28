@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class LevelRoom: IDisposable
+public class LevelRoom
 {
     private static readonly int2 Int2One = new int2(1,1);
     private int _wallThickness;
@@ -22,15 +22,13 @@ public class LevelRoom: IDisposable
 
     private List<int2> _xGrowthDirections;
     private List<int2> _yGrowthDirections;
-    private NativeList<LevelCell> _cells;
-    
+
     private Dictionary<int, List<LevelConnection>> _roomConnections;
     
 
     public Mesh Mesh;
 
-
-    public NativeList<LevelCell> Cells => _cells;
+    
 
     public List<int2> XGrowthDirections
     {
@@ -78,12 +76,8 @@ public class LevelRoom: IDisposable
         _growthType = growthType;
         _graphPosition = graphPosition;
         
-        _cells = new NativeList<LevelCell>(10, Allocator.Persistent);
-        _cells.Add( new LevelCell(origin, origin+size) );
         _bounds = new IntBounds(origin, origin+size - Int2One);
-        //_bounds = new IntBounds(origin, origin+size);
-        
-        
+
         _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;
         _weight = weight;
@@ -101,9 +95,5 @@ public class LevelRoom: IDisposable
         return (_xGrowthDirections.Count + _yGrowthDirections.Count) > 0;
     }
 
-    public void Dispose()
-    {
-        if(_cells.IsCreated)
-            _cells.Dispose();
-    }
+
 }

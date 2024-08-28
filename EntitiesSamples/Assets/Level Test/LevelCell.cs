@@ -6,14 +6,22 @@ using UnityEngine;
 public struct LevelCell
 {
     public IntBounds Bounds;
+    
+    public int CellId;
 
     public int2 Origin => Bounds.Origin;
     public int2 Size => Bounds.Size;
 
-    public LevelCell( int2 xy, int2 zw )
+    public LevelCell( int id, int2 xy, int2 zw )
     {
+        CellId = id;
         Bounds = new IntBounds(xy, zw);
-        
+    }
+    
+    public LevelCell( int id, int4 xyzw )
+    {
+        CellId = id;
+        Bounds = new IntBounds(xyzw);
     }
 }
 
@@ -28,6 +36,11 @@ public struct IntBounds
     public IntBounds( int2 xy, int2 zw )
     {
         Bounds = new int4(xy, zw);
+    }
+    
+    public IntBounds( int4 xyzw )
+    {
+        Bounds = xyzw;
     }
     
     public bool Contains( IntBounds otherBounds)
