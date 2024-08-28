@@ -12,18 +12,18 @@ public partial class LevelGenerator
     private int _counter = 0;
     private int _totalSteps = 0;
     
-/*
+
 public bool StepWiseGrow;
 public int GrowSteps;
 public void GrowRooms()
 {
     if ( StepWiseGrow )
     {
-        StepMainPathGrow();
+        //StepMainGrow();
     }
     else
     {
-        MainPathGrow();
+        MainGrow();
     }
     
 }
@@ -32,37 +32,17 @@ public void GrowRooms()
 
 
 
-private void StepMainPathGrow()
+
+
+private void MainGrow()
 {
     _totalSteps = 0;
     bool hasPath = false;
-    while ( _totalSteps < GrowSteps )
+    while ( !hasPath && _totalSteps < 1  )
     {
         LevelRoom room = _rooms[_counter];
         int connections = _edgeDictionary[_counter].Count;
-        GrowRoomPath( room );
-
-
-        if ( connections != _edgeDictionary[_counter].Count )
-        {
-            hasPath = HasPath( _counter );
-        }
-
-        _counter = ( _counter + 1 ) % _rooms.Length;
-        _totalSteps++;
-    }
-    MakeRoomMeshes();
-}
-
-private void MainPathGrow()
-{
-    _totalSteps = 0;
-    bool hasPath = false;
-    while ( !hasPath  )
-    {
-        LevelRoom room = _rooms[_counter];
-        int connections = _edgeDictionary[_counter].Count;
-        GrowRoomPath( room );
+        GrowRoom( room );
 
 
         if ( connections != _edgeDictionary[_counter].Count )
@@ -74,14 +54,11 @@ private void MainPathGrow()
         _totalSteps++;
     }
     
-    MakeRoomMeshes();
-    
-    
+    //MakeRoomMeshes();
 }
 
 
-
-private void GrowRoomPath( LevelRoom room )
+private void GrowRoom( LevelRoom room )
 {
     
     if ( !room.CanGrow )
@@ -92,11 +69,12 @@ private void GrowRoomPath( LevelRoom room )
         int2 growthDirection = GetRandomGrowthDirection( room );
         
         //for( int n = 0; n < 1; n++ )
-        for ( int n = 0; n < _minRoomSeedSize; n++ )
+        //for ( int n = 0; n < _minRoomSeedSize; n++ )
+        for( int n = 0; n < 1; n++ )
         {
             int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
             
-            NormalGrowPath( room, growthDirection );
+            NormalGrow( room, growthDirection );
             
             if ( room.XGrowthDirections.Count + room.YGrowthDirections.Count != dirsBefore )
                 return;
@@ -107,6 +85,141 @@ private void GrowRoomPath( LevelRoom room )
         //TODO implement mold growth
     }
 }
+
+
+private void NormalGrow( LevelRoom room, int2 growthDirection )
+{
+
+    NativeList<int> collisions = new NativeList<int>(_rooms.Length, Allocator.TempJob);
+    BroadPhaseQueryJob broadPhase = new BroadPhaseQueryJob
+    {
+        RoomBounds = room.Bounds,
+        RoomId = room.Id,
+        BroadPhaseBounds = _broadPhaseBounds,
+        Collisions = collisions.AsParallelWriter()
+    };
+    
+    JobHandle broadPhaseHandle = broadPhase.Schedule(_rooms.Length, 8);
+    broadPhaseHandle.Complete();
+
+    foreach ( int col in collisions )
+    {
+        Debug.Log( $"{room.Id} collided with {col}" );
+    }
+    
+    collisions.Dispose();
+    /*
+    //NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
+    NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
+    LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
+    {
+        GrowthDirection = growthDirection,
+        Required = _minRoomSeedSize + (room.WallThickness*2),
+        LevelDimensions = dimensions,
+        LevelLayout = _levelLayout,
+        RoomId = room.Id,
+        RoomSize = room.Size,
+        RoomOrigin = room.Origin,
+        NewCells = newCells.AsParallelWriter()
+    };
+    
+    
+    JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 32);
+    handle.Complete();
+
+    bool removeDirection = false;
+    //if we added cells, playback the results to paint them onto the level
+    if ( newCells.Count > 0 )
+    {
+        NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
+        NativeQueue<int2> localMinima = new NativeQueue<int2>(Allocator.TempJob);
+        NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
+        //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
+
+        //NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
+        NativeArray<LevelCell> newCellsArray = newCells.ToArray( Allocator.TempJob );
+        
+        LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
+        {
+            LevelLayout = _levelLayout,
+            LevelDimensions = dimensions,
+            Neighbors = newNeighbors.AsParallelWriter(),
+            LocalMinima = localMinima.AsParallelWriter(),
+            LocalMaxima = localMaxima.AsParallelWriter(),
+            NewCells = newCellsArray,
+            RoomId = room.Id,
+            RoomBounds = room.Bounds
+        };
+        
+        JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
+        applyHandle.Complete();
+
+        if ( localMinima.Count + localMaxima.Count > 0 )
+        {
+            //if(room.Id == 3)
+               // Debug.Log( $"{room.Bounds} : {room.Size}" );
+            ResizeRoom( room, localMinima, localMaxima );
+           // if(room.Id == 3)
+                //Debug.Log( $"{room.Bounds} : {room.Size}" );
+        }
+
+        localMaxima.Dispose();
+        localMinima.Dispose();
+        newCellsArray.Dispose();
+
+        
+        if ( newNeighbors.Count > 0 )
+        {
+            HashSet<int> checkedNeighbors = new HashSet<int>();
+            NativeArray<LevelConnection> neighborArray = newNeighbors.ToArray( Allocator.TempJob );
+            //go through each neighbor, and if it can form a valid connection to the neighbor, mark it as a new edge in the level
+            for ( int i = 0; i < neighborArray.Length; i++ )
+            {
+                int neighborIndex = neighborArray[i].RoomId-1;
+                if(checkedNeighbors.Contains( neighborIndex ))
+                    continue;
+
+                checkedNeighbors.Add( neighborIndex );
+                
+                LevelEdge check = new LevelEdge
+                {
+                    Source = room.Index,
+                    Destination = neighborIndex
+                };
+                if ( !_edgeDictionary[room.Index].Contains( check ) && IsValidConnection(room, _rooms[neighborIndex], neighborArray))
+                {
+                    SetNeighbors( room.Index, neighborIndex, room.Weight );
+                }
+            }
+
+            neighborArray.Dispose();
+        }
+        
+        newNeighbors.Dispose();
+    }
+    else
+    {
+        removeDirection = true;
+    }
+
+    if ( removeDirection )
+    {
+        //if it didn't grow in the current direction, remove it from the list of valid growth directions
+        if ( math.abs( growthDirection.x ) > math.abs( growthDirection.y ) )
+        {
+            room.XGrowthDirections.Remove( growthDirection );
+        }
+        else
+        {
+            room.YGrowthDirections.Remove( growthDirection );
+        }
+    }
+
+    newCells.Dispose();
+    */
+    
+}
+
 
 private int2 GetRandomGrowthDirection( LevelRoom room )
 {
@@ -142,6 +255,35 @@ private int2 GetRandomGrowthDirection( LevelRoom room )
     return room.YGrowthDirections[rand];
     
 }
+
+
+
+
+/*
+
+private void StepMainPathGrow()
+{
+    _totalSteps = 0;
+    bool hasPath = false;
+    while ( _totalSteps < GrowSteps )
+    {
+        LevelRoom room = _rooms[_counter];
+        int connections = _edgeDictionary[_counter].Count;
+        GrowRoomPath( room );
+
+
+        if ( connections != _edgeDictionary[_counter].Count )
+        {
+            hasPath = HasPath( _counter );
+        }
+
+        _counter = ( _counter + 1 ) % _rooms.Length;
+        _totalSteps++;
+    }
+    MakeRoomMeshes();
+}
+
+
 
 private void NormalGrowPath( LevelRoom room, int2 growthDirection )
 {

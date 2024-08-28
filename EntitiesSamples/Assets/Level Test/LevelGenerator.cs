@@ -27,8 +27,8 @@ public partial class LevelGenerator : MonoBehaviour
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
     private LevelRoom[] _rooms;
-    
 
+    private NativeHashMap<int, IntBounds> _broadPhaseBounds;
 
     //seeding variables
     public bool useSeed;
@@ -54,6 +54,11 @@ public partial class LevelGenerator : MonoBehaviour
     public bool DraftLook;
     public bool UseMeshes;
     public bool UseWireMeshes;
+
+    public bool TestCase;
+
+    public int2[] TestPositions;
+    public int2[] TestSizes;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -96,7 +101,12 @@ public partial class LevelGenerator : MonoBehaviour
         }
         */
         
-
+        Gizmos.color = Color.black;
+        Vector3 dimPos = new Vector3(dimensions.x, dimensions.y)/2;
+        dimPos /= GameSettings.PixelsPerUnit;
+        Vector3 dimSize = new Vector3( dimensions.x, dimensions.y ) / GameSettings.PixelsPerUnit;
+        Gizmos.DrawWireCube( dimPos, dimSize );
+        
         foreach ( LevelRoom room in _rooms )
         {
             foreach ( LevelCell cell in room.Cells )
@@ -145,7 +155,14 @@ public partial class LevelGenerator : MonoBehaviour
         _counter = 0;
         if ( useSeed )
             Random.seed = seed;
-        
+
+
+        if ( TestCase )
+        {
+            TestInitializeLevel();
+            return;
+        }
+            
         
         InitializeLevel();
         //VerifySeeds();
@@ -258,7 +275,7 @@ public partial class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
-
+        _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -289,11 +306,17 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
-
+/*
+                roomSize += new int2( 
+                    Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ),
+                    Random.Range( _minRoomSeedSize + (wallThickness*2), _maxRoomSeedSize + (wallThickness*2) + 1 ) );
+                    */
+                
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _edgeDictionary[index] = new List<LevelEdge>();
-                
+                _broadPhaseBounds[room.Id] = room.Bounds;
+
                 //add all growth directions to the room
                 int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
                 int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};
@@ -311,6 +334,70 @@ public partial class LevelGenerator : MonoBehaviour
         //create the level array and seed it with the rooms  
         dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
     }
+
+    private void TestInitializeLevel()
+    {
+        layoutDimensions.x = 2;
+        layoutDimensions.y = 1;
+        int count = layoutDimensions.x * layoutDimensions.y;
+        
+        if ( _rooms != null )
+        {
+            CleanUp();
+        }
+        
+        _floors = new List<LevelFloor>();
+        _walls = new List<LevelWall>();
+        _rooms = new LevelRoom[count];
+        _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
+        
+        
+        int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
+        int adjustedBuffer = _seedBuffer + _maxWallThickness;
+        
+        //create the rooms and randomly shuffle them around, but while making sure they are still aligned with their neighbors
+        for ( int x = 0; x < layoutDimensions.x; x++ )
+        {
+            for ( int y = 0; y < layoutDimensions.y; y++ )
+            {
+                int index = x + y * layoutDimensions.x;
+                
+                //set the room's initial variables
+                int wallThickness = Random.Range( _minWallThickness, _maxWallThickness + 1 );
+                //int wallThickness =  (((x+y)%2 ) * _maxWallThickness ) + _minWallThickness;
+                int weight = Random.Range( minEdgeWeight, maxEdgeWeight + 1 );
+
+                int2 roomSize = TestSizes[index];
+                
+                int2 roomSizeRatio = new int2( Random.Range( 1, 11 ), Random.Range( 1, 11 ) );
+                int2 graphPosition = new int2(x,y);
+                int2 roomOrigin = TestPositions[index];
+
+                LevelMaterial mat = GetRandomRoomMaterial();
+                LevelGrowthType growthType = LevelGrowthType.Normal;
+
+                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
+                _rooms[index] = room;
+                _edgeDictionary[index] = new List<LevelEdge>();
+                _broadPhaseBounds[room.Id] = room.Bounds;
+
+                //add all growth directions to the room
+                int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
+                int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};
+                
+                room.XGrowthDirections.AddRange( xGrow );
+                room.YGrowthDirections.AddRange( yGrow );
+                
+                
+            }
+            
+        }
+        
+        //create the level array and seed it with the rooms  
+        dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
+    }
+    
 
     private void SetNeighbors( int room1, int room2, int weight )
     {
@@ -405,7 +492,6 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void MakeWalls()
     {
-        
         int blockSize = 4;
         for ( int x = 0; x < dimensions.x; x++ )
         {
@@ -568,6 +654,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void CleanUp()
     {
+        _broadPhaseBounds.Dispose();
         foreach ( LevelRoom room in _rooms )
         {
             room.Dispose();

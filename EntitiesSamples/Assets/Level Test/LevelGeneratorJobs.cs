@@ -9,6 +9,25 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
+
+public struct BroadPhaseQueryJob : IJobParallelFor
+{
+    [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
+    [ReadOnly] public IntBounds RoomBounds;
+    [ReadOnly] public int RoomId;
+
+    public NativeList<int>.ParallelWriter Collisions;
+    
+    public void Execute( int index )
+    {
+        int otherId = index + 1;
+        IntBounds otherBounds = BroadPhaseBounds[otherId];
+            
+        if(RoomBounds.Contains( otherBounds ))
+            Collisions.AddNoResize( otherId );
+    }
+}
+
 /*
     [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor

@@ -13,6 +13,7 @@ public struct LevelCell
     public LevelCell( int2 xy, int2 zw )
     {
         Bounds = new IntBounds(xy, zw);
+        
     }
 }
 

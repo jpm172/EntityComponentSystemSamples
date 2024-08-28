@@ -80,8 +80,8 @@ public class LevelRoom: IDisposable
         
         _cells = new NativeList<LevelCell>(10, Allocator.Persistent);
         _cells.Add( new LevelCell(origin, origin+size) );
-        //_bounds = new IntBounds(origin, origin+size - Int2One);
-        _bounds = new IntBounds(origin, origin+size);
+        _bounds = new IntBounds(origin, origin+size - Int2One);
+        //_bounds = new IntBounds(origin, origin+size);
         
         
         _sizeRatio = sizeRatio;

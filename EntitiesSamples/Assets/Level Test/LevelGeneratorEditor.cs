@@ -17,6 +17,10 @@ public class LevelGeneratorEditor : Editor
         {
             level.GenerateLevel();
         }
+        if (GUILayout.Button("Grow Rooms")) 
+        {
+            level.GrowRooms();
+        }
 
         
 
