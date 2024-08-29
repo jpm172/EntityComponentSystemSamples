@@ -28,6 +28,11 @@ public struct LevelCell
     {
         return CellId.GetHashCode();
     }
+
+    public override string ToString()
+    {
+        return Bounds.ToString();
+    }
 }
 
 public struct IntBounds
@@ -61,5 +66,10 @@ public struct IntBounds
 
         return true;
 
+    }
+
+    public override string ToString()
+    {
+        return Bounds.ToString();
     }
 }

@@ -17,26 +17,31 @@ public struct LevelGrowQueryJob : IJobParallelFor
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
     [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
+    [ReadOnly] public int2 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
     public void Execute( int index )
     {
         LevelCell cell = GetCell( index );
+        LevelCell potentialCell = ApplyGrowth( cell );
 
+        Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
+        
         NativeHashMap<int, IntBounds>.Enumerator broadPhase = BroadPhaseBounds.GetEnumerator();
 
         while ( broadPhase.MoveNext() )
         {
-            if ( broadPhase.Current.Value.Contains( cell.Bounds ) )
+            if ( broadPhase.Current.Value.Contains( potentialCell.Bounds ) )
             {
                 Debug.Log( $"broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
-                NarrowPhaseCheck(broadPhase.Current.Key, cell);
+                NarrowPhaseCheck(broadPhase.Current.Key, potentialCell);
             }
         }
         
         broadPhase.Dispose();
 
     }
+    
 
     private void NarrowPhaseCheck( int collisionRoomId, LevelCell cell )
     {
@@ -64,12 +69,47 @@ public struct LevelGrowQueryJob : IJobParallelFor
         while ( cells.MoveNext() )
         {
             if ( counter == index )
+            {
                 return cells.Current;
+            }
+                
             counter++;
         }
         
         return new LevelCell();
     }
+
+    private LevelCell ApplyGrowth( LevelCell cell )
+    {
+
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.x + GrowthDirection.x;
+            }
+            else
+            {
+                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.z + GrowthDirection.x;
+            }
+            
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.y + GrowthDirection.y;
+            }
+            else
+            {
+                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.w + GrowthDirection.y;
+            }
+            
+        }
+        
+        return cell;
+    }
+        
 }
 
 

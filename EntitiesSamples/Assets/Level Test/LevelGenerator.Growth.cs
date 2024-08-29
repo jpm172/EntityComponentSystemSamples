@@ -62,7 +62,7 @@ private void GrowRoom( LevelRoom room )
     if ( room.GrowthType == LevelGrowthType.Normal )
     {
         int2 growthDirection = GetRandomGrowthDirection( room );
-        
+        growthDirection = new int2(1,0);
         //for( int n = 0; n < 1; n++ )
         //for ( int n = 0; n < _minRoomSeedSize; n++ )
         for( int n = 0; n < 1; n++ )
@@ -89,12 +89,14 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
 
     
+    
 
     LevelGrowQueryJob growQueryJob = new LevelGrowQueryJob
     {
         BroadPhaseBounds = _broadPhaseBounds,
         Collisions = collisionResults.AsParallelWriter(),
         NarrowPhaseBounds = _narrowPhaseBounds,
+        GrowthDirection = growthDirection,
         RoomId = room.Id
     };
 
@@ -103,7 +105,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
     if ( !collisionResults.IsEmpty )
     {
-        Debug.Log( "collision!" );
+        
     }
     
     collisionResults.Dispose();
