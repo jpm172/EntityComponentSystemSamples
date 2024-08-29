@@ -394,7 +394,7 @@ public partial class LevelGenerator : MonoBehaviour
                 _edgeDictionary[index] = new List<LevelEdge>();
                 
                 _broadPhaseBounds[room.Id] = room.Bounds;
-                AddCell( room, room.Bounds.Bounds );
+                AddCell( room, roomOrigin, roomSize );
 
                 //add all growth directions to the room
                 int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
@@ -410,10 +410,11 @@ public partial class LevelGenerator : MonoBehaviour
         dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
     }
 
-    private void AddCell(LevelRoom room, int4 cellBounds)
+    private void AddCell(LevelRoom room, int2 origin, int2 size)
     {
-        _narrowPhaseBounds.Add( room.Id, new LevelCell(_nextCellId, cellBounds) );
+        _narrowPhaseBounds.Add( room.Id, new LevelCell(_nextCellId, origin, size) );
         _nextCellId++;
+        room.CellCount++;
     }
     
 

@@ -15,6 +15,7 @@ public class LevelRoom
     private LevelGrowthType _growthType; 
     
     private int _id;
+    private int _cellCount;
     private Color _debugColor;
     private IntBounds _bounds;
     private int2 _sizeRatio;
@@ -41,7 +42,12 @@ public class LevelRoom
         get => _yGrowthDirections;
         set => _yGrowthDirections = value;
     }
-    
+
+    public int CellCount
+    {
+        get => _cellCount;
+        set => _cellCount = value;
+    }
 
     public IntBounds Bounds//(X,Y,Z,W)
     {
@@ -71,12 +77,13 @@ public class LevelRoom
 
     public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, int weight, LevelGrowthType growthType )
     {
+        _cellCount = 0;
         _id = id;
         _material = mat;
         _growthType = growthType;
         _graphPosition = graphPosition;
-        
-        _bounds = new IntBounds(origin, origin+size - Int2One);
+
+        _bounds = new IntBounds(origin, size);
 
         _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;

@@ -87,55 +87,27 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
+
     
-    NativeQueue<LevelBroadCollision> collisions = new NativeQueue<LevelBroadCollision>( Allocator.TempJob);
-    BroadPhaseQueryJob broadPhase = new BroadPhaseQueryJob
+
+    LevelGrowQueryJob growQueryJob = new LevelGrowQueryJob
     {
-        RoomId = room.Id,
         BroadPhaseBounds = _broadPhaseBounds,
+        Collisions = collisionResults.AsParallelWriter(),
         NarrowPhaseBounds = _narrowPhaseBounds,
-        Collisions = collisions.AsParallelWriter()
+        RoomId = room.Id
     };
-    
-    JobHandle broadPhaseHandle = broadPhase.Schedule(_rooms.Length, 8);
-    broadPhaseHandle.Complete();
 
+    JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount, 16 );
+    growQueryHandle.Complete();
 
-    if ( collisions.Count > 0 )
+    if ( !collisionResults.IsEmpty )
     {
-
-        NativeQueue<LevelNarrowCollision> narrowCollisions = new NativeQueue<LevelNarrowCollision>(Allocator.TempJob);
-        NativeArray<LevelBroadCollision> broadCollisions = collisions.ToArray( Allocator.TempJob );
-        
-        NarrowPhaseQueryJob narrowPhase = new NarrowPhaseQueryJob
-        {
-            Collisions = broadCollisions,
-            CellBounds = room.Bounds,
-            NarrowCollisions = narrowCollisions.AsParallelWriter(),
-            NarrowPhaseBounds = _narrowPhaseBounds,
-            RoomId = room.Id
-        };
-        
-        JobHandle narrowPhaseHandle = narrowPhase.Schedule(broadCollisions.Length, 32);
-        narrowPhaseHandle.Complete();
-
-        if ( narrowCollisions.Count > 0 )
-        {
-            Debug.Log( $"Narrow collision occured" );
-            /*
-            while ( narrowCollisions.TryDequeue( out LevelCollision col ) )
-            {
-                Debug.Log( $"Collided with -> {col.CollisionRoomId}:{col.CollisionCell}" );
-            }
-            */
-        }
-
-        broadCollisions.Dispose();
-        narrowCollisions.Dispose();
+        Debug.Log( "collision!" );
     }
     
-    
-    collisions.Dispose();
+    collisionResults.Dispose();
+
     /*
     //NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
     NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
@@ -245,7 +217,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
     newCells.Dispose();
     */
-    
+
 }
 
 

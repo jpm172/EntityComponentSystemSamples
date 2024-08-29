@@ -29,6 +29,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
         {
             if ( broadPhase.Current.Value.Contains( cell.Bounds ) )
             {
+                Debug.Log( $"broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
                 NarrowPhaseCheck(broadPhase.Current.Key, cell);
             }
         }

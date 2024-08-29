@@ -12,10 +12,10 @@ public struct LevelCell
     public int2 Origin => Bounds.Origin;
     public int2 Size => Bounds.Size;
 
-    public LevelCell( int id, int2 xy, int2 zw )
+    public LevelCell( int id, int2 origin, int2 size )
     {
         CellId = id;
-        Bounds = new IntBounds(xy, zw);
+        Bounds = new IntBounds(origin, size);
     }
     
     public LevelCell( int id, int4 xyzw )
@@ -32,15 +32,16 @@ public struct LevelCell
 
 public struct IntBounds
 {
+    private static int2 Int2One = new int2(1,1);
     public int4 Bounds; //(X, Y, Z, W)
 
     public int2 Origin => Bounds.xy;
-    public int2 Size => Bounds.zw - Bounds.xy;
+    public int2 Size => Bounds.zw - Bounds.xy + Int2One;
 
 
-    public IntBounds( int2 xy, int2 zw )
+    public IntBounds( int2 origin, int2 size )
     {
-        Bounds = new int4(xy, zw);
+        Bounds = new int4(origin, origin + size - Int2One);
     }
     
     public IntBounds( int4 xyzw )
