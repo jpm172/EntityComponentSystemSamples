@@ -85,6 +85,8 @@ private void GrowRoom( LevelRoom room )
 private void NormalGrow( LevelRoom room, int2 growthDirection )
 {
     
+    NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
+        new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
     
     NativeQueue<LevelBroadCollision> collisions = new NativeQueue<LevelBroadCollision>( Allocator.TempJob);
     BroadPhaseQueryJob broadPhase = new BroadPhaseQueryJob
@@ -101,33 +103,34 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
     if ( collisions.Count > 0 )
     {
-        foreach ( int col in collisions )
-        {
-            Debug.Log( $"{room.Id} collided with {col}" );
-        }
-        
-        NativeQueue<LevelCollision> narrowCollisions = new NativeQueue<LevelCollision>(Allocator.TempJob);
+
+        NativeQueue<LevelNarrowCollision> narrowCollisions = new NativeQueue<LevelNarrowCollision>(Allocator.TempJob);
+        NativeArray<LevelBroadCollision> broadCollisions = collisions.ToArray( Allocator.TempJob );
         
         NarrowPhaseQueryJob narrowPhase = new NarrowPhaseQueryJob
         {
-            Collisions = collisions,
+            Collisions = broadCollisions,
             CellBounds = room.Bounds,
             NarrowCollisions = narrowCollisions.AsParallelWriter(),
             NarrowPhaseBounds = _narrowPhaseBounds,
             RoomId = room.Id
         };
         
-        JobHandle narrowPhaseHandle = broadPhase.Schedule(collisions.Length, 32);
+        JobHandle narrowPhaseHandle = narrowPhase.Schedule(broadCollisions.Length, 32);
         narrowPhaseHandle.Complete();
 
         if ( narrowCollisions.Count > 0 )
         {
+            Debug.Log( $"Narrow collision occured" );
+            /*
             while ( narrowCollisions.TryDequeue( out LevelCollision col ) )
             {
                 Debug.Log( $"Collided with -> {col.CollisionRoomId}:{col.CollisionCell}" );
             }
+            */
         }
 
+        broadCollisions.Dispose();
         narrowCollisions.Dispose();
     }
     

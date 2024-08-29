@@ -23,6 +23,11 @@ public struct LevelCell
         CellId = id;
         Bounds = new IntBounds(xyzw);
     }
+
+    public override int GetHashCode()
+    {
+        return CellId.GetHashCode();
+    }
 }
 
 public struct IntBounds

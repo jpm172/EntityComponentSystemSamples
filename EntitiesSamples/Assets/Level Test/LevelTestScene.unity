@@ -287,6 +287,19 @@ MonoBehaviour:
   DraftLook: 0
   UseMeshes: 0
   UseWireMeshes: 0
+  TestCase: 1
+  TestPositions:
+  - x: 0
+    y: 0
+  - x: 20
+    y: 0
+  TestSizes:
+  - x: 20
+    y: 20
+  - x: 20
+    y: 20
+  StepWiseGrow: 0
+  GrowSteps: 0
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0
