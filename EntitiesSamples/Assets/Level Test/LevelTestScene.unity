@@ -291,7 +291,7 @@ MonoBehaviour:
   TestPositions:
   - x: 0
     y: 0
-  - x: 20
+  - x: 21
     y: 0
   TestSizes:
   - x: 20
@@ -299,7 +299,7 @@ MonoBehaviour:
   - x: 20
     y: 20
   StepWiseGrow: 0
-  GrowSteps: 0
+  GrowSteps: 1
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0

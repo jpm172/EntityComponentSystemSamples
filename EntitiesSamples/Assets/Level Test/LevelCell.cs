@@ -33,6 +33,15 @@ public struct LevelCell
     {
         return Bounds.ToString();
     }
+
+    public override bool Equals( object obj )
+    {
+        if ( obj == null )
+            return false;
+
+        LevelCell cell = (LevelCell) obj;
+        return cell.CellId == CellId;
+    }
 }
 
 public struct IntBounds

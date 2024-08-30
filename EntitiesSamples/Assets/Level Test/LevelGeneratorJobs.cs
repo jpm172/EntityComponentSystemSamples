@@ -11,6 +11,80 @@ using UnityEngine;
 
 
 
+public struct LevelCheckCollisionsJob : IJobParallelFor
+{
+
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCollision> Collisions;
+    [ReadOnly] public int RoomId;
+    [ReadOnly] public int2 GrowthDirection;
+
+    public NativeQueue<LevelCell>.ParallelWriter NewCells;
+    public NativeList<LevelCell>.ParallelWriter ChangedCells;
+    
+    public void Execute( int index )
+    {
+        LevelCell cell = GetCell( index );
+
+        if ( !Collisions.ContainsKey( cell.CellId ) )
+        {
+            ChangedCells.AddNoResize( ApplyGrowth( cell ) );
+        }
+        
+        
+        
+    }
+    
+    
+    private LevelCell ApplyGrowth( LevelCell cell )
+    {
+
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                cell.Bounds.Bounds.x += GrowthDirection.x;
+            }
+            else
+            {
+                cell.Bounds.Bounds.z += GrowthDirection.x;
+            }
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                cell.Bounds.Bounds.y += GrowthDirection.y;
+            }
+            else
+            {
+               cell.Bounds.Bounds.w += GrowthDirection.y;
+            }
+        }
+        
+        return cell;
+    }
+    
+    
+    private LevelCell GetCell( int index )
+    {
+        NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
+        
+        int counter = 0;
+        while ( cells.MoveNext() )
+        {
+            if ( counter == index )
+            {
+                return cells.Current;
+            }
+                
+            counter++;
+        }
+        
+        return new LevelCell();
+    }
+}
+
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -23,9 +97,9 @@ public struct LevelGrowQueryJob : IJobParallelFor
     public void Execute( int index )
     {
         LevelCell cell = GetCell( index );
-        LevelCell potentialCell = ApplyGrowth( cell );
+        LevelCell potentialCell = GetPotentialGrowth( cell );
 
-        Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
+        //Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
         
         NativeHashMap<int, IntBounds>.Enumerator broadPhase = BroadPhaseBounds.GetEnumerator();
 
@@ -33,7 +107,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
         {
             if ( broadPhase.Current.Value.Contains( potentialCell.Bounds ) )
             {
-                Debug.Log( $"broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
+                //Debug.Log( $"broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
                 NarrowPhaseCheck(broadPhase.Current.Key, potentialCell);
             }
         }
@@ -53,6 +127,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
             {
                 LevelCollision newCol = new LevelCollision
                 {
+                    Cell = cell,
                     CollidedWith = otherCells.Current,
                     CollisionRoomId = collisionRoomId
                 };
@@ -79,7 +154,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
         return new LevelCell();
     }
 
-    private LevelCell ApplyGrowth( LevelCell cell )
+    private LevelCell GetPotentialGrowth( LevelCell cell )
     {
 
         if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
@@ -116,6 +191,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
 public struct LevelCollision
 {
+    public LevelCell Cell;
     public LevelCell CollidedWith;
     public int CollisionRoomId;
 }

@@ -65,7 +65,7 @@ private void GrowRoom( LevelRoom room )
         growthDirection = new int2(1,0);
         //for( int n = 0; n < 1; n++ )
         //for ( int n = 0; n < _minRoomSeedSize; n++ )
-        for( int n = 0; n < 1; n++ )
+        for( int n = 0; n < GrowSteps; n++ )
         {
             int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
             
@@ -103,11 +103,50 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount, 16 );
     growQueryHandle.Complete();
 
-    if ( !collisionResults.IsEmpty )
+    NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
+    NativeList<LevelCell> changedCells = new NativeList<LevelCell>(room.CellCount, Allocator.TempJob);
+    LevelCheckCollisionsJob checkJob = new LevelCheckCollisionsJob
     {
+        Collisions = collisionResults,
+        GrowthDirection = growthDirection,
+        NarrowPhaseBounds = _narrowPhaseBounds,
+        NewCells = newCells.AsParallelWriter(),
+        ChangedCells = changedCells.AsParallelWriter(),
+        RoomId = room.Id
+    };
+
+
+    JobHandle checkHandle = checkJob.Schedule( room.CellCount, 16 );
+    checkHandle.Complete();
+
+    foreach ( LevelCell cell in changedCells )
+    {
+        _narrowPhaseBounds.TryGetFirstValue( room.Id, out LevelCell fc,
+            out NativeParallelMultiHashMapIterator<int> it );
+
+        if ( fc.Equals( cell ) )
+        {
+            _narrowPhaseBounds.SetValue( cell, it  );
+            continue;
+        }
+
+        while ( _narrowPhaseBounds.TryGetNextValue( out LevelCell c, ref it ) )
+        {
+            if ( c.Equals( cell ) )
+            {
+                _narrowPhaseBounds.SetValue( cell, it  );
+                break;
+            }
+        }
         
+        
+        
+
+        //
     }
-    
+        
+    newCells.Dispose();
+    changedCells.Dispose();
     collisionResults.Dispose();
 
     /*
