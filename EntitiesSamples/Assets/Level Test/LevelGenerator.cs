@@ -56,7 +56,8 @@ public partial class LevelGenerator : MonoBehaviour
     
 
     //gizmos variables
-    public bool DraftLook;
+    public bool Focus;
+    public int FocusOnRoom;
     public bool UseMeshes;
     public bool UseWireMeshes;
 
@@ -111,6 +112,29 @@ public partial class LevelGenerator : MonoBehaviour
         dimPos /= GameSettings.PixelsPerUnit;
         Vector3 dimSize = new Vector3( dimensions.x, dimensions.y ) / GameSettings.PixelsPerUnit;
         Gizmos.DrawWireCube( dimPos, dimSize );
+
+        if ( Focus )
+        {
+            if ( !_narrowPhaseBounds.ContainsKey( FocusOnRoom ) )
+                return;
+
+            LevelRoom room = _rooms[FocusOnRoom - 1];
+            
+            NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
+
+            while ( cells.MoveNext() )
+            {
+                LevelCell cell = cells.Current;
+                Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                pos /= GameSettings.PixelsPerUnit;
+                Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                 
+                Gizmos.color = room.DebugColor;
+                Gizmos.DrawCube( pos, size );
+            }
+            
+            return;
+        }
         
         foreach ( LevelRoom room in _rooms )
         {
@@ -413,6 +437,14 @@ public partial class LevelGenerator : MonoBehaviour
     private void AddCell(LevelRoom room, int2 origin, int2 size)
     {
         _narrowPhaseBounds.Add( room.Id, new LevelCell(_nextCellId, origin, size) );
+        _nextCellId++;
+        room.CellCount++;
+    }
+    
+    private void AddCell(LevelRoom room, LevelCell newCell)
+    {
+        newCell.CellId = _nextCellId;
+        _narrowPhaseBounds.Add( room.Id, newCell );
         _nextCellId++;
         room.CellCount++;
     }

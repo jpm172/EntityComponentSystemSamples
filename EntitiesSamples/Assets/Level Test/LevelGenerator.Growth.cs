@@ -138,11 +138,11 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
                 break;
             }
         }
-        
-        
-        
+    }
 
-        //
+    while ( newCells.TryDequeue( out LevelCell newCell ) )
+    {
+        AddCell( room, newCell );
     }
         
     newCells.Dispose();

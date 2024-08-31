@@ -29,12 +29,63 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         if ( !Collisions.ContainsKey( cell.CellId ) )
         {
             ChangedCells.AddNoResize( ApplyGrowth( cell ) );
+            return;
         }
-        
-        
-        
+
+        ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), GetPotentialGrowth( cell ) );
+
+    }
+
+    private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelCell potentialGrowth)
+    {
+        while ( colEnum.MoveNext() )
+        {
+            IntBounds checkBounds = colEnum.Current.CollidedWith.Bounds;
+            
+            if ( checkBounds.Contains( potentialGrowth.Bounds ) )
+            {
+                //if the potential growth is entirely contained within the cell in collided with,
+                //then just return since there is no other potential cell growth here
+                return;
+            }
+            else
+            {
+                IntBounds cutBounds = potentialGrowth.Bounds.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts );
+                NewCells.Enqueue( new LevelCell(-1, cutBounds.Bounds) );
+            }
+        }
     }
     
+    private LevelCell GetPotentialGrowth( LevelCell cell )
+    {
+
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.x + GrowthDirection.x;
+            }
+            else
+            {
+                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.z + GrowthDirection.x;
+            }
+            
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.y + GrowthDirection.y;
+            }
+            else
+            {
+                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.w + GrowthDirection.y;
+            }
+            
+        }
+        
+        return cell;
+    }
     
     private LevelCell ApplyGrowth( LevelCell cell )
     {
@@ -85,6 +136,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     }
 }
 
+[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -105,7 +157,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
         while ( broadPhase.MoveNext() )
         {
-            if ( broadPhase.Current.Value.Contains( potentialCell.Bounds ) )
+            if ( broadPhase.Current.Value.Overlaps( potentialCell.Bounds ) )
             {
                 //Debug.Log( $"broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
                 NarrowPhaseCheck(broadPhase.Current.Key, potentialCell);
@@ -123,7 +175,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
         while ( otherCells.MoveNext() )
         {
-            if ( otherCells.Current.Bounds.Contains( cell.Bounds ) )
+            if ( otherCells.Current.Bounds.Overlaps( cell.Bounds ) )
             {
                 LevelCollision newCol = new LevelCollision
                 {
@@ -221,7 +273,7 @@ public struct BroadPhaseQueryJob : IJobParallelFor
         
         while ( cells.MoveNext() )
         {
-            if ( cells.Current.Bounds.Contains( otherBounds ) )
+            if ( cells.Current.Bounds.Overlaps( otherBounds ) )
             {
                 LevelBroadCollision newCol = new LevelBroadCollision
                 {
@@ -258,7 +310,7 @@ public struct NarrowPhaseQueryJob : IJobParallelFor
         
         while ( cells.MoveNext() )
         {
-            if ( CellBounds.Contains( cells.Current.Bounds ) )
+            if ( CellBounds.Overlaps( cells.Current.Bounds ) )
             {
                 //NarrowCollisions.Enqueue( newCol );
             }

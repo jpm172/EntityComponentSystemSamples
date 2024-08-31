@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
+using Unity.Physics;
 using UnityEngine;
 
 public struct LevelCell
@@ -63,7 +64,7 @@ public struct IntBounds
         Bounds = xyzw;
     }
     
-    public bool Contains( IntBounds otherBounds)
+    public bool Overlaps( IntBounds otherBounds)
     {
         int4 other = otherBounds.Bounds;
 
@@ -74,7 +75,50 @@ public struct IntBounds
             return false;
 
         return true;
+    }
 
+    public bool Contains( IntBounds otherBounds )
+    {
+        bool x = Bounds.x <= otherBounds.Bounds.x && Bounds.z >= otherBounds.Bounds.z;
+        bool y = Bounds.y <= otherBounds.Bounds.y && Bounds.w >= otherBounds.Bounds.w;
+        
+        return x && y;
+    }
+    
+
+    public IntBounds CutOut( IntBounds otherBounds, out int cuts )
+    {
+        int4 result = Bounds;
+
+        int width = result.z - result.x + 1;
+        int height = result.w - result.y + 1;
+
+        if ( width == 1 )
+        {
+            if ( otherBounds.Bounds.y  > result.y )
+            {
+                result.w = otherBounds.Bounds.y-1;
+            }
+            else if ( otherBounds.Bounds.w < result.w )
+            {
+                result.y = otherBounds.Bounds.w+1;
+            }
+        }
+        
+        if ( height == 1 )
+        {
+            if ( otherBounds.Bounds.x  > result.x )
+            {
+                result.z = otherBounds.Bounds.x-1;
+            }
+            else if ( otherBounds.Bounds.z < result.z )
+            {
+                result.x = otherBounds.Bounds.z+1;
+            }
+        }
+
+        cuts = 1;
+        return new IntBounds(result);
     }
 
     public override string ToString()
