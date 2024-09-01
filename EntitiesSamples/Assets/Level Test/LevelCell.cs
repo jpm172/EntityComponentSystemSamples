@@ -86,15 +86,38 @@ public struct IntBounds
     }
     
 
-    public IntBounds CutOut( IntBounds otherBounds, out int cuts )
+    public IntBounds CutOut( IntBounds otherBounds, out int cuts, out IntBounds cut2 )
     {
         int4 result = Bounds;
+        int4 result2 = Bounds;
+        cuts = 1;
 
         int width = result.z - result.x + 1;
         int height = result.w - result.y + 1;
 
         if ( width == 1 )
         {
+
+            if ( otherBounds.Bounds.y > Bounds.w || otherBounds.Bounds.w < Bounds.y )
+            {
+                cuts = 0;
+                cut2 = new IntBounds(result2);
+                return new IntBounds(result);
+            }
+            
+            bool lowerCut = otherBounds.Bounds.y > result.y;
+            bool upperCut = otherBounds.Bounds.w < result.w;
+
+            if ( lowerCut && upperCut )
+            {
+                result.w = otherBounds.Bounds.y-1;
+                result2.y = otherBounds.Bounds.w + 1;
+                
+                cuts = 2;
+                cut2 = new IntBounds(result2);
+                return new IntBounds(result);
+            }
+            
             if ( otherBounds.Bounds.y  > result.y )
             {
                 result.w = otherBounds.Bounds.y-1;
@@ -107,6 +130,13 @@ public struct IntBounds
         
         if ( height == 1 )
         {
+            if ( otherBounds.Bounds.x > Bounds.z || otherBounds.Bounds.z < Bounds.x )
+            {
+                cuts = 0;
+                cut2 = new IntBounds(result2);
+                return new IntBounds(result);
+            }
+            
             if ( otherBounds.Bounds.x  > result.x )
             {
                 result.z = otherBounds.Bounds.x-1;
@@ -117,7 +147,7 @@ public struct IntBounds
             }
         }
 
-        cuts = 1;
+        cut2 = new IntBounds(result2);
         return new IntBounds(result);
     }
 

@@ -11,6 +11,7 @@ public partial class LevelGenerator
     private int _cornerLimit = 6;
     private int _counter = 0;
     private int _totalSteps = 0;
+    public int2 GrowthOverride;
     
 
 public bool StepWiseGrow;
@@ -62,7 +63,9 @@ private void GrowRoom( LevelRoom room )
     if ( room.GrowthType == LevelGrowthType.Normal )
     {
         int2 growthDirection = GetRandomGrowthDirection( room );
-        growthDirection = new int2(1,0);
+        if ( !GrowthOverride.Equals( int2.zero ) )
+            growthDirection = GrowthOverride;
+
         //for( int n = 0; n < 1; n++ )
         //for ( int n = 0; n < _minRoomSeedSize; n++ )
         for( int n = 0; n < GrowSteps; n++ )
@@ -123,6 +126,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
         _narrowPhaseBounds.TryGetFirstValue( room.Id, out LevelCell fc,
             out NativeParallelMultiHashMapIterator<int> it );
+        UpdateBroadPhase( room, cell );
 
         if ( fc.Equals( cell ) )
         {

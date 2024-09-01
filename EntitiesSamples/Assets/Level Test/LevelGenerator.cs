@@ -117,21 +117,34 @@ public partial class LevelGenerator : MonoBehaviour
         {
             if ( !_narrowPhaseBounds.ContainsKey( FocusOnRoom ) )
                 return;
-
+            
+            
+            
             LevelRoom room = _rooms[FocusOnRoom - 1];
             
             NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
 
+            Vector3 pos;
+            Vector3 size;
             while ( cells.MoveNext() )
             {
                 LevelCell cell = cells.Current;
-                Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
                 pos /= GameSettings.PixelsPerUnit;
-                Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
                  
                 Gizmos.color = room.DebugColor;
                 Gizmos.DrawCube( pos, size );
             }
+            
+            Gizmos.color = Color.black;
+            IntBounds bounds = _broadPhaseBounds[FocusOnRoom];
+                
+            pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
+            pos /= GameSettings.PixelsPerUnit;
+            size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
+
+            Gizmos.DrawWireCube( pos, size );
             
             return;
         }
@@ -141,16 +154,27 @@ public partial class LevelGenerator : MonoBehaviour
 
             NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
 
+            Vector3 pos;
+            Vector3 size;
             while ( cells.MoveNext() )
             {
                 LevelCell cell = cells.Current;
-                Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
                 pos /= GameSettings.PixelsPerUnit;
-                Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
                  
                 Gizmos.color = room.DebugColor;
                 Gizmos.DrawCube( pos, size );
             }
+            
+            Gizmos.color = Color.black;
+            IntBounds bounds = _broadPhaseBounds[room.Id];
+                
+            pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
+            pos /= GameSettings.PixelsPerUnit;
+            size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
+
+            Gizmos.DrawWireCube( pos, size );
             
         }
 
@@ -436,7 +460,10 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void AddCell(LevelRoom room, int2 origin, int2 size)
     {
-        _narrowPhaseBounds.Add( room.Id, new LevelCell(_nextCellId, origin, size) );
+        LevelCell newCell = new LevelCell( _nextCellId, origin, size );
+        UpdateBroadPhase( room, newCell );
+        _narrowPhaseBounds.Add( room.Id, newCell );
+
         _nextCellId++;
         room.CellCount++;
     }
@@ -444,17 +471,29 @@ public partial class LevelGenerator : MonoBehaviour
     private void AddCell(LevelRoom room, LevelCell newCell)
     {
         newCell.CellId = _nextCellId;
+        UpdateBroadPhase( room, newCell );
         _narrowPhaseBounds.Add( room.Id, newCell );
+
         _nextCellId++;
         room.CellCount++;
     }
-    
+
+    private void UpdateBroadPhase( LevelRoom room, LevelCell newCell )
+    {
+        IntBounds bounds = _broadPhaseBounds[room.Id];
+        bounds.Bounds.xy = math.min( newCell.Bounds.Bounds.xy, bounds.Bounds.xy );
+        bounds.Bounds.zw = math.max( newCell.Bounds.Bounds.zw, bounds.Bounds.zw );
+
+        _broadPhaseBounds[room.Id] = bounds;
+    }
 
     private void SetNeighbors( int room1, int room2, int weight )
     {
         _edgeDictionary[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
         _edgeDictionary[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
     }
+    
+    
     
     private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
     {
