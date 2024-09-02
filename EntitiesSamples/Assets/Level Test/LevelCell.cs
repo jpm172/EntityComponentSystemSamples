@@ -97,7 +97,7 @@ public struct IntBounds
 
         if ( width == 1 )
         {
-
+            //if the cut doesnt overlap with the current peice dont make any cuts and return
             if ( otherBounds.Bounds.y > Bounds.w || otherBounds.Bounds.w < Bounds.y )
             {
                 cuts = 0;
@@ -130,6 +130,7 @@ public struct IntBounds
         
         if ( height == 1 )
         {
+            //if the cut doesnt overlap with the current peice dont make any cuts and return
             if ( otherBounds.Bounds.x > Bounds.z || otherBounds.Bounds.z < Bounds.x )
             {
                 cuts = 0;

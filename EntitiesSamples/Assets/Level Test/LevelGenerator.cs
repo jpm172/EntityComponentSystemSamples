@@ -334,6 +334,8 @@ public partial class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        
+        _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
         
         
@@ -374,7 +376,9 @@ public partial class LevelGenerator : MonoBehaviour
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _edgeDictionary[index] = new List<LevelEdge>();
+                
                 _broadPhaseBounds[room.Id] = room.Bounds;
+                AddCell( room, roomOrigin, roomSize );
 
                 //add all growth directions to the room
                 int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
