@@ -448,6 +448,12 @@ public partial class LevelGenerator : MonoBehaviour
                 _broadPhaseBounds[room.Id] = room.Bounds;
                 AddCell( room, roomOrigin, roomSize );
 
+                if ( index+1 == 2 )
+                {
+                    AddCell( room, roomOrigin + new int2(0,5), roomSize );
+                }
+                
+
                 //add all growth directions to the room
                 int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
                 int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};

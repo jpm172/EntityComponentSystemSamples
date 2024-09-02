@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-[BurstCompile]
+//[BurstCompile]
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
@@ -30,8 +30,6 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 
         if ( !Collisions.ContainsKey( cell.CellId ) )
         {
-            //if(RoomId == 1)
-                //Debug.Log( $"Changed Cell {ApplyGrowth( cell )}" );
             ChangedCells.AddNoResize( ApplyGrowth( cell ) );
             return;
         }
@@ -46,29 +44,21 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         while ( colEnum.MoveNext() )
         {
             IntBounds checkBounds = colEnum.Current.CollidedWith.Bounds;
-            
             if ( checkBounds.Contains( result ) )
             {
                 //if the potential growth is entirely contained within the cell in collided with,
                 //then just return since there is no other potential cell growth here
                 return;
             }
-            else
+           
+            result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
+            if ( cuts == 2 )
             {
-                //result = potentialGrowth.Bounds.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2);
-                result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
-                if ( cuts == 2 )
-                {
-                    //NewCells.Enqueue( new LevelCell(-1, cut2.Bounds) );
-                    //ApplyCollision( Collisions.GetValuesForKey( cellId ), new LevelCell(-1, cut2.Bounds), cellId  );
-                    ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cellId  );
-                }
-                
+                ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cellId  );
             }
         }
         
-        if(RoomId == 1)
-            Debug.Log( $"Added {result.Bounds}" );
+
         NewCells.Enqueue( new LevelCell(-1, result.Bounds) );
         
     }
