@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-
+[BurstCompile]
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
@@ -153,7 +153,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     }
 }
 
-//[BurstCompile]
+[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -165,43 +165,18 @@ public struct LevelGrowQueryJob : IJobParallelFor
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
     public void Execute( int index )
     {
-        //todo: this doesnt utilize multithreading very well unless the room has a lot of cells
-        //should do something like this 
-        /*
         int cellIndex = index / BroadPhaseBounds.Count;
         int broadPhaseIndex = (index % BroadPhaseBounds.Count)+1;
+        
+        //Debug.Log( $"{index} == C{cellIndex}, B{broadPhaseIndex}" );
         
         LevelCell cell = GetCell( cellIndex );
         LevelCell potentialCell = GetPotentialGrowth( cell );
 
-        //Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
-        
-        
-        
         if ( BroadPhaseBounds[broadPhaseIndex].Overlaps( potentialCell.Bounds ) )
         {
-            //Debug.Log( $"{cell.ToString()} broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
             NarrowPhaseCheck(broadPhaseIndex, potentialCell);
         }
-        */
-        
-        LevelCell cell = GetCell( index );
-        LevelCell potentialCell = GetPotentialGrowth( cell );
-
-        //Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
-        
-        NativeHashMap<int, IntBounds>.Enumerator broadPhase = BroadPhaseBounds.GetEnumerator();
-
-        while ( broadPhase.MoveNext() )
-        {
-            if ( broadPhase.Current.Value.Overlaps( potentialCell.Bounds ) )
-            {
-                //Debug.Log( $"{cell.ToString()} broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
-                NarrowPhaseCheck(broadPhase.Current.Key, potentialCell);
-            }
-        }
-        
-        broadPhase.Dispose();
 
     }
     

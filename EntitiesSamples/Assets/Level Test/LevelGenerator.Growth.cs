@@ -103,7 +103,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         RoomId = room.Id
     };
 
-    JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount, 16 );
+    JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 128 );
     growQueryHandle.Complete();
 
     NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
@@ -118,8 +118,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         RoomId = room.Id
     };
 
-
-    //JobHandle checkHandle = checkJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 16 );
+    
     JobHandle checkHandle = checkJob.Schedule( room.CellCount, 16 );
     checkHandle.Complete();
 
