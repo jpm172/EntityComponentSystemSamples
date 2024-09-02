@@ -56,9 +56,9 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             {
                 ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cellId  );
             }
+            
         }
         
-
         NewCells.Enqueue( new LevelCell(-1, result.Bounds) );
         
     }
