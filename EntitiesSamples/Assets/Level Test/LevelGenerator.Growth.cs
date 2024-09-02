@@ -119,6 +119,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     };
 
 
+    //JobHandle checkHandle = checkJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 16 );
     JobHandle checkHandle = checkJob.Schedule( room.CellCount, 16 );
     checkHandle.Complete();
 

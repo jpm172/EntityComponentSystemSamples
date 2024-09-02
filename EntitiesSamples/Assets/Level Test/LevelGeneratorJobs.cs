@@ -24,6 +24,8 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     
     public void Execute( int index )
     {
+        
+        
         LevelCell cell = GetCell( index );
 
         if ( !Collisions.ContainsKey( cell.CellId ) )
@@ -163,6 +165,26 @@ public struct LevelGrowQueryJob : IJobParallelFor
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
     public void Execute( int index )
     {
+        //todo: this doesnt utilize multithreading very well unless the room has a lot of cells
+        //should do something like this 
+        /*
+        int cellIndex = index / BroadPhaseBounds.Count;
+        int broadPhaseIndex = (index % BroadPhaseBounds.Count)+1;
+        
+        LevelCell cell = GetCell( cellIndex );
+        LevelCell potentialCell = GetPotentialGrowth( cell );
+
+        //Debug.Log( $"{cell} + {GrowthDirection} == {potentialCell}" );
+        
+        
+        
+        if ( BroadPhaseBounds[broadPhaseIndex].Overlaps( potentialCell.Bounds ) )
+        {
+            //Debug.Log( $"{cell.ToString()} broadphase collision: Room {RoomId} -> {broadPhase.Current.Key}" );
+            NarrowPhaseCheck(broadPhaseIndex, potentialCell);
+        }
+        */
+        
         LevelCell cell = GetCell( index );
         LevelCell potentialCell = GetPotentialGrowth( cell );
 
