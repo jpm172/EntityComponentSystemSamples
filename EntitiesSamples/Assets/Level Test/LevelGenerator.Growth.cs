@@ -91,21 +91,28 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
 
-    
+    NativeQueue<LevelConnection> connections = new NativeQueue<LevelConnection>(Allocator.TempJob);
     
 
     LevelGrowQueryJob growQueryJob = new LevelGrowQueryJob
     {
         BroadPhaseBounds = _broadPhaseBounds,
         Collisions = collisionResults.AsParallelWriter(),
+        NewConnections = connections.AsParallelWriter(),
         NarrowPhaseBounds = _narrowPhaseBounds,
         GrowthDirection = growthDirection,
-        RoomId = room.Id
+        RoomId = room.Id,
+        MinimumConnectLength = _minRoomSeedSize
     };
 
     JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 128 );
     growQueryHandle.Complete();
 
+
+    AddConnections( connections );
+    
+    connections.Dispose();
+    
     NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
     NativeList<LevelCell> changedCells = new NativeList<LevelCell>(room.CellCount, Allocator.TempJob);
     LevelCheckCollisionsJob checkJob = new LevelCheckCollisionsJob
@@ -264,6 +271,26 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     */
 
 }
+
+private void AddConnections( NativeQueue<LevelConnection> connections )
+{
+    while ( connections.TryDequeue( out LevelConnection cnct ) )
+    {
+        if ( _roomConnections.ContainsKey( cnct.OriginRoomId ) )
+        {
+            _roomConnections[cnct.OriginRoomId] = new List<LevelConnection>();
+        }
+        if ( _roomConnections.ContainsKey( cnct.OtherRoomId ) )
+        {
+            _roomConnections[cnct.OtherRoomId ] = new List<LevelConnection>();
+        }
+        
+        _roomConnections[cnct.OriginRoomId].Add( cnct );
+        _roomConnections[cnct.OtherRoomId].Add( cnct );
+        
+    }
+}
+
 
 
 private int2 GetRandomGrowthDirection( LevelRoom room )

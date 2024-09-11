@@ -147,12 +147,14 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
-    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
+     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
     [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
+    [ReadOnly] public int MinimumConnectLength;
     [ReadOnly] public int2 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
+    public NativeQueue<LevelConnection>.ParallelWriter NewConnections;
     public void Execute( int index )
     {
         int cellIndex = index / BroadPhaseBounds.Count;
@@ -186,9 +188,26 @@ public struct LevelGrowQueryJob : IJobParallelFor
                     CollisionRoomId = collisionRoomId
                 };
                 Collisions.Add( cell.CellId, newCol );
+
+                if ( collisionRoomId != RoomId  )
+                {
+                    int4 bounds = cell.Bounds.Boolean( otherCells.Current.Bounds ).Bounds;
+
+                    float length = math.distance( bounds.zw, bounds.xy );
+                    Debug.Log( length );
+                    if ( length >= MinimumConnectLength )
+                    {
+                        Debug.Log( "New connection of length " + length );
+                        LevelConnectionInfo newInfo = new LevelConnectionInfo(cell.Bounds.Boolean( otherCells.Current.Bounds ));
+                        LevelConnection newConnect = new LevelConnection( RoomId, collisionRoomId, newInfo );
+                    
+                        NewConnections.Enqueue( newConnect );
+                    }
+                }
             }
         }
     }
+    
 
     private LevelCell GetCell( int index )
     {
@@ -242,6 +261,33 @@ public struct LevelGrowQueryJob : IJobParallelFor
 }
 
 
+public struct LevelConnection
+{
+    public int OriginRoomId;
+    public int OtherRoomId;
+    public int Hash;
+
+    public LevelConnectionInfo Info;
+
+    public LevelConnection( int room1, int room2, LevelConnectionInfo info )
+    {
+        OriginRoomId = math.min( room1, room2 );
+        OtherRoomId = math.max( room1, room2 );
+        Info = info;
+        Hash = new int2(OriginRoomId, OtherRoomId).GetHashCode();
+    }
+    
+}
+
+public struct LevelConnectionInfo
+{
+    public IntBounds Bounds;
+
+    public LevelConnectionInfo( IntBounds bounds )
+    {
+        Bounds = bounds;
+    }
+}
 
 public struct LevelCollision
 {

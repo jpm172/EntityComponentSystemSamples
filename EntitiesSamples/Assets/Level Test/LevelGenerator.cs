@@ -31,6 +31,7 @@ public partial class LevelGenerator : MonoBehaviour
     //cell variables
     private NativeHashMap<int, IntBounds> _broadPhaseBounds;
     private NativeParallelMultiHashMap<int, LevelCell> _narrowPhaseBounds;
+    private Dictionary<int, List<LevelConnection>> _roomConnections;
 
     private int _nextCellId = 1;
     
@@ -337,6 +338,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
+        //_roomConnections = new Dictionary<int2, LevelConnectionInfo>();
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -790,10 +792,4 @@ public struct LevelEdge
 
         return ( edge.Source == Source && edge.Destination == Destination );
     }
-}
-
-public struct LevelConnection
-{
-    public int2 Origin;
-    public int RoomId;
 }
