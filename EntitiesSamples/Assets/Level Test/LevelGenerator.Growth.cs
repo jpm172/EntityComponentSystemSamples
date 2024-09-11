@@ -109,7 +109,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     growQueryHandle.Complete();
 
 
-    //AddConnections( connections );
+    AddConnections( connections );
     
     connections.Dispose();
     
@@ -274,24 +274,22 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
 private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
 {
-    /*
-    while ( connections.TryDequeue( out LevelConnection cnct ) )
+    
+    while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
     {
-        if ( !_roomConnections.ContainsKey( cnct.OriginRoomId ) )
+        if ( !_roomConnections.ContainsKey( cnct.Connections ) )
         {
-            _roomConnections[cnct.OriginRoomId] = new List<LevelConnection>();
+            _roomConnections[cnct.Connections] = new List<LevelConnection>();
         }
-        if ( !_roomConnections.ContainsKey( cnct.OtherRoomId ) )
+
+        foreach ( LevelConnection connect in _roomConnections[cnct.Connections] )
         {
-            _roomConnections[cnct.OtherRoomId ] = new List<LevelConnection>();
-        } 
+            
+        }
         
-        _roomConnections[cnct.OriginRoomId].Add( cnct );
-        _roomConnections[cnct.OtherRoomId].Add( cnct );
-        
-        
+        //_roomConnections[cnct.OriginRoomId].Add( cnct );
     }
-    */
+    
 }
 
 

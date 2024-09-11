@@ -31,7 +31,7 @@ public partial class LevelGenerator : MonoBehaviour
     //cell variables
     private NativeHashMap<int, IntBounds> _broadPhaseBounds;
     private NativeParallelMultiHashMap<int, LevelCell> _narrowPhaseBounds;
-    private Dictionary<int, List<LevelConnection>> _roomConnections;
+    private Dictionary<int2, List<LevelConnection>> _roomConnections;
 
     private int _nextCellId = 1;
     
@@ -181,7 +181,7 @@ public partial class LevelGenerator : MonoBehaviour
 
         
         Gizmos.color = Color.yellow;
-        foreach ( int key in _roomConnections.Keys )
+        foreach ( int2 key in _roomConnections.Keys )
         {
             foreach ( LevelConnection cnct in _roomConnections[key] )
             {
@@ -355,7 +355,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
-        _roomConnections = new Dictionary<int, List<LevelConnection>>();
+        _roomConnections = new Dictionary<int2, List<LevelConnection>>();
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -435,7 +435,7 @@ public partial class LevelGenerator : MonoBehaviour
 
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
-        _roomConnections = new Dictionary<int, List<LevelConnection>>();
+        _roomConnections = new Dictionary<int2, List<LevelConnection>>();
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;

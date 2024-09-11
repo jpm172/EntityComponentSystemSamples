@@ -12,10 +12,18 @@ public class LevelConnection
 
    public IntBounds Bounds => _bounds;
 
+   public float Length => GetLength();
+
    public LevelConnection(IntBounds startingPiece)
    {
       _pieces = new List<IntBounds>();
       _pieces.Add( startingPiece );
+   }
+
+   private float GetLength()
+   {
+      float length = math.distance( _bounds.Bounds.zw, _bounds.Bounds.xy );
+      return length;
    }
 
    public bool TryMerge( LevelConnection otherConnection )
@@ -51,4 +59,16 @@ public class LevelConnection
       _bounds.Bounds = bounds;
    }
    
+}
+
+public struct LevelConnectionInfo
+{
+   public IntBounds Bounds;
+   public int2 Connections;
+
+   public LevelConnectionInfo( int room1, int room2, IntBounds bounds )
+   {
+      Bounds = bounds;
+      Connections = new int2(math.min( room1, room2 ), math.max( room1, room2 ));
+   }
 }

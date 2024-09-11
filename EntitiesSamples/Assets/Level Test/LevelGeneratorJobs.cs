@@ -198,9 +198,9 @@ public struct LevelGrowQueryJob : IJobParallelFor
                     if ( length >= MinimumConnectLength )
                     {
                         Debug.Log( "New connection of length " + length );
-                        LevelConnectionInfo newInfo = new LevelConnectionInfo(cell.Bounds.Boolean( otherCells.Current.Bounds ));
-                        //LevelConnection newConnect = new LevelConnection( RoomId, collisionRoomId, newInfo );
-                    
+                        IntBounds boolean = cell.Bounds.Boolean( otherCells.Current.Bounds );
+                        LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, boolean);
+
                         NewConnections.Enqueue( newInfo );
                     }
                 }
@@ -262,15 +262,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
 
 
-public struct LevelConnectionInfo
-{
-    public IntBounds Bounds;
 
-    public LevelConnectionInfo( IntBounds bounds )
-    {
-        Bounds = bounds;
-    }
-}
 
 public struct LevelCollision
 {
