@@ -90,7 +90,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
-
+    NativeQueue<LevelConncection> newConnections = new NativeQueue<LevelConncection>(Allocator.TempJob);
     
     
 
@@ -98,6 +98,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
         BroadPhaseBounds = _broadPhaseBounds,
         Collisions = collisionResults.AsParallelWriter(),
+        NewConnections = newConnections.AsParallelWriter(),
         NarrowPhaseBounds = _narrowPhaseBounds,
         GrowthDirection = growthDirection,
         RoomId = room.Id
@@ -105,6 +106,16 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
     JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 128 );
     growQueryHandle.Complete();
+
+    if ( !newConnections.IsEmpty() )
+    {
+        while ( newConnections.TryDequeue( out LevelConncection conncection ) )
+        {
+            _roomConnections.Add( conncection );
+        }
+    }
+    
+    newConnections.Dispose();
 
     NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
     NativeList<LevelCell> changedCells = new NativeList<LevelCell>(room.CellCount, Allocator.TempJob);

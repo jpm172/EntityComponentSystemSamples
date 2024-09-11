@@ -31,6 +31,7 @@ public partial class LevelGenerator : MonoBehaviour
     //cell variables
     private NativeHashMap<int, IntBounds> _broadPhaseBounds;
     private NativeParallelMultiHashMap<int, LevelCell> _narrowPhaseBounds;
+    private Dictionary<LevelConncection> _roomConnections;
 
     private int _nextCellId = 1;
     
@@ -178,6 +179,17 @@ public partial class LevelGenerator : MonoBehaviour
             
         }
 
+        Gizmos.color = Color.yellow;
+        foreach ( LevelConncection cnct in _roomConnections )
+        {
+            IntBounds cell = cnct.Bounds;
+            Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+            pos /= GameSettings.PixelsPerUnit;
+            Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+            
+            Gizmos.DrawCube( pos, size );
+        }
+        
         /*
         Gizmos.color = Color.red;
         for ( int i = 0; i < _rooms.Length; i++ )
@@ -337,7 +349,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
-        
+        _roomConnections = new List<LevelConncection>();
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;
@@ -413,6 +425,7 @@ public partial class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        _roomConnections = new List<LevelConncection>();
 
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);

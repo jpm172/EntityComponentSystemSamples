@@ -151,6 +151,49 @@ public struct IntBounds
         cut2 = new IntBounds(result2);
         return new IntBounds(result);
     }
+    
+    public IntBounds Boolean( IntBounds otherBounds )
+    {
+        int4 result = Bounds;
+
+        int width = result.z - result.x + 1;
+        int height = result.w - result.y + 1;
+
+        if ( width == 1 )
+        {
+
+            bool lowerCut = otherBounds.Bounds.y > result.y;
+            bool upperCut = otherBounds.Bounds.w < result.w;
+
+            if ( lowerCut  )
+            {
+                result.y = otherBounds.Bounds.y;
+            }
+
+            if ( upperCut )
+            {
+                result.w = otherBounds.Bounds.w;
+            }
+            
+        }
+        
+        if ( height == 1 )
+        {
+            bool leftCut = otherBounds.Bounds.x  > result.x;
+            bool rightCut = otherBounds.Bounds.z < result.z;
+
+            if ( leftCut )
+            {
+                result.z = otherBounds.Bounds.x;
+            }
+            if ( rightCut )
+            {
+                result.x = otherBounds.Bounds.z;
+            }
+        }
+        
+        return new IntBounds(result);
+    }
 
     public override string ToString()
     {

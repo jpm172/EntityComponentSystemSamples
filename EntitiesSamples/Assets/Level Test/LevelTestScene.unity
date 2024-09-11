@@ -288,7 +288,7 @@ MonoBehaviour:
   FocusOnRoom: 1
   UseMeshes: 0
   UseWireMeshes: 0
-  TestCase: 0
+  TestCase: 1
   TestPositions:
   - x: 0
     y: 0
@@ -298,7 +298,7 @@ MonoBehaviour:
   - x: 20
     y: 20
   - x: 20
-    y: 10
+    y: 3
   GrowthOverride:
     x: 0
     y: 0
