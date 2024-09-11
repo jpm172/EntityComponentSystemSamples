@@ -91,7 +91,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
 
-    NativeQueue<LevelConnection> connections = new NativeQueue<LevelConnection>(Allocator.TempJob);
+    NativeQueue<LevelConnectionInfo> connections = new NativeQueue<LevelConnectionInfo>(Allocator.TempJob);
     
 
     LevelGrowQueryJob growQueryJob = new LevelGrowQueryJob
@@ -109,7 +109,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     growQueryHandle.Complete();
 
 
-    AddConnections( connections );
+    //AddConnections( connections );
     
     connections.Dispose();
     
@@ -272,23 +272,26 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
 }
 
-private void AddConnections( NativeQueue<LevelConnection> connections )
+private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
 {
+    /*
     while ( connections.TryDequeue( out LevelConnection cnct ) )
     {
-        if ( _roomConnections.ContainsKey( cnct.OriginRoomId ) )
+        if ( !_roomConnections.ContainsKey( cnct.OriginRoomId ) )
         {
             _roomConnections[cnct.OriginRoomId] = new List<LevelConnection>();
         }
-        if ( _roomConnections.ContainsKey( cnct.OtherRoomId ) )
+        if ( !_roomConnections.ContainsKey( cnct.OtherRoomId ) )
         {
             _roomConnections[cnct.OtherRoomId ] = new List<LevelConnection>();
-        }
+        } 
         
         _roomConnections[cnct.OriginRoomId].Add( cnct );
         _roomConnections[cnct.OtherRoomId].Add( cnct );
         
+        
     }
+    */
 }
 
 

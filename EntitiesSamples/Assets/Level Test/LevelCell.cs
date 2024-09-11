@@ -77,6 +77,11 @@ public struct IntBounds
         return true;
     }
 
+    public bool Borders( IntBounds otherBounds )
+    {
+        return true;
+    }
+
     public bool Contains( IntBounds otherBounds )
     {
         bool x = Bounds.x <= otherBounds.Bounds.x && Bounds.z >= otherBounds.Bounds.z;

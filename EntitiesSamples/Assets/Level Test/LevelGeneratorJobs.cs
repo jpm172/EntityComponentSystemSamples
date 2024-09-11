@@ -154,7 +154,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     [ReadOnly] public int2 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
-    public NativeQueue<LevelConnection>.ParallelWriter NewConnections;
+    public NativeQueue<LevelConnectionInfo>.ParallelWriter NewConnections;
     public void Execute( int index )
     {
         int cellIndex = index / BroadPhaseBounds.Count;
@@ -199,9 +199,9 @@ public struct LevelGrowQueryJob : IJobParallelFor
                     {
                         Debug.Log( "New connection of length " + length );
                         LevelConnectionInfo newInfo = new LevelConnectionInfo(cell.Bounds.Boolean( otherCells.Current.Bounds ));
-                        LevelConnection newConnect = new LevelConnection( RoomId, collisionRoomId, newInfo );
+                        //LevelConnection newConnect = new LevelConnection( RoomId, collisionRoomId, newInfo );
                     
-                        NewConnections.Enqueue( newConnect );
+                        NewConnections.Enqueue( newInfo );
                     }
                 }
             }
@@ -261,23 +261,6 @@ public struct LevelGrowQueryJob : IJobParallelFor
 }
 
 
-public struct LevelConnection
-{
-    public int OriginRoomId;
-    public int OtherRoomId;
-    public int Hash;
-
-    public LevelConnectionInfo Info;
-
-    public LevelConnection( int room1, int room2, LevelConnectionInfo info )
-    {
-        OriginRoomId = math.min( room1, room2 );
-        OtherRoomId = math.max( room1, room2 );
-        Info = info;
-        Hash = new int2(OriginRoomId, OtherRoomId).GetHashCode();
-    }
-    
-}
 
 public struct LevelConnectionInfo
 {
