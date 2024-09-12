@@ -281,13 +281,20 @@ private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
         {
             _roomConnections[cnct.Connections] = new List<LevelConnection>();
         }
-
-        foreach ( LevelConnection connect in _roomConnections[cnct.Connections] )
-        {
-            
-        }
         
-        //_roomConnections[cnct.OriginRoomId].Add( cnct );
+        LevelConnection newConnction = new LevelConnection( cnct.Bounds );
+
+        _roomConnections[cnct.Connections].Add( newConnction );
+        continue;
+        List<LevelConnection> roomConnections = _roomConnections[cnct.Connections];
+        for ( int i = roomConnections.Count-2; i >= 0 ; i-- )
+        {
+            if ( newConnction.TryMerge( roomConnections[i] ) )
+            {
+                //Debug.Log( "merge" );
+                roomConnections.RemoveAt( i );
+            }
+        }
     }
     
 }

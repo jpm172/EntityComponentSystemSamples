@@ -143,7 +143,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     }
 }
 
-[BurstCompile]
+//BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -191,18 +191,10 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
                 if ( collisionRoomId != RoomId  )
                 {
-                    int4 bounds = cell.Bounds.Boolean( otherCells.Current.Bounds ).Bounds;
+                    IntBounds boolean = cell.Bounds.Boolean( otherCells.Current.Bounds );
+                    LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, boolean);
 
-                    float length = math.distance( bounds.zw, bounds.xy );
-                    Debug.Log( length );
-                    if ( length >= MinimumConnectLength )
-                    {
-                        Debug.Log( "New connection of length " + length );
-                        IntBounds boolean = cell.Bounds.Boolean( otherCells.Current.Bounds );
-                        LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, boolean);
-
-                        NewConnections.Enqueue( newInfo );
-                    }
+                    NewConnections.Enqueue( newInfo );
                 }
             }
         }

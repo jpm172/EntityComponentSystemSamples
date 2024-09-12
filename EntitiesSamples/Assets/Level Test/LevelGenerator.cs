@@ -185,14 +185,16 @@ public partial class LevelGenerator : MonoBehaviour
         {
             foreach ( LevelConnection cnct in _roomConnections[key] )
             {
-                /*
-                IntBounds cell = cnct.Info.Bounds;
-                Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
-                pos /= GameSettings.PixelsPerUnit;
-                Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                foreach ( IntBounds cell in cnct.Pieces )
+                {
+                    Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                    pos /= GameSettings.PixelsPerUnit;
+                    Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
                 
-                Gizmos.DrawCube( pos, size );
-                */
+                    Gizmos.DrawCube( pos, size );
+                }
+                
+                
             }
         }
 

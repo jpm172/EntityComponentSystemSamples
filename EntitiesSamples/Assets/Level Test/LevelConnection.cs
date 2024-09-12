@@ -18,6 +18,7 @@ public class LevelConnection
    {
       _pieces = new List<IntBounds>();
       _pieces.Add( startingPiece );
+      _bounds = startingPiece;
    }
 
    private float GetLength()
@@ -51,12 +52,13 @@ public class LevelConnection
 
    private void Merge( LevelConnection otherConnection )
    {
+      _pieces.AddRange( otherConnection.Pieces );
+      
       int4 bounds = _bounds.Bounds;
       int4 otherBounds = otherConnection.Bounds.Bounds;
-      _pieces.AddRange( otherConnection.Pieces );
-      bounds.xy = math.min( bounds.xy, otherBounds.xy );
-      bounds.zw = math.max( bounds.zw, otherBounds.zw );
-      _bounds.Bounds = bounds;
+      
+      _bounds.Bounds.xy = math.min( bounds.xy, otherBounds.xy );
+      _bounds.Bounds.zw = math.max( bounds.zw, otherBounds.zw );
    }
    
 }
