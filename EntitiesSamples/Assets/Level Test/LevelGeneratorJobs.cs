@@ -147,10 +147,9 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
-     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
     [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
-    [ReadOnly] public int MinimumConnectLength;
     [ReadOnly] public int2 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
@@ -191,15 +190,48 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
                 if ( collisionRoomId != RoomId  )
                 {
-                    IntBounds boolean = cell.Bounds.Boolean( otherCells.Current.Bounds );
-                    LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, boolean);
+                    IntBounds connectionBounds = GetConnectionBounds( cell.Bounds, otherCells.Current.Bounds );
+                    LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds);
 
                     NewConnections.Enqueue( newInfo );
                 }
             }
         }
     }
-    
+
+    //creates an IntBounds that represents the connection between the two rooms
+    //the bounds will overlap both rooms 
+    private IntBounds GetConnectionBounds(IntBounds bounds1, IntBounds bounds2)
+    {
+        IntBounds result = bounds1.Boolean( bounds2 );
+        
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                result.Bounds.z -= GrowthDirection.x;
+            }
+            else
+            {
+                result.Bounds.x -= GrowthDirection.x;
+            }
+            
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                result.Bounds.w -= GrowthDirection.y;
+            }
+            else
+            {
+                result.Bounds.y -= GrowthDirection.y;
+            }
+            
+        }
+
+        return result;
+    }
 
     private LevelCell GetCell( int index )
     {

@@ -101,8 +101,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         NewConnections = connections.AsParallelWriter(),
         NarrowPhaseBounds = _narrowPhaseBounds,
         GrowthDirection = growthDirection,
-        RoomId = room.Id,
-        MinimumConnectLength = _minRoomSeedSize
+        RoomId = room.Id
     };
 
     JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 128 );
@@ -285,7 +284,6 @@ private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
         LevelConnection newConnction = new LevelConnection( cnct.Bounds );
 
         _roomConnections[cnct.Connections].Add( newConnction );
-        continue;
         List<LevelConnection> roomConnections = _roomConnections[cnct.Connections];
         for ( int i = roomConnections.Count-2; i >= 0 ; i-- )
         {

@@ -191,7 +191,7 @@ public partial class LevelGenerator : MonoBehaviour
                     pos /= GameSettings.PixelsPerUnit;
                     Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
                 
-                    Gizmos.DrawCube( pos, size );
+                    Gizmos.DrawWireCube( pos, size );
                 }
                 
                 

@@ -208,50 +208,17 @@ public struct IntBounds
     public IntBounds Boolean( IntBounds otherBounds )
     {
         int4 result = Bounds;
-
-        int width = result.z - result.x + 1;
-        int height = result.w - result.y + 1;
-
         
+
+        result.xy = math.max( result.xy, otherBounds.Bounds.xy );
+        result.zw = math.min( result.zw, otherBounds.Bounds.zw );
+        /*
         int x_distance = math.min(Bounds.z, otherBounds.Bounds.z) - math.max( Bounds.x, otherBounds.Bounds.x );
         int y_distance = math.min(Bounds.w, otherBounds.Bounds.w) - math.max( Bounds.y, otherBounds.Bounds.y );
         //x_distance = math.min(R1.x, R2.x) – max(L1.x, L2.x)
         //y_distance = min(R1.y, R2.y) – max(L1.y, L2.y)
-        
-        if ( width == 1 )
-        {
-            Debug.Log( "W== 1" );
-            bool lowerCut = otherBounds.Bounds.y > result.y;
-            bool upperCut = otherBounds.Bounds.w < result.w;
+        */
 
-            if ( lowerCut  )
-            {
-                result.y = otherBounds.Bounds.y;
-            }
-
-            if ( upperCut )
-            {
-                result.w = otherBounds.Bounds.w;
-            }
-            
-        }
-        
-        if ( height == 1 )
-        {
-            Debug.Log( "H == 1" );
-            bool leftCut = otherBounds.Bounds.x  > result.x;
-            bool rightCut = otherBounds.Bounds.z < result.z;
-
-            if ( leftCut )
-            {
-                result.z = otherBounds.Bounds.x;
-            }
-            if ( rightCut )
-            {
-                result.x = otherBounds.Bounds.z;
-            }
-        }
-        Debug.Log( result );
         return new IntBounds(result);
     }
     
