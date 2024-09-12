@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-//[BurstCompile]
+[BurstCompile]
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
@@ -143,7 +143,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     }
 }
 
-//BurstCompile]
+[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     

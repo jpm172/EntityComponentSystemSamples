@@ -50,7 +50,8 @@ public partial class LevelGenerator : MonoBehaviour
 
 
     //dijkstas variables
-    private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
+    //private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
+    private Dictionary<int, Dictionary<int,int>> _edgeDictionary;//stores the edge weights used for dijsktras
     private int minEdgeWeight = 1;
     [SerializeField]
     private int maxEdgeWeight = 10;
@@ -59,6 +60,7 @@ public partial class LevelGenerator : MonoBehaviour
     //gizmos variables
     public bool Focus;
     public int FocusOnRoom;
+    public bool ShowRoomBounds;
     public bool UseMeshes;
     public bool UseWireMeshes;
 
@@ -120,7 +122,6 @@ public partial class LevelGenerator : MonoBehaviour
                 return;
             
             
-            
             LevelRoom room = _rooms[FocusOnRoom - 1];
             
             NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
@@ -136,6 +137,7 @@ public partial class LevelGenerator : MonoBehaviour
                  
                 Gizmos.color = room.DebugColor;
                 Gizmos.DrawCube( pos, size );
+
             }
             
             Gizmos.color = Color.black;
@@ -166,16 +168,22 @@ public partial class LevelGenerator : MonoBehaviour
                  
                 Gizmos.color = room.DebugColor;
                 Gizmos.DrawCube( pos, size );
+                Gizmos.color = Color.black;
+                Gizmos.DrawWireCube( pos, size );
+            }
+
+            if ( ShowRoomBounds )
+            {
+                Gizmos.color = Color.black;
+                IntBounds bounds = _broadPhaseBounds[room.Id];
+                
+                pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
+                pos /= GameSettings.PixelsPerUnit;
+                size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
+
+                Gizmos.DrawWireCube( pos, size );
             }
             
-            Gizmos.color = Color.black;
-            IntBounds bounds = _broadPhaseBounds[room.Id];
-                
-            pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
-            pos /= GameSettings.PixelsPerUnit;
-            size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
-
-            Gizmos.DrawWireCube( pos, size );
             
         }
 
@@ -185,6 +193,7 @@ public partial class LevelGenerator : MonoBehaviour
         {
             foreach ( LevelConnection cnct in _roomConnections[key] )
             {
+                Gizmos.color = cnct.DebugColor;
                 foreach ( IntBounds cell in cnct.Pieces )
                 {
                     Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
@@ -198,8 +207,25 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
 
-        /*
+        
         Gizmos.color = Color.red;
+
+        foreach ( LevelRoom room in _rooms )
+        {
+            if ( _edgeDictionary.ContainsKey( room.Id ) )
+            {
+                Vector3 source = new Vector3(room.Origin.x, room.Origin.y) + new Vector3(room.Size.x, room.Size.y)/2;
+                foreach (  KeyValuePair<int, int> neighbor in _edgeDictionary[room.Id])
+                {
+
+                    int neighborIndex = neighbor.Key -1;
+                    Vector3 destination = new Vector3(_rooms[neighborIndex].Origin.x, _rooms[neighborIndex].Origin.y)+ new Vector3(_rooms[neighborIndex].Size.x, _rooms[neighborIndex].Size.y)/2;;
+                    
+                    Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
+                }
+            }
+        }
+        /*
         for ( int i = 0; i < _rooms.Length; i++ )
         {
             if ( _edgeDictionary.ContainsKey( i ) )
@@ -216,17 +242,10 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
         */
+        
     }
 #endif
-
-    private bool IsBorder( int x, int y )
-    {
-        if ( x == 0 || x == dimensions.x - 1 )
-            return true;
-        if ( y == 0 || y == dimensions.y - 1 )
-            return true;
-        return false;
-    }
+    
 
     public void GenerateLevel()
     {
@@ -258,18 +277,15 @@ public partial class LevelGenerator : MonoBehaviour
     private bool HasPath(int startNode)
     {
         int INF = Int32.MaxValue;
-        int[] distance = new int[_rooms.Length];
-        LevelEdge[] pathEdges = new LevelEdge[_rooms.Length];
+        Dictionary<int, int> pathEdges = new Dictionary<int, int>();
+        Dictionary<int, int> distances = new Dictionary<int, int>();
+        //int[] distance = new int[_rooms.Length];
+        //int[] pathEdges = new int[_rooms.Length];
         List<int> path = new List<int>();
 
-
         //initialize the lists needed to run dijkstras alg
-        for ( int i = 0; i < distance.Length; i++ )
-        {
-            distance[i] = INF;
-        }
-        distance[startNode] = 0;
-        
+        distances[startNode] = 0;
+
         //run dijkstras algorithm until the path is found
         while ( path.Count < _rooms.Length )
         {
@@ -277,12 +293,12 @@ public partial class LevelGenerator : MonoBehaviour
             int result = -1;
 
             //pick the node with the smallest distance to reach
-            for ( int i = 0; i < distance.Length; i++ )
+            foreach ( int roomId in distances.Keys )
             {
-                if ( distance[i] < min && !path.Contains( i ) )
+                if ( distances[roomId] < min && !path.Contains( roomId ) )
                 {
-                    result = i;
-                    min = distance[i];
+                    result = roomId;
+                    min = distances[roomId];
                 }
             }
 
@@ -293,19 +309,28 @@ public partial class LevelGenerator : MonoBehaviour
 
 
             path.Add( result );
-            distance[result] = min;
+            //distance[result] = min;
             
             //look at each of the edges, update any new connections that are shorter than the ones previously found
-            foreach ( LevelEdge e in _edgeDictionary[result] )
+            foreach ( int neighborId in _edgeDictionary[result].Keys )
             {
-                //LevelRoom destination = _rooms[e.Destination];
-                //int index = (int) ((int)e.Destination.GraphPosition.x + e.Destination.GraphPosition.y * _width);
+                int weight = _edgeDictionary[result][neighborId];
 
+                
+                
+                if ( distances.ContainsKey(neighborId) && min + weight < distances[neighborId] )
+                {
+                    distances[neighborId] = min + weight;
+                    pathEdges[neighborId] = result;
+                }
+                
+                /*
                 if ( min + e.Weight < distance[e.Destination] )
                 {
                     distance[e.Destination] = min + e.Weight;
                     pathEdges[e.Destination] = e;
                 }
+                */
             }
         }
         
@@ -313,9 +338,28 @@ public partial class LevelGenerator : MonoBehaviour
         _edgeDictionary.Clear();
         foreach ( LevelRoom room in _rooms )
         {
-            _edgeDictionary[room.Index] = new List<LevelEdge>();
+            _edgeDictionary[room.Index] = new Dictionary<int, int>();
         }
+
+
+        foreach ( int roomId in pathEdges.Keys )
+        {
+            if(roomId == startNode)
+                continue;
+            
+            SetNeighbors( roomId, pathEdges[roomId], distances[roomId] );
+        }
+        /*
+        for ( int i = 0; i < pathEdges.Length; i++ )
+        {
+            if(i == startNode)
+                continue;
+            
+            SetNeighbors( i, pathEdges[i], distance[i] );
+        }
+        */
         
+        /*
         //update the graph to only contain the edges from the shortest path we just found
         foreach ( LevelEdge e in pathEdges )
         {
@@ -326,6 +370,7 @@ public partial class LevelGenerator : MonoBehaviour
             }
                 
         }
+        */
         
         return true;
     }
@@ -353,7 +398,7 @@ public partial class LevelGenerator : MonoBehaviour
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
-        _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
         
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
@@ -396,7 +441,7 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
-                _edgeDictionary[index] = new List<LevelEdge>();
+                _edgeDictionary[room.Id] = new Dictionary<int, int>();
                 
                 _broadPhaseBounds[room.Id] = room.Bounds;
                 AddCell( room, roomOrigin, roomSize );
@@ -433,7 +478,7 @@ public partial class LevelGenerator : MonoBehaviour
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
-        _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
 
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
@@ -465,7 +510,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
-                _edgeDictionary[index] = new List<LevelEdge>();
+                _edgeDictionary[room.Id] = new Dictionary<int, int>();
                 
                 _broadPhaseBounds[room.Id] = room.Bounds;
                 AddCell( room, roomOrigin, roomSize );
@@ -521,8 +566,13 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void SetNeighbors( int room1, int room2, int weight )
     {
-        _edgeDictionary[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
-        _edgeDictionary[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
+
+        _edgeDictionary[room1][room2] = weight;
+        _edgeDictionary[room2][room1] = weight;
+        
+
+        //_edgeDictionary[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
+        //_edgeDictionary[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
     }
     
     

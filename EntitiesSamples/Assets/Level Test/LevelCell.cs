@@ -184,7 +184,6 @@ public struct IntBounds
                 
                 cuts = 2;
                 cut2 = new IntBounds(result2);
-                
                 //return new IntBounds(result);
             }
             else

@@ -69,6 +69,7 @@ public class LevelRoom
     public int Index => _id - 1;
 
     public int Weight => _weight;
+    
 
     public LevelMaterial Material => _material;
     public int Id => _id;

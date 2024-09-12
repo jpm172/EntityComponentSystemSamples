@@ -12,10 +12,13 @@ public partial class LevelGenerator
     private int _counter = 0;
     private int _totalSteps = 0;
     public int2 GrowthOverride;
-    
+
+
+    public bool breakPoint;
 
 public bool StepWiseGrow;
-public int GrowSteps;
+public int GrowIterations;
+public int StepsPerIteration;
 public void GrowRooms()
 {
     if ( StepWiseGrow )
@@ -24,7 +27,10 @@ public void GrowRooms()
     }
     else
     {
-        MainGrow();
+        for ( int i = 0; i < GrowIterations; i++ )
+        {
+            MainGrow();
+        }
     }
     
 }
@@ -37,13 +43,13 @@ private void MainGrow()
     while ( !hasPath && _totalSteps < 1  )
     {
         LevelRoom room = _rooms[_counter];
-        int connections = _edgeDictionary[_counter].Count;
+        int connections = _edgeDictionary[room.Id].Count;
         GrowRoom( room );
 
 
-        if ( connections != _edgeDictionary[_counter].Count )
+        if ( connections != _edgeDictionary[room.Id].Count )
         {
-            hasPath = HasPath( _counter );
+            hasPath = HasPath( room.Id );
         }
         
         _counter = ( _counter + 1 ) % _rooms.Length;
@@ -68,7 +74,7 @@ private void GrowRoom( LevelRoom room )
 
         //for( int n = 0; n < 1; n++ )
         //for ( int n = 0; n < _minRoomSeedSize; n++ )
-        for( int n = 0; n < GrowSteps; n++ )
+        for( int n = 0; n < StepsPerIteration; n++ )
         {
             int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
             
@@ -87,7 +93,10 @@ private void GrowRoom( LevelRoom room )
 
 private void NormalGrow( LevelRoom room, int2 growthDirection )
 {
-    
+    if ( breakPoint )
+    {
+    }
+
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
         new NativeParallelMultiHashMap<int, LevelCollision>(_nextCellId*_nextCellId, Allocator.TempJob);
 
@@ -108,7 +117,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     growQueryHandle.Complete();
 
 
-    AddConnections( connections );
+    AddConnections( connections,  room);
     
     connections.Dispose();
     
@@ -271,9 +280,8 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 
 }
 
-private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
+private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
 {
-    
     while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
     {
         if ( !_roomConnections.ContainsKey( cnct.Connections ) )
@@ -281,20 +289,26 @@ private void AddConnections( NativeQueue<LevelConnectionInfo> connections )
             _roomConnections[cnct.Connections] = new List<LevelConnection>();
         }
         
-        LevelConnection newConnction = new LevelConnection( cnct.Bounds );
+        LevelConnection newConnection = new LevelConnection( cnct.Bounds );
 
-        _roomConnections[cnct.Connections].Add( newConnction );
+        _roomConnections[cnct.Connections].Add( newConnection );
         List<LevelConnection> roomConnections = _roomConnections[cnct.Connections];
         for ( int i = roomConnections.Count-2; i >= 0 ; i-- )
         {
-            if ( newConnction.TryMerge( roomConnections[i] ) )
+            if ( newConnection.TryMerge( roomConnections[i] ) )
             {
-                //Debug.Log( "merge" );
                 roomConnections.RemoveAt( i );
+
+                if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
+                {
+                    //Debug.Log( "Valid Connection Made" );
+                    SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
+                }
+               //roomConnections[i].Pieces.Clear();
             }
         }
     }
-    
+
 }
 
 
