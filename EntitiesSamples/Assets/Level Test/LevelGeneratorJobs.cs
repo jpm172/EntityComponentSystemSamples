@@ -10,7 +10,6 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-[BurstCompile]
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
@@ -24,9 +23,12 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     
     public void Execute( int index )
     {
-        
-        
         LevelCell cell = GetCell( index );
+        LevelCell potentialGrowth = GetPotentialGrowth( cell );
+        if ( potentialGrowth.Size.x * potentialGrowth.Size.y == 0 )
+        {
+            
+        }
 
         if ( !Collisions.ContainsKey( cell.CellId ) )
         {
@@ -34,15 +36,16 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             return;
         }
 
-        ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), GetPotentialGrowth( cell ), cell.CellId );
+        ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), potentialGrowth, cell );
 
     }
 
-    private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelCell potentialGrowth, int cellId)
+    private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelCell potentialGrowth, LevelCell cell)
     {
         IntBounds result = potentialGrowth.Bounds;
         while ( colEnum.MoveNext() )
         {
+            
             IntBounds checkBounds = colEnum.Current.CollidedWith.Bounds;
             if ( checkBounds.Contains( result ) )
             {
@@ -50,15 +53,22 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
                 //then just return since there is no other potential cell growth here
                 return;
             }
-           
+
+            IntBounds before = result;
             result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
+            if ( result.Area == 0 )
+            {
+                Debug.Log( before + " -> " + result );
+                return;
+            }
             if ( cuts == 2 )
             {
-                ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cellId  );
+                ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cell  );
             }
             
         }
         
+        //if(result.Area > 0) this fixes issue, but need to find where it happens
         NewCells.Enqueue( new LevelCell(-1, result.Bounds) );
         
     }

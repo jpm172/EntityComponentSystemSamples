@@ -143,6 +143,11 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
             out NativeParallelMultiHashMapIterator<int> it );
         UpdateBroadPhase( room, cell );
 
+        if ( cell.Area == 0 )
+        {
+            Debug.Log( cell );
+        }
+        
         if ( fc.Equals( cell ) )
         {
             _narrowPhaseBounds.SetValue( cell, it  );
@@ -163,6 +168,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
         AddCell( room, newCell );
     }
+    
         
     newCells.Dispose();
     changedCells.Dispose();

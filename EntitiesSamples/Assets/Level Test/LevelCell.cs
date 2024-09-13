@@ -13,6 +13,8 @@ public struct LevelCell
     public int2 Origin => Bounds.Origin;
     public int2 Size => Bounds.Size;
 
+    public int Area => Bounds.Area;
+
     public LevelCell( int id, int2 origin, int2 size )
     {
         CellId = id;
@@ -32,7 +34,7 @@ public struct LevelCell
 
     public override string ToString()
     {
-        return Bounds.ToString();
+        return $"Cell {CellId}: " + Bounds.ToString();
     }
 
     public override bool Equals( object obj )
@@ -58,10 +60,13 @@ public struct IntBounds
     public int z => Bounds.z;
     public int w => Bounds.w;
     
+    
+    
     public int2 Origin => Bounds.xy;
-    public int2 Size => Bounds.zw - Bounds.xy + Int2One;
+    public int2 Size => (Bounds.zw - Bounds.xy) + Int2One;
 
-
+    public int Area => Size.x * Size.y;
+    
     public IntBounds( int2 origin, int2 size )
     {
         Bounds = new int4(origin, origin + size - Int2One);

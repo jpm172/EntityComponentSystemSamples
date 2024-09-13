@@ -272,7 +272,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 15
   dimensions: {x: 0, y: 0}
-  layoutDimensions: {x: 3, y: 1}
+  layoutDimensions: {x: 3, y: 3}
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
@@ -286,6 +286,7 @@ MonoBehaviour:
   maxEdgeWeight: 10
   Focus: 0
   FocusOnRoom: 1
+  ShowRoomBounds: 0
   UseMeshes: 0
   UseWireMeshes: 0
   TestCase: 0
@@ -302,8 +303,10 @@ MonoBehaviour:
   GrowthOverride:
     x: 0
     y: 0
+  breakPoint: 0
   StepWiseGrow: 0
-  GrowSteps: 1
+  GrowIterations: 88
+  StepsPerIteration: 20
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0
