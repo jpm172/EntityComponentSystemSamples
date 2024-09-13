@@ -49,9 +49,9 @@ public struct LevelCell
 
 public struct IntBounds
 {
-    private static int2 Int2One = new int2(1,1);
-    private static int4 ExpandHorizontal = new int4(-1,0,1,0);
-    private static int4 ExpandVertical = new int4(0,1,0,1);
+    private static readonly int2 Int2One = new int2(1,1);
+    private static readonly int4 ExpandHorizontal = new int4(-1,0,1,0);
+    private static readonly int4 ExpandVertical = new int4(0,1,0,1);
     public int4 Bounds; //(X, Y, Z, W)
 
 
@@ -154,121 +154,38 @@ public struct IntBounds
             return this;
         }
 
-        bool removeAbove = !result.xy.Equals( boolean.xy ); 
-        bool removeBelow = !result.zw.Equals( boolean.zw );
+        bool removeA = !result.xy.Equals( boolean.xy ); 
+        bool removeB = !result.zw.Equals( boolean.zw );
 
 
-        Debug.Log( $"remove above: {removeAbove}, remove below: {removeBelow}" );
+        //Debug.Log( $"remove above: {removeA}, remove below: {removeB}" );
         //Debug.Log( $"{result} : {boolean}" );
         
-        int2 aboveCut = math.sign (boolean.xy - result.xy);
-        int2 belowCut = math.sign (boolean.zw - result.zw);
+        int2 cutA = math.sign (boolean.xy - result.xy);
+        int2 cutB = math.sign (boolean.zw - result.zw);
 
-        if ( removeAbove && removeBelow )
+        if ( removeA && removeB )
         {
-            result.zw = boolean.xy - aboveCut;
-            result2.xy = boolean.zw - belowCut;
+            result.zw = boolean.xy - cutA;
+            result2.xy = boolean.zw - cutB;
             cuts = 2;
             
             cut2 = new IntBounds(result2);
             return new IntBounds(result);
         }
 
-        if ( removeAbove )
+        if ( removeA )
         {
-            result.zw = boolean.xy - aboveCut;
+            result.zw = boolean.xy - cutA;
             cut2 = new IntBounds(result2);
             return new IntBounds(result);
         }
         else
         {
-            result.xy = boolean.zw - belowCut;
+            result.xy = boolean.zw - cutB;
             cut2 = new IntBounds(result2);
             return new IntBounds(result);
         }
-        
-        /*
-        int x_distance = math.min(Bounds.z, otherBounds.Bounds.z) - math.max( Bounds.x, otherBounds.Bounds.x );
-        int y_distance = math.min(Bounds.w, otherBounds.Bounds.w) - math.max( Bounds.y, otherBounds.Bounds.y );
-        //x_distance = math.min(R1.x, R2.x) – max(L1.x, L2.x)
-        //y_distance = min(R1.y, R2.y) – max(L1.y, L2.y)
-        
-        /*
-        if ( width == 1 )
-        {
-            //if the cut doesnt overlap with the current peice dont make any cuts and return
-            if ( otherBounds.Bounds.y > Bounds.w || otherBounds.Bounds.w < Bounds.y )
-            {
-                cuts = 0;
-                cut2 = new IntBounds(result2);
-                return new IntBounds(result);
-            }
-            
-            bool lowerCut = otherBounds.Bounds.y > result.y;
-            bool upperCut = otherBounds.Bounds.w < result.w;
-
-            if ( lowerCut && upperCut )
-            {
-                result.w = otherBounds.Bounds.y-1;
-                result2.y = otherBounds.Bounds.w + 1;
-                
-                cuts = 2;
-                cut2 = new IntBounds(result2);
-                
-                //return new IntBounds(result);
-            }
-            else
-            {
-                if ( lowerCut )
-                {
-                    result.w = otherBounds.Bounds.y-1;
-                }
-                else if ( upperCut )
-                {
-                    result.y = otherBounds.Bounds.w+1;
-                }
-            }
-        }
-        
-        if ( height == 1 )
-        {
-            //if the cut doesnt overlap with the current peice dont make any cuts and return
-            if ( otherBounds.Bounds.x > Bounds.z || otherBounds.Bounds.z < Bounds.x )
-            {
-                cuts = 0;
-                cut2 = new IntBounds(result2);
-                return new IntBounds(result);
-            }
-            
-            bool leftCut = otherBounds.Bounds.x  > result.x;
-            bool rightCut = otherBounds.Bounds.z < result.z;
-            
-            if ( leftCut && rightCut )
-            {
-                result.w = otherBounds.Bounds.y-1;
-                result2.y = otherBounds.Bounds.w + 1;
-                
-                cuts = 2;
-                cut2 = new IntBounds(result2);
-                //return new IntBounds(result);
-            }
-            else
-            {
-                if ( leftCut )
-                {
-                    result.z = otherBounds.Bounds.x-1;
-                }
-                else if ( rightCut )
-                {
-                    result.x = otherBounds.Bounds.z+1;
-                }
-            }
-            
-        }
-
-        cut2 = new IntBounds(result2);
-        return new IntBounds(result);
-        */
     }
 
     public IntBounds Boolean( IntBounds otherBounds )
