@@ -517,7 +517,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 if ( index+1 == 2 )
                 {
-                    AddCell( room, roomOrigin + new int2(0,5), roomSize );
+                    //AddCell( room, roomOrigin + new int2(0,5), roomSize );
                 }
                 
 

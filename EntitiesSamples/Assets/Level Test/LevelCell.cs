@@ -129,10 +129,71 @@ public struct IntBounds
         int4 result = Bounds;
         int4 result2 = Bounds;
         cuts = 1;
+        
+        int x_distance = math.min(Bounds.z, otherBounds.Bounds.z) - math.max( Bounds.x, otherBounds.Bounds.x );
+        int y_distance = math.min(Bounds.w, otherBounds.Bounds.w) - math.max( Bounds.y, otherBounds.Bounds.y );
 
-        int width = result.z - result.x + 1;
-        int height = result.w - result.y + 1;
+        //if either distance is negative, then the two bounds do not overlap
+        if ( x_distance < 0 || y_distance < 0 )
+        {
+            cuts = 0;
+            cut2 = new IntBounds(result2);
+            return this;
+        }
 
+        int4 boolean = result;
+        boolean.xy = math.max( result.xy, otherBounds.Bounds.xy );
+        boolean.zw = math.min( result.zw, otherBounds.Bounds.zw );
+
+        //if the result of the boolean is the same dimensions as the current bounds, then the entire bounds is being cut out
+        //return -1 to indicate that it has been completely cut away
+        if ( boolean.Equals( result ) )
+        {
+            cuts = -1;
+            cut2 = new IntBounds(result2);
+            return this;
+        }
+
+        bool removeAbove = !result.xy.Equals( boolean.xy ); 
+        bool removeBelow = !result.zw.Equals( boolean.zw );
+
+
+        Debug.Log( $"remove above: {removeAbove}, remove below: {removeBelow}" );
+        //Debug.Log( $"{result} : {boolean}" );
+        
+        int2 aboveCut = math.sign (boolean.xy - result.xy);
+        int2 belowCut = math.sign (boolean.zw - result.zw);
+
+        if ( removeAbove && removeBelow )
+        {
+            result.zw = boolean.xy - aboveCut;
+            result2.xy = boolean.zw - belowCut;
+            cuts = 2;
+            
+            cut2 = new IntBounds(result2);
+            return new IntBounds(result);
+        }
+
+        if ( removeAbove )
+        {
+            result.zw = boolean.xy - aboveCut;
+            cut2 = new IntBounds(result2);
+            return new IntBounds(result);
+        }
+        else
+        {
+            result.xy = boolean.zw - belowCut;
+            cut2 = new IntBounds(result2);
+            return new IntBounds(result);
+        }
+        
+        /*
+        int x_distance = math.min(Bounds.z, otherBounds.Bounds.z) - math.max( Bounds.x, otherBounds.Bounds.x );
+        int y_distance = math.min(Bounds.w, otherBounds.Bounds.w) - math.max( Bounds.y, otherBounds.Bounds.y );
+        //x_distance = math.min(R1.x, R2.x) – max(L1.x, L2.x)
+        //y_distance = min(R1.y, R2.y) – max(L1.y, L2.y)
+        
+        /*
         if ( width == 1 )
         {
             //if the cut doesnt overlap with the current peice dont make any cuts and return
@@ -207,6 +268,7 @@ public struct IntBounds
 
         cut2 = new IntBounds(result2);
         return new IntBounds(result);
+        */
     }
 
     public IntBounds Boolean( IntBounds otherBounds )

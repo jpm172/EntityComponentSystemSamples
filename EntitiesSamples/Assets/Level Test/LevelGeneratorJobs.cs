@@ -47,20 +47,21 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             
             IntBounds checkBounds = colEnum.Current.CollidedWith.Bounds;
-            if ( checkBounds.Contains( result ) )
+            
+            result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
+            Debug.Log( cuts );
+            if ( cuts == -1 )
             {
-                //if the potential growth is entirely contained within the cell in collided with,
-                //then just return since there is no other potential cell growth here
                 return;
             }
-
-            IntBounds before = result;
-            result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
+            
+            /*
             if ( result.Area == 0 )
             {
                 Debug.Log( before + " -> " + result );
                 return;
             }
+            */
             if ( cuts == 2 )
             {
                 ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cell  );
