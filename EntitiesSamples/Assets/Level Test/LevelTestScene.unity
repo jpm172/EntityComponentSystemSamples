@@ -272,7 +272,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 15
   dimensions: {x: 0, y: 0}
-  layoutDimensions: {x: 5, y: 3}
+  layoutDimensions: {x: 3, y: 3}
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
@@ -281,10 +281,32 @@ MonoBehaviour:
   _minWallThickness: 1
   _maxWallThickness: 5
   _minRoomSeedSize: 20
-  _maxRoomSeedSize: 60
+  _maxRoomSeedSize: 100
   _seedBuffer: 20
   maxEdgeWeight: 10
-  DraftLook: 1
+  Focus: 0
+  FocusOnRoom: 1
+  ShowRoomBounds: 0
+  UseMeshes: 0
+  UseWireMeshes: 0
+  TestCase: 0
+  TestPositions:
+  - x: 0
+    y: 0
+  - x: 20
+    y: 5
+  TestSizes:
+  - x: 20
+    y: 20
+  - x: 20
+    y: 10
+  GrowthOverride:
+    x: 0
+    y: 0
+  breakPoint: 0
+  StepWiseGrow: 0
+  GrowIterations: 88
+  StepsPerIteration: 20
 --- !u!4 &791758686
 Transform:
   m_ObjectHideFlags: 0

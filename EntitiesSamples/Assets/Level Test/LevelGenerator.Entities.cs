@@ -114,6 +114,7 @@ public partial class LevelGenerator
         for (int i = 0; i < bounds.Length; ++i)
             bounds[i] = new RenderBounds {Value = meshList[i].bounds.ToAABB()};
 
+        /*
         LevelSpawnUnmanagedJob spawnJob = new LevelSpawnUnmanagedJob
         {
             Prototype = floorEntity,
@@ -121,6 +122,7 @@ public partial class LevelGenerator
             MeshBounds = bounds,
             EntityRenderMap = entityRenderMap
         };
+        
 
         var spawnHandle = spawnJob.Schedule(entityCounter-_walls.Count, 128);
         bounds.Dispose(spawnHandle);
@@ -132,6 +134,7 @@ public partial class LevelGenerator
         ecbJob.Playback(entityManager);
         ecbJob.Dispose();
         entityManager.DestroyEntity(floorEntity);
+        */
         
         
     }

@@ -21,14 +21,11 @@ public class LevelGeneratorEditor : Editor
         {
             level.GrowRooms();
         }
-        if (GUILayout.Button("Random Grow Rooms")) 
+        if (GUILayout.Button("Find Path")) 
         {
-            level.RandomGrowRooms();
+            level.TestPath();
         }
-        if (GUILayout.Button("Make Room Meshes")) 
-        {
-            level.MakeRoomMeshes();
-        }
+
         
 
     }
