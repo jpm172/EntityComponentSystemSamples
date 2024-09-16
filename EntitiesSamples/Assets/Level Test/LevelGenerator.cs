@@ -319,14 +319,11 @@ public partial class LevelGenerator : MonoBehaviour
 
 
             path.Add( result );
-            //distance[result] = min;
-            
+
             //look at each of the edges, update any new connections that are shorter than the ones previously found
             foreach ( int neighborId in _edgeDictionary[result].Keys )
             {
                 int weight = _edgeDictionary[result][neighborId];
-
-                
                 
                 if ( !distances.ContainsKey(neighborId) || min + weight < distances[neighborId] )
                 {
@@ -334,13 +331,6 @@ public partial class LevelGenerator : MonoBehaviour
                     pathEdges[neighborId] = result;
                 }
                 
-                /*
-                if ( min + e.Weight < distance[e.Destination] )
-                {
-                    distance[e.Destination] = min + e.Weight;
-                    pathEdges[e.Destination] = e;
-                }
-                */
             }
         }
         
@@ -359,29 +349,7 @@ public partial class LevelGenerator : MonoBehaviour
             
             SetNeighbors( roomId, pathEdges[roomId], distances[roomId] );
         }
-        /*
-        for ( int i = 0; i < pathEdges.Length; i++ )
-        {
-            if(i == startNode)
-                continue;
-            
-            SetNeighbors( i, pathEdges[i], distance[i] );
-        }
-        */
-        
-        /*
-        //update the graph to only contain the edges from the shortest path we just found
-        foreach ( LevelEdge e in pathEdges )
-        {
-            //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
-            if ( e.Destination != e.Source )
-            {
-                SetNeighbors( e.Source, e.Destination, e.Weight );
-            }
-                
-        }
-        */
-        
+
         return true;
     }
     
