@@ -52,7 +52,6 @@ public partial class LevelGenerator : MonoBehaviour
 
 
     //dijkstas variables
-    //private Dictionary<int, List<LevelEdge>> _edgeDictionary;//stores the edge weights used for dijsktras
     private Dictionary<int, Dictionary<int,int>> _edgeDictionary;//stores the edge weights used for dijsktras
     private int minEdgeWeight = 1;
     [SerializeField]
@@ -384,7 +383,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 int2 roomSizeRatio = new int2( Random.Range( 1, 11 ), Random.Range( 1, 11 ) );
                 int2 graphPosition = new int2(x,y);
-                int2 floorOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, 0, floorCellSize );
+                int2 floorOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, floorCellSize );
                 int2 wallOrigin = floorOrigin - wallVector;
 
                 LevelMaterial mat = GetRandomRoomMaterial();
@@ -404,8 +403,7 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 room.XGrowthDirections.AddRange( xGrow );
                 room.YGrowthDirections.AddRange( yGrow );
-                
-                
+
                 yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
             }
             
@@ -526,38 +524,29 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void SetNeighbors( int room1, int room2, int weight )
     {
-
         _edgeDictionary[room1][room2] = weight;
         _edgeDictionary[room2][room1] = weight;
-        
-
-        //_edgeDictionary[room1].Add( new LevelEdge{Source = room1,Destination = room2, Weight = weight} );
-        //_edgeDictionary[room2].Add( new LevelEdge{Source = room2, Destination = room1, Weight = weight} );
     }
     
     
     
-    private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
+    private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset,  int2 size)
     {
-        
         int2 shift = new int2(0,0);
-        
-        int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
 
         if ( x == 0 )
         {
-            shift.y = Random.Range( -(_seedBuffer+wallThickness),  _seedBuffer + wallThickness + (adjustedMaxSize - size.x)+ 1 );
+            shift.y = Random.Range( -_seedBuffer,  _seedBuffer + 1 );
         }
         else
         {
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
-            IntBounds leftBounds = _floorBroadPhase[]
-            
-            
-            int walkable = size.y - 2 * wallThickness;
-            int walkableNeighbor = leftNeighbor.Size.y - 2 * leftNeighbor.WallThickness;
-            int distance = (yOffset + wallThickness) - (leftNeighbor.Origin.y + leftNeighbor.WallThickness);
+            IntBounds leftBounds = _floorBroadPhase[leftNeighbor.Id];
+
+            int walkable = size.y;
+            int walkableNeighbor = leftBounds.Size.y;
+            int distance = yOffset - leftBounds.Origin.y;
             
             int extraSteps = walkable - _minRoomSeedSize;
             
@@ -572,16 +561,17 @@ public partial class LevelGenerator : MonoBehaviour
 
         if ( y == 0 )
         {
-            shift.x = Random.Range( -(_seedBuffer+wallThickness), _seedBuffer + wallThickness + (adjustedMaxSize - size.x) + 1 );
+            shift.x = Random.Range( -_seedBuffer, _seedBuffer  + 1 );
         }
         else
         {
             int index = x + (y-1) * layoutDimensions.x;
             LevelRoom bottomNeighbor = _rooms[index];
+            IntBounds bottomBounds = _floorBroadPhase[bottomNeighbor.Id];
             
-            int walkable = size.x - 2 * wallThickness;
-            int walkableNeighbor = bottomNeighbor.Size.x - 2 * bottomNeighbor.WallThickness;
-            int distance = (xOffset + wallThickness) - (bottomNeighbor.Origin.x + bottomNeighbor.WallThickness);
+            int walkable = size.x ;
+            int walkableNeighbor = bottomBounds.Size.x;
+            int distance = xOffset - bottomBounds.Origin.x ;
 
             int extraSteps = walkable - _minRoomSeedSize;
 
@@ -591,14 +581,13 @@ public partial class LevelGenerator : MonoBehaviour
             int rightShift = walkableNeighbor - (distance + walkable) + extraSteps;
 
             int inclusive = rightShift >= 0 ? 1 : -1;
-            shift.x = Random.Range( leftShift, rightShift + inclusive ); 
-            
-            
+            shift.x = Random.Range( leftShift, rightShift + inclusive );
         }
 
 
-        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer - wallThickness, xOffset + (adjustedMaxSize - size.x) + _seedBuffer + wallThickness );
-        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer - wallThickness, yOffset + (adjustedMaxSize - size.y) + _seedBuffer + wallThickness );
+        int xResult = Mathf.Clamp( xOffset + shift.x, xOffset - _seedBuffer , xOffset  + _seedBuffer  );
+        int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer , yOffset  + _seedBuffer  );
+        
         
         return new int2(xResult, yResult) ;
     }
