@@ -66,7 +66,7 @@ public partial class LevelGenerator
         
         //need to do the SortingGroup stuff via setting shader priority
         //doing it in code is inconsistent
-        foreach ( LevelWall wall in _walls )
+        foreach ( LevelWallEntity wall in _walls )
         {
             if ( !meshMap.ContainsKey( wall.Mesh ) )
             {
@@ -146,7 +146,7 @@ public partial class LevelGenerator
         for ( int i = 0; i < _walls.Count; i++ )
         {
             Entity prototype = entityManager.CreateEntity();
-            LevelWall wall = _walls[i];
+            LevelWallEntity wall = _walls[i];
             
             EntityRenderInfo info = renderMap[entityCountOffset+i];
             
