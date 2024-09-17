@@ -164,11 +164,11 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
         AddCell( room, newCell );
     }
-    
+    */
         
     newCells.Dispose();
-    changedCells.Dispose();
-    */
+    changedWalls.Dispose();
+    
     collisionResults.Dispose();
 
     /*

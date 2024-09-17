@@ -219,7 +219,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     */
 }
 
-[BurstCompile]
+//[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -282,11 +282,12 @@ public struct LevelGrowQueryJob : IJobParallelFor
     //Essentially, if the walkable space on each floor overlap at all on an axis, return true
     private bool WallAlignedWithFloor(LevelWall wall, LevelWall otherWall)
     {
-        int combinedThickness = wall.Thickness + otherWall.Thickness;
+        int combinedThickness = wall.Thickness + otherWall.Thickness + 1;
         LevelCell otherFloor = FloorNarrowPhase[otherWall.WallId];
         LevelCell floor = FloorNarrowPhase[wall.WallId];
 
         int4 connect = floor.Bounds.Bounds + GetGrowthDirection() * combinedThickness;
+        Debug.Log( $"{floor} -> {connect} ? {connect.Overlaps( otherFloor.Bounds.Bounds )}" );
         
         return connect.Overlaps( otherFloor.Bounds.Bounds );
     }
