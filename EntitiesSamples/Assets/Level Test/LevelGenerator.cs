@@ -272,7 +272,11 @@ public partial class LevelGenerator : MonoBehaviour
         //MakeEntities();
         
     }
-    
+
+    public void TestPath()
+    {
+        HasPath( 1 );
+    }
 
     private bool HasPath(int startNode)
     {
@@ -286,6 +290,12 @@ public partial class LevelGenerator : MonoBehaviour
         //initialize the lists needed to run dijkstras alg
         distances[startNode] = 0;
 
+        if ( breakPoint )
+        {
+
+        }
+
+        
         //run dijkstras algorithm until the path is found
         while ( path.Count < _rooms.Length )
         {
@@ -309,28 +319,18 @@ public partial class LevelGenerator : MonoBehaviour
 
 
             path.Add( result );
-            //distance[result] = min;
-            
+
             //look at each of the edges, update any new connections that are shorter than the ones previously found
             foreach ( int neighborId in _edgeDictionary[result].Keys )
             {
                 int weight = _edgeDictionary[result][neighborId];
-
                 
-                
-                if ( distances.ContainsKey(neighborId) && min + weight < distances[neighborId] )
+                if ( !distances.ContainsKey(neighborId) || min + weight < distances[neighborId] )
                 {
                     distances[neighborId] = min + weight;
                     pathEdges[neighborId] = result;
                 }
                 
-                /*
-                if ( min + e.Weight < distance[e.Destination] )
-                {
-                    distance[e.Destination] = min + e.Weight;
-                    pathEdges[e.Destination] = e;
-                }
-                */
             }
         }
         
@@ -338,7 +338,7 @@ public partial class LevelGenerator : MonoBehaviour
         _edgeDictionary.Clear();
         foreach ( LevelRoom room in _rooms )
         {
-            _edgeDictionary[room.Index] = new Dictionary<int, int>();
+            _edgeDictionary[room.Id] = new Dictionary<int, int>();
         }
 
 
@@ -349,29 +349,7 @@ public partial class LevelGenerator : MonoBehaviour
             
             SetNeighbors( roomId, pathEdges[roomId], distances[roomId] );
         }
-        /*
-        for ( int i = 0; i < pathEdges.Length; i++ )
-        {
-            if(i == startNode)
-                continue;
-            
-            SetNeighbors( i, pathEdges[i], distance[i] );
-        }
-        */
-        
-        /*
-        //update the graph to only contain the edges from the shortest path we just found
-        foreach ( LevelEdge e in pathEdges )
-        {
-            //the starting node will not be assigned a path, which will show up as an edge with all values == 0, so ignore it
-            if ( e.Destination != e.Source )
-            {
-                SetNeighbors( e.Source, e.Destination, e.Weight );
-            }
-                
-        }
-        */
-        
+
         return true;
     }
     
@@ -381,7 +359,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         foreach ( LevelRoom room in _rooms )
         {
-            StripMeshConstructor meshConstructor = new StripMeshConstructor();
+            //StripMeshConstructor meshConstructor = new StripMeshConstructor();
             //room.Mesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room );
         }
     }

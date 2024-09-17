@@ -21,6 +21,10 @@ public class LevelGeneratorEditor : Editor
         {
             level.GrowRooms();
         }
+        if (GUILayout.Button("Find Path")) 
+        {
+            level.TestPath();
+        }
 
         
 

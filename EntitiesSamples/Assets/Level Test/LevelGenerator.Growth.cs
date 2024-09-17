@@ -27,10 +27,9 @@ public void GrowRooms()
     }
     else
     {
-        for ( int i = 0; i < GrowIterations; i++ )
-        {
-            MainGrow();
-        }
+
+        MainGrow();
+        
     }
     
 }
@@ -40,7 +39,7 @@ private void MainGrow()
 {
     _totalSteps = 0;
     bool hasPath = false;
-    while ( !hasPath && _totalSteps < 1  )
+    while ( !hasPath  )
     {
         LevelRoom room = _rooms[_counter];
         int connections = _edgeDictionary[room.Id].Count;
