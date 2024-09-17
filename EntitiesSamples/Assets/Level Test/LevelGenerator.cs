@@ -283,19 +283,11 @@ public partial class LevelGenerator : MonoBehaviour
         int INF = Int32.MaxValue;
         Dictionary<int, int> pathEdges = new Dictionary<int, int>();
         Dictionary<int, int> distances = new Dictionary<int, int>();
-        //int[] distance = new int[_rooms.Length];
-        //int[] pathEdges = new int[_rooms.Length];
         List<int> path = new List<int>();
 
         //initialize the lists needed to run dijkstras alg
         distances[startNode] = 0;
 
-        if ( breakPoint )
-        {
-
-        }
-
-        
         //run dijkstras algorithm until the path is found
         while ( path.Count < _rooms.Length )
         {
