@@ -102,6 +102,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     LevelGrowQueryJob growQueryJob = new LevelGrowQueryJob
     {
         BroadPhaseBounds = _broadPhaseBounds,
+        FloorNarrowPhase = _floorNarrowPhase,
         Collisions = collisionResults.AsParallelWriter(),
         NewConnections = connections.AsParallelWriter(),
         WallNarrowPhase = _wallNarrowPhase,
@@ -118,14 +119,14 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     connections.Dispose();
     
     NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
-    NativeList<LevelCell> changedCells = new NativeList<LevelCell>(room.CellCount, Allocator.TempJob);
+    NativeList<LevelWall> changedWalls = new NativeList<LevelWall>(room.CellCount, Allocator.TempJob);
     LevelCheckCollisionsJob checkJob = new LevelCheckCollisionsJob
     {
         Collisions = collisionResults,
         GrowthDirection = growthDirection,
-        NarrowPhaseBounds = _narrowPhaseBounds,
+        NarrowPhaseBounds = _wallNarrowPhase,
         NewCells = newCells.AsParallelWriter(),
-        ChangedCells = changedCells.AsParallelWriter(),
+        ChangedCells = changedWalls.AsParallelWriter(),
         RoomId = room.Id
     };
 
@@ -133,28 +134,32 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     JobHandle checkHandle = checkJob.Schedule( room.CellCount, 16 );
     checkHandle.Complete();
 
-    foreach ( LevelCell cell in changedCells )
+    foreach ( LevelWall wall in changedWalls )
     {
-        _narrowPhaseBounds.TryGetFirstValue( room.Id, out LevelCell fc,
+        LevelCell levelCell = _floorNarrowPhase[wall.WallId];
+        levelCell.Bounds.Bounds += GetGrowthDirection( growthDirection );
+        _floorNarrowPhase[wall.WallId] = levelCell;
+        
+        _wallNarrowPhase.TryGetFirstValue( room.Id, out LevelWall fc,
             out NativeParallelMultiHashMapIterator<int> it );
-        UpdateBroadPhase( room, cell );
+        UpdateBroadPhase( room, wall );
 
-        if ( fc.Equals( cell ) )
+        if ( fc.Equals( wall ) )
         {
-            _narrowPhaseBounds.SetValue( cell, it  );
+            _wallNarrowPhase.SetValue( wall, it  );
             continue;
         }
 
-        while ( _narrowPhaseBounds.TryGetNextValue( out LevelCell c, ref it ) )
+        while ( _wallNarrowPhase.TryGetNextValue( out LevelWall c, ref it ) )
         {
-            if ( c.Equals( cell ) )
+            if ( c.Equals( wall ) )
             {
-                _narrowPhaseBounds.SetValue( cell, it  );
+                _wallNarrowPhase.SetValue( wall, it  );
                 break;
             }
         }
     }
-
+/*
     while ( newCells.TryDequeue( out LevelCell newCell ) )
     {
         AddCell( room, newCell );
@@ -163,6 +168,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         
     newCells.Dispose();
     changedCells.Dispose();
+    */
     collisionResults.Dispose();
 
     /*
@@ -275,6 +281,35 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     newCells.Dispose();
     */
 
+}
+
+
+private int4 GetGrowthDirection( int2 growthDirection)
+{
+    if ( math.abs( growthDirection.x ) > math.abs( growthDirection.y ) )
+    {
+        if ( growthDirection.x < 0 )
+        {
+            return new int4(-1,0,0,0);
+        }
+        else
+        {
+            return new int4(0,0,1, 0);
+        }
+            
+    }
+    else
+    {
+        if ( growthDirection.y < 0 )
+        {
+            return new int4(0,-1,0,0);
+        }
+        else
+        {
+            return new int4(0,0,0, 1);
+        }
+            
+    }
 }
 
 private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )

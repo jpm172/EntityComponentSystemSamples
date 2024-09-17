@@ -31,7 +31,7 @@ public partial class LevelGenerator : MonoBehaviour
     //cell variables
     private NativeHashMap<int, IntBounds> _broadPhaseBounds;
     private NativeHashMap<int, IntBounds> _floorBroadPhase;
-    private NativeParallelMultiHashMap<int, LevelCell> _narrowPhaseBounds;
+    private NativeHashMap<int, LevelCell> _floorNarrowPhase;
     private NativeParallelMultiHashMap<int, LevelWall> _wallNarrowPhase;
     private Dictionary<int2, List<LevelConnection>> _roomConnections;
 
@@ -81,7 +81,7 @@ public partial class LevelGenerator : MonoBehaviour
         dimPos /= GameSettings.PixelsPerUnit;
         Vector3 dimSize = new Vector3( dimensions.x, dimensions.y ) / GameSettings.PixelsPerUnit;
         Gizmos.DrawWireCube( dimPos, dimSize );
-
+/*
         if ( Focus )
         {
             if ( !_narrowPhaseBounds.ContainsKey( FocusOnRoom ) )
@@ -117,6 +117,7 @@ public partial class LevelGenerator : MonoBehaviour
             
             return;
         }
+        */
         
         foreach ( LevelRoom room in _rooms )
         {
@@ -154,13 +155,14 @@ public partial class LevelGenerator : MonoBehaviour
         
         foreach ( LevelRoom room in _rooms )
         {
-            NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = _narrowPhaseBounds.GetValuesForKey( room.Id );
+            NativeParallelMultiHashMap<int, LevelWall>.Enumerator cells = _wallNarrowPhase.GetValuesForKey( room.Id );
 
             Vector3 pos;
             Vector3 size;
             while ( cells.MoveNext() )
             {
-                LevelCell cell = cells.Current;
+                LevelWall wall = cells.Current;
+                LevelCell cell = _floorNarrowPhase[wall.WallId];
                 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
                 pos /= GameSettings.PixelsPerUnit;
                 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
@@ -168,18 +170,7 @@ public partial class LevelGenerator : MonoBehaviour
                 Gizmos.color = room.DebugColor;
                 Gizmos.DrawCube( pos, size );
             }
-
-            if ( ShowRoomBounds )
-            {
-                Gizmos.color = Color.black;
-                IntBounds bounds = _broadPhaseBounds[room.Id];
-                
-                pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
-                pos /= GameSettings.PixelsPerUnit;
-                size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
-
-                Gizmos.DrawWireCube( pos, size );
-            }
+            
             
             
         }
@@ -349,7 +340,7 @@ public partial class LevelGenerator : MonoBehaviour
         _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
         
         _wallNarrowPhase = new NativeParallelMultiHashMap<int, LevelWall>( _rooms.Length * 10, Allocator.Persistent );
-        _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
+        _floorNarrowPhase = new NativeHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         
         _floorBroadPhase = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
         _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
@@ -495,13 +486,14 @@ public partial class LevelGenerator : MonoBehaviour
         
         UpdateBroadPhase( room, newWall );
         _wallNarrowPhase.Add( room.Id, newWall );
-        _narrowPhaseBounds.Add( room.Id, newCell );
+        _floorNarrowPhase.Add( _nextCellId, newCell );
 
         _nextCellId++;
         room.CellCount++;
     }
     
     
+    /*
     private void AddCell(LevelRoom room, LevelCell newCell)
     {
         newCell.CellId = _nextCellId;
@@ -511,6 +503,7 @@ public partial class LevelGenerator : MonoBehaviour
         _nextCellId++;
         room.CellCount++;
     }
+    */
 
     private void UpdateBroadPhase( LevelRoom room, LevelCell newCell )
     {
@@ -698,8 +691,8 @@ public partial class LevelGenerator : MonoBehaviour
     private void CleanUp()
     {
         _broadPhaseBounds.Dispose();
-        _narrowPhaseBounds.Dispose();
         _wallNarrowPhase.Dispose();
+        _floorNarrowPhase.Dispose();
         _floorBroadPhase.Dispose();
     }
 }

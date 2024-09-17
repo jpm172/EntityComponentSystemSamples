@@ -14,26 +14,26 @@ using UnityEngine;
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
-    [ReadOnly] public NativeParallelMultiHashMap<int, LevelCell> NarrowPhaseBounds;
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> NarrowPhaseBounds;
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCollision> Collisions;
     [ReadOnly] public int RoomId;
     [ReadOnly] public int2 GrowthDirection;
 
     public NativeQueue<LevelCell>.ParallelWriter NewCells;
-    public NativeList<LevelCell>.ParallelWriter ChangedCells;
+    public NativeList<LevelWall>.ParallelWriter ChangedCells;
     
     public void Execute( int index )
     {
-        LevelCell cell = GetCell( index );
-        LevelCell potentialGrowth = GetPotentialGrowth( cell );
+        LevelWall cell = GetWall( index );
+        LevelWall potentialGrowth = GetPotentialGrowth( cell );
 
-        if ( !Collisions.ContainsKey( cell.CellId ) )
+        if ( !Collisions.ContainsKey( cell.WallId ) )
         {
             ChangedCells.AddNoResize( ApplyGrowth( cell ) );
             return;
         }
 
-        ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), potentialGrowth, cell );
+        //ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), potentialGrowth, cell );
 
     }
 
@@ -91,6 +91,55 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         return cell;
     }
     
+    private LevelWall GetWall( int index )
+    {
+        NativeParallelMultiHashMap<int, LevelWall>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
+        
+        int counter = 0;
+        while ( cells.MoveNext() )
+        {
+            if ( counter == index )
+            {
+                return cells.Current;
+            }
+                
+            counter++;
+        }
+        
+        return new LevelWall();
+    }
+
+    
+    
+    private LevelWall GetPotentialGrowth( LevelWall wall )
+    {
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.x + GrowthDirection.x;
+            }
+            else
+            {
+                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.z + GrowthDirection.x;
+            }
+            
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.y + GrowthDirection.y;
+            }
+            else
+            {
+                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.w + GrowthDirection.y;
+            }
+            
+        }
+        
+        return wall;
+    }
     private LevelCell ApplyGrowth( LevelCell cell )
     {
 
@@ -120,7 +169,36 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         return cell;
     }
     
+    private LevelWall ApplyGrowth( LevelWall wall )
+    {
+
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                wall.Bounds.Bounds.x += GrowthDirection.x;
+            }
+            else
+            {
+                wall.Bounds.Bounds.z += GrowthDirection.x;
+            }
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                wall.Bounds.Bounds.y += GrowthDirection.y;
+            }
+            else
+            {
+                wall.Bounds.Bounds.w += GrowthDirection.y;
+            }
+        }
+        
+        return wall;
+    }
     
+    /*
     private LevelCell GetCell( int index )
     {
         NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
@@ -138,6 +216,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         
         return new LevelCell();
     }
+    */
 }
 
 [BurstCompile]
@@ -145,6 +224,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 {
     
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> WallNarrowPhase;
+    [ReadOnly] public NativeHashMap<int, LevelCell> FloorNarrowPhase;
     [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
     [ReadOnly] public int2 GrowthDirection;
@@ -185,7 +265,8 @@ public struct LevelGrowQueryJob : IJobParallelFor
                 };
                 Collisions.Add( wall.WallId, newCol );
 
-                if ( collisionRoomId != RoomId  )
+                
+                if ( collisionRoomId != RoomId && WallAlignedWithFloor(wall, otherWalls.Current)  )
                 {
                     IntBounds connectionBounds = GetConnectionBounds( wall.Bounds, otherWalls.Current.Bounds );
                     LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds);
@@ -196,6 +277,49 @@ public struct LevelGrowQueryJob : IJobParallelFor
         }
     }
 
+
+    //returns true if the floors assigned to each wall can connect with each other
+    //Essentially, if the walkable space on each floor overlap at all on an axis, return true
+    private bool WallAlignedWithFloor(LevelWall wall, LevelWall otherWall)
+    {
+        int combinedThickness = wall.Thickness + otherWall.Thickness;
+        LevelCell otherFloor = FloorNarrowPhase[otherWall.WallId];
+        LevelCell floor = FloorNarrowPhase[wall.WallId];
+
+        int4 connect = floor.Bounds.Bounds + GetGrowthDirection() * combinedThickness;
+        
+        return connect.Overlaps( otherFloor.Bounds.Bounds );
+    }
+    
+    private int4 GetGrowthDirection( )
+    {
+        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
+        {
+            if ( GrowthDirection.x < 0 )
+            {
+                return new int4(-1,0,0,0);
+            }
+            else
+            {
+                return new int4(0,0,1, 0);
+            }
+            
+        }
+        else
+        {
+            if ( GrowthDirection.y < 0 )
+            {
+                return new int4(0,-1,0,0);
+            }
+            else
+            {
+                return new int4(0,0,0, 1);
+            }
+            
+        }
+    }
+    
+    
     //creates an IntBounds that represents the connection between the two rooms
     //the bounds will overlap both rooms 
     private IntBounds GetConnectionBounds(IntBounds bounds1, IntBounds bounds2)
@@ -230,6 +354,8 @@ public struct LevelGrowQueryJob : IJobParallelFor
         return result;
     }
 
+    
+    
     private LevelWall GetWallCell( int index )
     {
         NativeParallelMultiHashMap<int, LevelWall>.Enumerator cells = WallNarrowPhase.GetValuesForKey( RoomId );
@@ -248,9 +374,10 @@ public struct LevelGrowQueryJob : IJobParallelFor
         return new LevelWall();
     }
 
+    
+    
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
-
         if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
         {
             if ( GrowthDirection.x < 0 )

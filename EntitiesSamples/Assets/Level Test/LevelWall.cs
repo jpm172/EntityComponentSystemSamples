@@ -18,4 +18,13 @@ public struct LevelWall
         Thickness = thickness;
         WallId = id;
     }
+    
+    public override bool Equals( object obj )
+    {
+        if ( obj == null )
+            return false;
+
+        LevelWall wall = (LevelWall) obj;
+        return wall.WallId == WallId;
+    }
 }
