@@ -126,10 +126,10 @@ public partial class LevelGenerator : MonoBehaviour
             Vector3 size;
             while ( cells.MoveNext() )
             {
-                LevelCell cell = cells.Current.Cell;
-                pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                LevelWall wall = cells.Current;
+                pos = new Vector3(wall.Origin.x, wall.Origin.y) + new Vector3(wall.Size.x, wall.Size.y)/2;
                 pos /= GameSettings.PixelsPerUnit;
-                size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                size = new Vector3( wall.Size.x, wall.Size.y ) / GameSettings.PixelsPerUnit;
                  
                 Gizmos.color = room.DebugColor * Color.gray;
                 Gizmos.DrawCube( pos, size );
@@ -490,11 +490,10 @@ public partial class LevelGenerator : MonoBehaviour
         LevelCell newCell = new LevelCell( _nextCellId, origin, size );
         
         int2 wallVector = new int2(room.WallThickness, room.WallThickness);
-        LevelCell wallCell = new LevelCell(_nextCellId,origin - wallVector, size + wallVector*2);
-        LevelWall newWall = new LevelWall(wallCell, room.WallThickness);
+        LevelWall newWall = new LevelWall(_nextCellId,origin - wallVector, size + wallVector*2, room.WallThickness);
         
         
-        UpdateBroadPhase( room, wallCell );
+        UpdateBroadPhase( room, newWall );
         _wallNarrowPhase.Add( room.Id, newWall );
         _narrowPhaseBounds.Add( room.Id, newCell );
 
@@ -522,6 +521,15 @@ public partial class LevelGenerator : MonoBehaviour
         _broadPhaseBounds[room.Id] = bounds;
     }
 
+    private void UpdateBroadPhase( LevelRoom room, LevelWall newWall )
+    {
+        IntBounds bounds = _broadPhaseBounds[room.Id];
+        bounds.Bounds.xy = math.min( newWall.Bounds.Bounds.xy, bounds.Bounds.xy );
+        bounds.Bounds.zw = math.max( newWall.Bounds.Bounds.zw, bounds.Bounds.zw );
+
+        _broadPhaseBounds[room.Id] = bounds;
+    }
+    
     private void SetNeighbors( int room1, int room2, int weight )
     {
         _edgeDictionary[room1][room2] = weight;

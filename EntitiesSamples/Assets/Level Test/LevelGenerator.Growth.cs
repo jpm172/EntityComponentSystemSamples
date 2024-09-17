@@ -104,7 +104,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
         BroadPhaseBounds = _broadPhaseBounds,
         Collisions = collisionResults.AsParallelWriter(),
         NewConnections = connections.AsParallelWriter(),
-        NarrowPhaseBounds = _narrowPhaseBounds,
+        WallNarrowPhase = _wallNarrowPhase,
         GrowthDirection = growthDirection,
         RoomId = room.Id
     };
