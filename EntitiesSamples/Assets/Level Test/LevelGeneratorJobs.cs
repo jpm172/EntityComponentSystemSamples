@@ -39,10 +39,10 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 
     private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelCell potentialGrowth, LevelCell cell)
     {
-        IntBounds result = potentialGrowth.Bounds;
+        int4 result = potentialGrowth.Bounds;
         while ( colEnum.MoveNext() )
         {
-            result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out IntBounds cut2 );
+            result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out int4 cut2 );
             if ( cuts == -1 )
             {
                 //a cut value of -1 means the entire cell was cut away
@@ -50,13 +50,13 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             }
             if ( cuts == 2 )
             {
-                ApplyCollision( colEnum, new LevelCell(-1, cut2.Bounds), cell  );
+                ApplyCollision( colEnum, new LevelCell(-1, cut2), cell  );
             }
             
         }
         
         //if(result.Area > 0) this fixes issue, but need to find where it happens
-        NewCells.Enqueue( new LevelCell(-1, result.Bounds) );
+        NewCells.Enqueue( new LevelCell(-1, result) );
         
     }
     
@@ -67,11 +67,11 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.x < 0 )
             {
-                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.x + GrowthDirection.x;
+                cell.Bounds.x = cell.Bounds.z = cell.Bounds.x + GrowthDirection.x;
             }
             else
             {
-                cell.Bounds.Bounds.x = cell.Bounds.Bounds.z = cell.Bounds.Bounds.z + GrowthDirection.x;
+                cell.Bounds.x = cell.Bounds.z = cell.Bounds.z + GrowthDirection.x;
             }
             
         }
@@ -79,11 +79,11 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.y < 0 )
             {
-                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.y + GrowthDirection.y;
+                cell.Bounds.y = cell.Bounds.w = cell.Bounds.y + GrowthDirection.y;
             }
             else
             {
-                cell.Bounds.Bounds.y = cell.Bounds.Bounds.w = cell.Bounds.Bounds.w + GrowthDirection.y;
+                cell.Bounds.y = cell.Bounds.w = cell.Bounds.w + GrowthDirection.y;
             }
             
         }
@@ -117,11 +117,11 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.x < 0 )
             {
-                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.x + GrowthDirection.x;
+                wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
             }
             else
             {
-                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.z + GrowthDirection.x;
+                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.x;
             }
             
         }
@@ -129,11 +129,11 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.y < 0 )
             {
-                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.y + GrowthDirection.y;
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
             }
             else
             {
-                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.w + GrowthDirection.y;
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.y;
             }
             
         }
@@ -147,22 +147,22 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.x < 0 )
             {
-                cell.Bounds.Bounds.x += GrowthDirection.x;
+                cell.Bounds.x += GrowthDirection.x;
             }
             else
             {
-                cell.Bounds.Bounds.z += GrowthDirection.x;
+                cell.Bounds.z += GrowthDirection.x;
             }
         }
         else
         {
             if ( GrowthDirection.y < 0 )
             {
-                cell.Bounds.Bounds.y += GrowthDirection.y;
+                cell.Bounds.y += GrowthDirection.y;
             }
             else
             {
-               cell.Bounds.Bounds.w += GrowthDirection.y;
+               cell.Bounds.w += GrowthDirection.y;
             }
         }
         
@@ -176,22 +176,22 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         {
             if ( GrowthDirection.x < 0 )
             {
-                wall.Bounds.Bounds.x += GrowthDirection.x;
+                wall.Bounds.x += GrowthDirection.x;
             }
             else
             {
-                wall.Bounds.Bounds.z += GrowthDirection.x;
+                wall.Bounds.z += GrowthDirection.x;
             }
         }
         else
         {
             if ( GrowthDirection.y < 0 )
             {
-                wall.Bounds.Bounds.y += GrowthDirection.y;
+                wall.Bounds.y += GrowthDirection.y;
             }
             else
             {
-                wall.Bounds.Bounds.w += GrowthDirection.y;
+                wall.Bounds.w += GrowthDirection.y;
             }
         }
         
@@ -225,7 +225,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> WallNarrowPhase;
     [ReadOnly] public NativeHashMap<int, LevelCell> FloorNarrowPhase;
-    [ReadOnly] public NativeHashMap<int, IntBounds> BroadPhaseBounds;
+    [ReadOnly] public NativeHashMap<int, int4> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
     [ReadOnly] public int2 GrowthDirection;
     
@@ -268,7 +268,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
                 
                 if ( collisionRoomId != RoomId && WallAlignedWithFloor(wall, otherWalls.Current)  )
                 {
-                    IntBounds connectionBounds = GetConnectionBounds( wall.Bounds, otherWalls.Current.Bounds );
+                    int4 connectionBounds = GetConnectionBounds( wall.Bounds, otherWalls.Current.Bounds );
                     LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds);
 
                     NewConnections.Enqueue( newInfo );
@@ -286,10 +286,10 @@ public struct LevelGrowQueryJob : IJobParallelFor
         LevelCell otherFloor = FloorNarrowPhase[otherWall.WallId];
         LevelCell floor = FloorNarrowPhase[wall.WallId];
 
-        int4 connect = floor.Bounds.Bounds + GetGrowthDirection() * combinedThickness;
-        Debug.Log( $"{floor} -> {connect} ? {connect.Overlaps( otherFloor.Bounds.Bounds )}" );
+        int4 connect = floor.Bounds + GetGrowthDirection() * combinedThickness;
+        //Debug.Log( $"{floor} -> {connect} ? {connect.Overlaps( otherFloor.Bounds )}" );
         
-        return connect.Overlaps( otherFloor.Bounds.Bounds );
+        return connect.Overlaps( otherFloor.Bounds );
     }
     
     private int4 GetGrowthDirection( )
@@ -323,19 +323,19 @@ public struct LevelGrowQueryJob : IJobParallelFor
     
     //creates an IntBounds that represents the connection between the two rooms
     //the bounds will overlap both rooms 
-    private IntBounds GetConnectionBounds(IntBounds bounds1, IntBounds bounds2)
+    private int4 GetConnectionBounds(int4 bounds1, int4 bounds2)
     {
-        IntBounds result = bounds1.Boolean( bounds2 );
+        int4 result = bounds1.Boolean( bounds2 );
         
         if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
         {
             if ( GrowthDirection.x < 0 )
             {
-                result.Bounds.z -= GrowthDirection.x;
+                result.z -= GrowthDirection.x;
             }
             else
             {
-                result.Bounds.x -= GrowthDirection.x;
+                result.x -= GrowthDirection.x;
             }
             
         }
@@ -343,11 +343,11 @@ public struct LevelGrowQueryJob : IJobParallelFor
         {
             if ( GrowthDirection.y < 0 )
             {
-                result.Bounds.w -= GrowthDirection.y;
+                result.w -= GrowthDirection.y;
             }
             else
             {
-                result.Bounds.y -= GrowthDirection.y;
+                result.y -= GrowthDirection.y;
             }
             
         }
@@ -383,11 +383,11 @@ public struct LevelGrowQueryJob : IJobParallelFor
         {
             if ( GrowthDirection.x < 0 )
             {
-                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.x + GrowthDirection.x;
+                wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
             }
             else
             {
-                wall.Bounds.Bounds.x = wall.Bounds.Bounds.z = wall.Bounds.Bounds.z + GrowthDirection.x;
+                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.x;
             }
             
         }
@@ -395,11 +395,11 @@ public struct LevelGrowQueryJob : IJobParallelFor
         {
             if ( GrowthDirection.y < 0 )
             {
-                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.y + GrowthDirection.y;
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
             }
             else
             {
-                wall.Bounds.Bounds.y = wall.Bounds.Bounds.w = wall.Bounds.Bounds.w + GrowthDirection.y;
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.y;
             }
             
         }
@@ -421,7 +421,7 @@ public struct LevelCollision
 }
 
 
-
+/*
 [BurstCompile]
 public struct BroadPhaseQueryJob : IJobParallelFor
 {
@@ -502,6 +502,7 @@ public struct LevelBroadCollision
     public int CollisionRoomId;
     public LevelCell OriginCell;
 }
+*/
 
 /*
     [BurstCompile]

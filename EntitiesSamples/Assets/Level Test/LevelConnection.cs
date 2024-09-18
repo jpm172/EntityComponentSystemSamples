@@ -6,21 +6,21 @@ using Random = UnityEngine.Random;
 
 public class LevelConnection
 {
-   private IntBounds _bounds;
-   private List<IntBounds> _pieces;
+   private int4 _bounds;
+   private List<int4> _pieces;
 
-   public List<IntBounds> Pieces => _pieces;
+   public List<int4> Pieces => _pieces;
 
-   public IntBounds Bounds => _bounds;
+   public int4 Bounds => _bounds;
 
    public Color DebugColor;
    
    public float Length => GetLength();
    
 
-   public LevelConnection(IntBounds startingPiece)
+   public LevelConnection(int4 startingPiece)
    {
-      _pieces = new List<IntBounds>();
+      _pieces = new List<int4>();
       _pieces.Add( startingPiece );
       _bounds = startingPiece;
       
@@ -29,13 +29,13 @@ public class LevelConnection
 
    private float GetLength()
    {
-      float length = math.distance( _bounds.Bounds.zw, _bounds.Bounds.xy );
+      float length = math.distance( _bounds.zw, _bounds.xy );
       return length;
    }
 
    public int GetLargestDimension()
    {
-      int2 size = _bounds.Size;
+      int2 size = _bounds.Size();
       return math.max( size.x, size.y );
    }
 
@@ -46,10 +46,10 @@ public class LevelConnection
       if ( !broadphase )
          return false;
       
-      List<IntBounds> otherPieces = otherConnection.Pieces;
-      foreach ( IntBounds piece in _pieces )
+      List<int4> otherPieces = otherConnection.Pieces;
+      foreach ( int4 piece in _pieces )
       {
-         foreach ( IntBounds otherPiece in otherPieces )
+         foreach ( int4 otherPiece in otherPieces )
          {
             if ( piece.Borders( otherPiece ) || piece.Overlaps( otherPiece ) )
             {
@@ -66,21 +66,21 @@ public class LevelConnection
    {
       _pieces.AddRange( otherConnection.Pieces );
       
-      int4 bounds = _bounds.Bounds;
-      int4 otherBounds = otherConnection.Bounds.Bounds;
+
+      int4 otherBounds = otherConnection.Bounds;
       
-      _bounds.Bounds.xy = math.min( bounds.xy, otherBounds.xy );
-      _bounds.Bounds.zw = math.max( bounds.zw, otherBounds.zw );
+      _bounds.xy = math.min( _bounds.xy, otherBounds.xy );
+      _bounds.zw = math.max( _bounds.zw, otherBounds.zw );
    }
    
 }
 
 public struct LevelConnectionInfo
 {
-   public IntBounds Bounds;
+   public int4 Bounds;
    public int2 Connections;
 
-   public LevelConnectionInfo( int room1, int room2, IntBounds bounds )
+   public LevelConnectionInfo( int room1, int room2, int4 bounds )
    {
       Bounds = bounds;
       Connections = new int2(math.min( room1, room2 ), math.max( room1, room2 ));

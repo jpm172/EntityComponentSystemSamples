@@ -137,7 +137,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     foreach ( LevelWall wall in changedWalls )
     {
         LevelCell levelCell = _floorNarrowPhase[wall.WallId];
-        levelCell.Bounds.Bounds += GetGrowthDirection( growthDirection );
+        levelCell.Bounds += GetGrowthDirection( growthDirection );
         _floorNarrowPhase[wall.WallId] = levelCell;
         
         _wallNarrowPhase.TryGetFirstValue( room.Id, out LevelWall fc,

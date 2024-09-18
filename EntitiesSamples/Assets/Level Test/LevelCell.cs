@@ -3,28 +3,26 @@ using System.Collections.Generic;
 using Unity.Mathematics;
 using Unity.Physics;
 using UnityEngine;
+using static MyExtensionMethods;
 
 public struct LevelCell
 {
-    public IntBounds Bounds;
-    
+    public int4 Bounds;
     public int CellId;
-
-    public int2 Origin => Bounds.Origin;
-    public int2 Size => Bounds.Size;
-
-    public int Area => Bounds.Area;
+    
+    public int2 Origin => Bounds.Origin();
+    public int2 Size => Bounds.Size();
 
     public LevelCell( int id, int2 origin, int2 size )
     {
         CellId = id;
-        Bounds = new IntBounds(origin, size);
+        Bounds = new int4(origin, origin + size - Int2One);
     }
     
     public LevelCell( int id, int4 xyzw )
     {
         CellId = id;
-        Bounds = new IntBounds(xyzw);
+        Bounds = xyzw;
     }
 
     public override int GetHashCode()

@@ -29,8 +29,8 @@ public partial class LevelGenerator : MonoBehaviour
     private LevelRoom[] _rooms;
 
     //cell variables
-    private NativeHashMap<int, IntBounds> _broadPhaseBounds;
-    private NativeHashMap<int, IntBounds> _floorBroadPhase;
+    private NativeHashMap<int, int4> _broadPhaseBounds;
+    private NativeHashMap<int, int4> _floorBroadPhase;
     private NativeHashMap<int, LevelCell> _floorNarrowPhase;
     private NativeParallelMultiHashMap<int, LevelWall> _wallNarrowPhase;
     private Dictionary<int2, List<LevelConnection>> _roomConnections;
@@ -107,7 +107,7 @@ public partial class LevelGenerator : MonoBehaviour
             }
             
             Gizmos.color = Color.black;
-            IntBounds bounds = _broadPhaseBounds[FocusOnRoom];
+            int4 bounds = _broadPhaseBounds[FocusOnRoom];
                 
             pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
             pos /= GameSettings.PixelsPerUnit;
@@ -139,11 +139,11 @@ public partial class LevelGenerator : MonoBehaviour
             if ( ShowRoomBounds )
             {
                 Gizmos.color = Color.black;
-                IntBounds bounds = _broadPhaseBounds[room.Id];
+                int4 bounds = _broadPhaseBounds[room.Id];
                 
-                pos = new Vector3(bounds.Origin.x, bounds.Origin.y) + new Vector3(bounds.Size.x, bounds.Size.y)/2;
+                pos = new Vector3(bounds.x, bounds.y) + new Vector3(bounds.Size().x, bounds.Size().y)/2;
                 pos /= GameSettings.PixelsPerUnit;
-                size = new Vector3( bounds.Size.x, bounds.Size.y ) / GameSettings.PixelsPerUnit;
+                size = new Vector3( bounds.Size().x, bounds.Size().y ) / GameSettings.PixelsPerUnit;
 
                 Gizmos.DrawWireCube( pos, size );
                 Gizmos.color = Color.black;
@@ -182,11 +182,12 @@ public partial class LevelGenerator : MonoBehaviour
             foreach ( LevelConnection cnct in _roomConnections[key] )
             {
                 Gizmos.color = cnct.DebugColor;
-                foreach ( IntBounds cell in cnct.Pieces )
+                foreach ( int4 cell in cnct.Pieces )
                 {
-                    Vector3 pos = new Vector3(cell.Origin.x, cell.Origin.y) + new Vector3(cell.Size.x, cell.Size.y)/2;
+                    int2 cellSize = cell.Size();
+                    Vector3 pos = new Vector3(cell.x, cell.y) + new Vector3(cellSize.x, cellSize.y)/2;
                     pos /= GameSettings.PixelsPerUnit;
-                    Vector3 size = new Vector3( cell.Size.x, cell.Size.y ) / GameSettings.PixelsPerUnit;
+                    Vector3 size = new Vector3( cellSize.x, cellSize.y ) / GameSettings.PixelsPerUnit;
                 
                     Gizmos.DrawWireCube( pos, size );
                 }
@@ -202,12 +203,12 @@ public partial class LevelGenerator : MonoBehaviour
         {
             if ( _edgeDictionary.ContainsKey( room.Id ) )
             {
-                IntBounds roomBounds = _broadPhaseBounds[room.Id];
-                Vector3 source = new Vector3(roomBounds.Origin.x, roomBounds.Origin.y) + new Vector3(roomBounds.Size.x, roomBounds.Size.y)/2;
+                int4 roomBounds = _broadPhaseBounds[room.Id];
+                Vector3 source = new Vector3(roomBounds.x, roomBounds.y) + new Vector3(roomBounds.Size().x, roomBounds.Size().y)/2;
                 foreach (  KeyValuePair<int, int> neighbor in _edgeDictionary[room.Id])
                 {
-                    IntBounds neighborBounds = _broadPhaseBounds[neighbor.Key];
-                    Vector3 destination = new Vector3(neighborBounds.Origin.x, neighborBounds.Origin.y)+ new Vector3(neighborBounds.Size.x, neighborBounds.Size.y)/2;;
+                    int4 neighborBounds = _broadPhaseBounds[neighbor.Key];
+                    Vector3 destination = new Vector3(neighborBounds.x, neighborBounds.y)+ new Vector3(neighborBounds.Size().x, neighborBounds.Size().y)/2;;
                     
                     Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
                 }
@@ -342,8 +343,8 @@ public partial class LevelGenerator : MonoBehaviour
         _wallNarrowPhase = new NativeParallelMultiHashMap<int, LevelWall>( _rooms.Length * 10, Allocator.Persistent );
         _floorNarrowPhase = new NativeHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
         
-        _floorBroadPhase = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
-        _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
+        _floorBroadPhase = new NativeHashMap<int, int4>(_rooms.Length, Allocator.Persistent);
+        _broadPhaseBounds = new NativeHashMap<int, int4>(_rooms.Length, Allocator.Persistent);
         _roomConnections = new Dictionary<int2, List<LevelConnection>>();
         
         
@@ -384,8 +385,8 @@ public partial class LevelGenerator : MonoBehaviour
                 _rooms[index] = room;
                 _edgeDictionary[room.Id] = new Dictionary<int, int>();
                 
-                _floorBroadPhase[room.Id] = new IntBounds(floorOrigin, floorCellSize);
-                _broadPhaseBounds[room.Id] = new IntBounds(wallOrigin, wallCellSize);
+                _floorBroadPhase[room.Id] = new int4(floorOrigin, floorCellSize);
+                _broadPhaseBounds[room.Id] = new int4(wallOrigin, wallCellSize);
                 AddCell( room, floorOrigin, floorCellSize );
 
                 //add all growth directions to the room
@@ -421,7 +422,7 @@ public partial class LevelGenerator : MonoBehaviour
         _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
 
         _narrowPhaseBounds = new NativeParallelMultiHashMap<int, LevelCell>( _rooms.Length * 10, Allocator.Persistent );
-        _broadPhaseBounds = new NativeHashMap<int, IntBounds>(_rooms.Length, Allocator.Persistent);
+        _broadPhaseBounds = new NativeHashMap<int, int4>(_rooms.Length, Allocator.Persistent);
         _roomConnections = new Dictionary<int2, List<LevelConnection>>();
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -507,18 +508,18 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void UpdateBroadPhase( LevelRoom room, LevelCell newCell )
     {
-        IntBounds bounds = _broadPhaseBounds[room.Id];
-        bounds.Bounds.xy = math.min( newCell.Bounds.Bounds.xy, bounds.Bounds.xy );
-        bounds.Bounds.zw = math.max( newCell.Bounds.Bounds.zw, bounds.Bounds.zw );
+        int4 bounds = _broadPhaseBounds[room.Id];
+        bounds.xy = math.min( newCell.Bounds.xy, bounds.xy );
+        bounds.zw = math.max( newCell.Bounds.zw, bounds.zw );
 
         _broadPhaseBounds[room.Id] = bounds;
     }
 
     private void UpdateBroadPhase( LevelRoom room, LevelWall newWall )
     {
-        IntBounds bounds = _broadPhaseBounds[room.Id];
-        bounds.Bounds.xy = math.min( newWall.Bounds.Bounds.xy, bounds.Bounds.xy );
-        bounds.Bounds.zw = math.max( newWall.Bounds.Bounds.zw, bounds.Bounds.zw );
+        int4 bounds = _broadPhaseBounds[room.Id];
+        bounds.xy = math.min( newWall.Bounds.xy, bounds.xy );
+        bounds.zw = math.max( newWall.Bounds.zw, bounds.zw );
 
         _broadPhaseBounds[room.Id] = bounds;
     }
@@ -543,11 +544,11 @@ public partial class LevelGenerator : MonoBehaviour
         {
             int index = ( x - 1 ) + y * layoutDimensions.x;
             LevelRoom leftNeighbor = _rooms[index];
-            IntBounds leftBounds = _floorBroadPhase[leftNeighbor.Id];
+            int4 leftBounds = _floorBroadPhase[leftNeighbor.Id];
 
             int walkable = size.y;
-            int walkableNeighbor = leftBounds.Size.y;
-            int distance = yOffset - leftBounds.Origin.y;
+            int walkableNeighbor = leftBounds.Size().y;
+            int distance = yOffset - leftBounds.y;
             
             int extraSteps = walkable - _minRoomSeedSize;
             
@@ -568,11 +569,11 @@ public partial class LevelGenerator : MonoBehaviour
         {
             int index = x + (y-1) * layoutDimensions.x;
             LevelRoom bottomNeighbor = _rooms[index];
-            IntBounds bottomBounds = _floorBroadPhase[bottomNeighbor.Id];
+            int4 bottomBounds = _floorBroadPhase[bottomNeighbor.Id];
             
             int walkable = size.x ;
-            int walkableNeighbor = bottomBounds.Size.x;
-            int distance = xOffset - bottomBounds.Origin.x ;
+            int walkableNeighbor = bottomBounds.Size( ).x;
+            int distance = xOffset - bottomBounds.x ;
 
             int extraSteps = walkable - _minRoomSeedSize;
 
