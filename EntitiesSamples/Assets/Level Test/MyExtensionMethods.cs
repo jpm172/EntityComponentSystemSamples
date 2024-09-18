@@ -117,7 +117,8 @@ public static class MyExtensionMethods
 
         return horizontalEdge.Overlaps( otherBounds ) || verticalEdge.Overlaps( otherBounds );
     }
-
+    
+    
     public static int4 Flatten( this int4 bounds, int4 flattenDirection )
     {
         int4 halfMask = math.abs( flattenDirection );//turns the direction into a mask that only keeps the axis that we will flatten against

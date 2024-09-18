@@ -110,30 +110,8 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
-            }
-            else
-            {
-                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.x;
-            }
-            
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
-            }
-            else
-            {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.y;
-            }
-            
-        }
+        int4 newGrowth = wall.Bounds + GrowthDirection;
+        wall.Bounds = newGrowth.Flatten( GrowthDirection );
         
         return wall;
     }
@@ -188,7 +166,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
                 
                 if ( collisionRoomId != RoomId && WallAlignedWithFloor(wall, otherWalls.Current)  )
                 {
-                    int4 connectionBounds = GetConnectionBounds( wall.Bounds, otherWalls.Current.Bounds );
+                    int4 connectionBounds = GetConnectionBounds( wall, otherWalls.Current);
                     LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds);
 
                     NewConnections.Enqueue( newInfo );
@@ -218,39 +196,30 @@ public struct LevelGrowQueryJob : IJobParallelFor
     
     //creates an IntBounds that represents the connection between the two rooms
     //the bounds will overlap both rooms 
-    private int4 GetConnectionBounds(int4 bounds1, int4 bounds2)
+    private int4 GetConnectionBounds(LevelWall wall, LevelWall otherWall)
     {
-        int4 result = bounds1.Boolean( bounds2 );
-        
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                result.z -= GrowthDirection.x;
-            }
-            else
-            {
-                result.x -= GrowthDirection.x;
-            }
-            
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                result.w -= GrowthDirection.y;
-            }
-            else
-            {
-                result.y -= GrowthDirection.y;
-            }
-            
-        }
+        int4 inverseGrowth = InvertGrowthDirection();
+        int combinedThickness = wall.Thickness + otherWall.Thickness + 1;
+        LevelCell otherFloor = FloorNarrowPhase[otherWall.WallId];
+        LevelCell floor = FloorNarrowPhase[wall.WallId];
 
-        return result;
+        int4 result = floor.Bounds.Flatten( GrowthDirection );
+        result += GrowthDirection * (combinedThickness);
+
+        int4 result2 = otherFloor.Bounds.Flatten( inverseGrowth );
+        result2 += inverseGrowth * combinedThickness;
+
+        return result.Boolean( result2 );
     }
 
-    
+    private int4 InvertGrowthDirection()
+    {
+        int4 inverse = GrowthDirection.zwxy ;
+        Debug.Log( $"INV: {inverse}, {-math.sign( inverse )} -> {inverse*-math.sign( inverse )} " );
+        inverse = -math.sign( inverse );
+        Debug.Log( $"{GrowthDirection} -> {inverse}" );
+        return inverse;
+    }
     
     private LevelWall GetWallCell( int index )
     {
@@ -275,44 +244,8 @@ public struct LevelGrowQueryJob : IJobParallelFor
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
         int4 newGrowth = wall.Bounds + GrowthDirection;
-
         wall.Bounds = newGrowth.Flatten( GrowthDirection );
-/*
-        int4 axis = math.abs( GrowthDirection );
-        int4 growthBase = newGrowth * axis;
-        int4 mask = math.max( axis.xyzw, axis.zwxy );
-        int4 inverseMask = mask.yxwz;
-        int4 result = (mask * math.csum( growthBase )) + ( inverseMask * newGrowth );
 
-        wall.Bounds = result;
-
-        if ( GrowthDirection.x != 0 )
-        {
-            wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
-        }
-        else if(GrowthDirection.z != 0)
-        {
-            wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.z;
-        }
-        else if ( GrowthDirection.y != 0 )
-        {
-            wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
-        }
-        else
-        {
-            wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.w;
-        }
-        
-
-        Debug.Log( $"{wall.Bounds} vs {result}" );
-        
-        if ( !wall.Bounds.Equals( result ) )
-        {
-            Debug.Log( "not equal" );
-        }
-        */
-        
-        
         return wall;
     }
         
