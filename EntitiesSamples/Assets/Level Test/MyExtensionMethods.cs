@@ -9,9 +9,6 @@ public static class MyExtensionMethods
     private static readonly int4 ExpandHorizontal = new int4(-1,0,1,0);
     private static readonly int4 ExpandVertical = new int4(0,1,0,1);
 
-    
-    
-    
     public static bool Overlaps( this int4 bounds, int4 otherBounds )
     {
         if ( bounds.x > otherBounds.z || bounds.y > otherBounds.w )
@@ -108,7 +105,6 @@ public static class MyExtensionMethods
     
     public static bool Borders( this int4 bounds, int4 otherBounds )
     {
-
         if ( bounds.Overlaps( otherBounds ) ) 
             return false;
         
@@ -119,6 +115,11 @@ public static class MyExtensionMethods
     }
     
     
+    //turns the bounds into a strip with a height/width of 1, depending on flattenDirection
+    // (-1,0,0,0) == flatten to the left
+    // (0,-1,0,0) == flatten to the bottom
+    // (0,0,1,0) == flatten to the right
+    // (0,0,0,1) == flatten to the top
     public static int4 Flatten( this int4 bounds, int4 flattenDirection )
     {
         int4 halfMask = math.abs( flattenDirection );//turns the direction into a mask that only keeps the axis that we will flatten against

@@ -19,26 +19,26 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     [ReadOnly] public int RoomId;
     [ReadOnly] public int4 GrowthDirection;
 
-    public NativeQueue<LevelCell>.ParallelWriter NewCells;
-    public NativeList<LevelWall>.ParallelWriter ChangedCells;
+    public NativeQueue<LevelWall>.ParallelWriter NewWalls;
+    public NativeList<LevelWall>.ParallelWriter ChangedWalls;
     
     public void Execute( int index )
     {
-        LevelWall cell = GetWall( index );
-        LevelWall potentialGrowth = GetPotentialGrowth( cell );
+        LevelWall wall = GetWall( index );
+        LevelWall potentialGrowth = GetPotentialGrowth( wall );
 
-        if ( !Collisions.ContainsKey( cell.WallId ) )
+        if ( !Collisions.ContainsKey( wall.WallId ) )
         {
-            cell.Bounds += GrowthDirection;
-            ChangedCells.AddNoResize( cell );
+            wall.Bounds += GrowthDirection;
+            ChangedWalls.AddNoResize( wall );
             return;
         }
 
-        //ApplyCollision( Collisions.GetValuesForKey( cell.CellId ), potentialGrowth, cell );
+        ApplyCollision( Collisions.GetValuesForKey( wall.WallId ), potentialGrowth, wall );
 
     }
 
-    private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelCell potentialGrowth, LevelCell cell)
+    private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelWall potentialGrowth, LevelWall wall)
     {
         int4 result = potentialGrowth.Bounds;
         while ( colEnum.MoveNext() )
@@ -51,44 +51,14 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             }
             if ( cuts == 2 )
             {
-                ApplyCollision( colEnum, new LevelCell(-1, cut2), cell  );
+                ApplyCollision( colEnum, new LevelWall(-1, cut2, wall.Thickness), wall  );
             }
         }
         
-        NewCells.Enqueue( new LevelCell(-1, result) );
+        NewWalls.Enqueue( new LevelWall(-1, result, wall.Thickness) );
         
     }
     
-    private LevelCell GetPotentialGrowth( LevelCell cell )
-    {
-
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                cell.Bounds.x = cell.Bounds.z = cell.Bounds.x + GrowthDirection.x;
-            }
-            else
-            {
-                cell.Bounds.x = cell.Bounds.z = cell.Bounds.z + GrowthDirection.x;
-            }
-            
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                cell.Bounds.y = cell.Bounds.w = cell.Bounds.y + GrowthDirection.y;
-            }
-            else
-            {
-                cell.Bounds.y = cell.Bounds.w = cell.Bounds.w + GrowthDirection.y;
-            }
-            
-        }
-        
-        return cell;
-    }
     
     private LevelWall GetWall( int index )
     {
@@ -118,7 +88,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 
 }
 
-//[BurstCompile]
+[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -134,8 +104,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     {
         int cellIndex = index / BroadPhaseBounds.Count;
         int broadPhaseIndex = (index % BroadPhaseBounds.Count)+1;
-        
-        
+
         LevelWall wallCell = GetWallCell( cellIndex );
         LevelWall potentialWall = GetPotentialGrowth( wallCell );
 
@@ -194,7 +163,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     
     
     
-    //creates an IntBounds that represents the connection between the two rooms
+    //creates the bounds that represents the connection between the two rooms
     //the bounds will overlap both rooms 
     private int4 GetConnectionBounds(LevelWall wall, LevelWall otherWall)
     {
@@ -214,11 +183,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
 
     private int4 InvertGrowthDirection()
     {
-        int4 inverse = GrowthDirection.zwxy ;
-        Debug.Log( $"INV: {inverse}, {-math.sign( inverse )} -> {inverse*-math.sign( inverse )} " );
-        inverse = -math.sign( inverse );
-        Debug.Log( $"{GrowthDirection} -> {inverse}" );
-        return inverse;
+        return -math.sign( GrowthDirection.zwxy );
     }
     
     private LevelWall GetWallCell( int index )

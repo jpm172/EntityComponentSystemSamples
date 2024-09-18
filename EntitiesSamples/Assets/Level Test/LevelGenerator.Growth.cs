@@ -27,9 +27,7 @@ public void GrowRooms()
     }
     else
     {
-
         MainGrow();
-        
     }
     
 }
@@ -38,15 +36,19 @@ public void GrowRooms()
 private void MainGrow()
 {
     _totalSteps = 0;
+    int totalConnections = 0;
+    
     bool hasPath = false;
-    while ( !hasPath && _totalSteps < 1 )
+    //while ( !hasPath && _totalSteps < 1 )
+    while ( !hasPath )
     {
         LevelRoom room = _rooms[_counter];
         int connections = _edgeDictionary[room.Id].Count;
         GrowRoom( room );
+        totalConnections += _edgeDictionary[room.Id].Count - connections;
 
-
-        if ( connections != _edgeDictionary[room.Id].Count )
+        //if ( connections != _edgeDictionary[room.Id].Count )
+        if(totalConnections >= _rooms.Length-1)//only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
         {
             hasPath = HasPath( room.Id );
         }
@@ -120,15 +122,15 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
     
     connections.Dispose();
     
-    NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>(Allocator.TempJob);
+    NativeQueue<LevelWall> newWalls = new NativeQueue<LevelWall>(Allocator.TempJob);
     NativeList<LevelWall> changedWalls = new NativeList<LevelWall>(room.CellCount, Allocator.TempJob);
     LevelCheckCollisionsJob checkJob = new LevelCheckCollisionsJob
     {
         Collisions = collisionResults,
         GrowthDirection = growthDirection,
         NarrowPhaseBounds = _wallNarrowPhase,
-        NewCells = newCells.AsParallelWriter(),
-        ChangedCells = changedWalls.AsParallelWriter(),
+        NewWalls = newWalls.AsParallelWriter(),
+        ChangedWalls = changedWalls.AsParallelWriter(),
         RoomId = room.Id
     };
 
@@ -139,7 +141,7 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
     foreach ( LevelWall wall in changedWalls )
     {
         LevelCell levelCell = _floorNarrowPhase[wall.WallId];
-        levelCell.Bounds += growthDirection ;
+        levelCell.Bounds += growthDirection;
         _floorNarrowPhase[wall.WallId] = levelCell;
         
         _wallNarrowPhase.TryGetFirstValue( room.Id, out LevelWall fc,
@@ -161,14 +163,14 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
             }
         }
     }
-/*
-    while ( newCells.TryDequeue( out LevelCell newCell ) )
+
+    while ( newWalls.TryDequeue( out LevelWall newWall ) )
     {
-        AddCell( room, newCell );
+        AddWall( room, newWall );
     }
-    */
+    
         
-    newCells.Dispose();
+    newWalls.Dispose();
     changedWalls.Dispose();
     
     collisionResults.Dispose();

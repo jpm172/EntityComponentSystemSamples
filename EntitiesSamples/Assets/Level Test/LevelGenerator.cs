@@ -492,7 +492,11 @@ public partial class LevelGenerator : MonoBehaviour
         _nextCellId++;
         room.CellCount++;
     }
-    
+
+    private void AddWall( LevelRoom room, LevelWall newWall )
+    {
+        
+    }
     
     /*
     private void AddCell(LevelRoom room, LevelCell newCell)

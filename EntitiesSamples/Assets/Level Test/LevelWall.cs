@@ -17,6 +17,13 @@ public struct LevelWall
         WallId = id;
     }
     
+    public LevelWall( int id, int4 bounds, int thickness  )
+    {
+        Bounds = bounds;
+        Thickness = thickness;
+        WallId = id;
+    }
+    
     public override bool Equals( object obj )
     {
         if ( obj == null )
