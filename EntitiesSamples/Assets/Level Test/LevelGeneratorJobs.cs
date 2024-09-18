@@ -29,7 +29,8 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 
         if ( !Collisions.ContainsKey( cell.WallId ) )
         {
-            ChangedCells.AddNoResize( ApplyGrowth( cell ) );
+            cell.Bounds += GrowthDirection;
+            ChangedCells.AddNoResize( cell );
             return;
         }
 
@@ -106,8 +107,6 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         
         return new LevelWall();
     }
-
-    
     
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
@@ -138,64 +137,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         
         return wall;
     }
-    private LevelCell ApplyGrowth( LevelCell cell )
-    {
 
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                cell.Bounds.x += GrowthDirection.x;
-            }
-            else
-            {
-                cell.Bounds.z += GrowthDirection.x;
-            }
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                cell.Bounds.y += GrowthDirection.y;
-            }
-            else
-            {
-               cell.Bounds.w += GrowthDirection.y;
-            }
-        }
-        
-        return cell;
-    }
-    
-    private LevelWall ApplyGrowth( LevelWall wall )
-    {
-
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                wall.Bounds.x += GrowthDirection.x;
-            }
-            else
-            {
-                wall.Bounds.z += GrowthDirection.x;
-            }
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                wall.Bounds.y += GrowthDirection.y;
-            }
-            else
-            {
-                wall.Bounds.w += GrowthDirection.y;
-            }
-        }
-        
-        return wall;
-    }
-    
 }
 
 //[BurstCompile]
@@ -215,7 +157,6 @@ public struct LevelGrowQueryJob : IJobParallelFor
         int cellIndex = index / BroadPhaseBounds.Count;
         int broadPhaseIndex = (index % BroadPhaseBounds.Count)+1;
         
-        //Debug.Log( $"{index} == C{cellIndex}, B{broadPhaseIndex}" );
         
         LevelWall wallCell = GetWallCell( cellIndex );
         LevelWall potentialWall = GetPotentialGrowth( wallCell );
@@ -265,7 +206,9 @@ public struct LevelGrowQueryJob : IJobParallelFor
         LevelCell otherFloor = FloorNarrowPhase[otherWall.WallId];
         LevelCell floor = FloorNarrowPhase[wall.WallId];
 
-        int4 connect = floor.Bounds + GetGrowthDirection() * combinedThickness;
+        
+        
+        int4 connect = floor.Bounds + GrowthDirection * combinedThickness;
         //Debug.Log( $"{floor} -> {connect} ? {connect.Overlaps( otherFloor.Bounds )}" );
         
         return connect.Overlaps( otherFloor.Bounds );
@@ -332,6 +275,16 @@ public struct LevelGrowQueryJob : IJobParallelFor
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
         int4 newGrowth = wall.Bounds + GrowthDirection;
+
+        int4 axis = math.abs( GrowthDirection );
+        int4 growthBase = newGrowth * axis;
+        int4 mask = math.max( axis.xyzw, axis.zwxy );
+        int4 inverseMask = mask.yzwz;
+        int4 result = (mask * math.csum( growthBase )) + ( inverseMask * newGrowth );
+        
+        
+        //Debug.Log( $"{GrowthDirection} -> {growthBase} | {mask} == {result}  " );//
+
         //math.select(  )
 
             if ( GrowthDirection.x != 0 )
@@ -342,24 +295,19 @@ public struct LevelGrowQueryJob : IJobParallelFor
             {
                 wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.z;
             }
-            else if ( GrowthDirection.y < 0 )
-            {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
-            }
-            
-        
-        else
-        {
-            if ( GrowthDirection.y < 0 )
+            else if ( GrowthDirection.y != 0 )
             {
                 wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
             }
             else
             {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.y;
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.w;
             }
-            
-        }
+
+            if ( !wall.Bounds.Equals( result ) )
+            {
+                Debug.Log( "wrong" );
+            }
         
         return wall;
     }
