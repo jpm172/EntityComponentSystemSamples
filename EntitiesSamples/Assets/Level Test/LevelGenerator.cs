@@ -390,8 +390,8 @@ public partial class LevelGenerator : MonoBehaviour
                 AddCell( room, floorOrigin, floorCellSize );
 
                 //add all growth directions to the room
-                int2[] xGrow = new[] {new int2( -1, 0 ), new int2( 1, 0 )};
-                int2[] yGrow = new[] {new int2( 0, -1 ), new int2( 0, 1 )};
+                int4[] xGrow = new[] {new int4( -1, 0,0,0 ), new int4( 0,0, 1, 0 )};
+                int4[] yGrow = new[] {new int4( 0, -1,0,0 ), new int4( 0,0, 0, 1 )};
                 
                 room.XGrowthDirections.AddRange( xGrow );
                 room.YGrowthDirections.AddRange( yGrow );

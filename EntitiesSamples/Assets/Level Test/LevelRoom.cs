@@ -19,8 +19,8 @@ public class LevelRoom
     private int2 _sizeRatio;
     private int2 _graphPosition;
 
-    private List<int2> _xGrowthDirections;
-    private List<int2> _yGrowthDirections;
+    private List<int4> _xGrowthDirections;
+    private List<int4> _yGrowthDirections;
 
     private Dictionary<int, List<LevelConnection>> _roomConnections;
     
@@ -29,16 +29,14 @@ public class LevelRoom
 
     
 
-    public List<int2> XGrowthDirections
+    public List<int4> XGrowthDirections
     {
         get => _xGrowthDirections;
-        set => _xGrowthDirections = value;
     }
 
-    public List<int2> YGrowthDirections
+    public List<int4> YGrowthDirections
     {
         get => _yGrowthDirections;
-        set => _yGrowthDirections = value;
     }
 
     public int CellCount
@@ -78,8 +76,8 @@ public class LevelRoom
         _sizeRatio = sizeRatio;
         _wallThickness = wallThickness;
         _weight = weight;
-        _xGrowthDirections = new List<int2>();
-        _yGrowthDirections = new List<int2>();
+        _xGrowthDirections = new List<int4>();
+        _yGrowthDirections = new List<int4>();
         
         _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
     }

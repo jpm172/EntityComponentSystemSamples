@@ -17,7 +17,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> NarrowPhaseBounds;
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCollision> Collisions;
     [ReadOnly] public int RoomId;
-    [ReadOnly] public int2 GrowthDirection;
+    [ReadOnly] public int4 GrowthDirection;
 
     public NativeQueue<LevelCell>.ParallelWriter NewCells;
     public NativeList<LevelWall>.ParallelWriter ChangedCells;
@@ -52,10 +52,8 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             {
                 ApplyCollision( colEnum, new LevelCell(-1, cut2), cell  );
             }
-            
         }
         
-        //if(result.Area > 0) this fixes issue, but need to find where it happens
         NewCells.Enqueue( new LevelCell(-1, result) );
         
     }
@@ -198,25 +196,6 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         return wall;
     }
     
-    /*
-    private LevelCell GetCell( int index )
-    {
-        NativeParallelMultiHashMap<int, LevelCell>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
-        
-        int counter = 0;
-        while ( cells.MoveNext() )
-        {
-            if ( counter == index )
-            {
-                return cells.Current;
-            }
-                
-            counter++;
-        }
-        
-        return new LevelCell();
-    }
-    */
 }
 
 //[BurstCompile]
@@ -227,7 +206,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     [ReadOnly] public NativeHashMap<int, LevelCell> FloorNarrowPhase;
     [ReadOnly] public NativeHashMap<int, int4> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
-    [ReadOnly] public int2 GrowthDirection;
+    [ReadOnly] public int4 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
     public NativeQueue<LevelConnectionInfo>.ParallelWriter NewConnections;
@@ -292,33 +271,6 @@ public struct LevelGrowQueryJob : IJobParallelFor
         return connect.Overlaps( otherFloor.Bounds );
     }
     
-    private int4 GetGrowthDirection( )
-    {
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
-            {
-                return new int4(-1,0,0,0);
-            }
-            else
-            {
-                return new int4(0,0,1, 0);
-            }
-            
-        }
-        else
-        {
-            if ( GrowthDirection.y < 0 )
-            {
-                return new int4(0,-1,0,0);
-            }
-            else
-            {
-                return new int4(0,0,0, 1);
-            }
-            
-        }
-    }
     
     
     //creates an IntBounds that represents the connection between the two rooms
@@ -379,18 +331,23 @@ public struct LevelGrowQueryJob : IJobParallelFor
     
     private LevelWall GetPotentialGrowth( LevelWall wall )
     {
-        if ( math.abs( GrowthDirection.x ) > math.abs( GrowthDirection.y ) )
-        {
-            if ( GrowthDirection.x < 0 )
+        int4 newGrowth = wall.Bounds + GrowthDirection;
+        //math.select(  )
+
+            if ( GrowthDirection.x != 0 )
             {
                 wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
             }
-            else
+            else if(GrowthDirection.z != 0)
             {
-                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.x;
+                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.z;
+            }
+            else if ( GrowthDirection.y < 0 )
+            {
+                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
             }
             
-        }
+        
         else
         {
             if ( GrowthDirection.y < 0 )

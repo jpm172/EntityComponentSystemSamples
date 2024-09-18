@@ -67,9 +67,11 @@ private void GrowRoom( LevelRoom room )
     
     if ( room.GrowthType == LevelGrowthType.Normal )
     {
-        int2 growthDirection = GetRandomGrowthDirection( room );
-        if ( !GrowthOverride.Equals( int2.zero ) )
+        int4 growthDirection = GetRandomGrowthDirection( room );
+        /*
+        if ( !GrowthOverride.xy.Equals( int2.zero ) )
             growthDirection = GrowthOverride;
+            */
 
         //for( int n = 0; n < 1; n++ )
         //for ( int n = 0; n < _minRoomSeedSize; n++ )
@@ -90,7 +92,7 @@ private void GrowRoom( LevelRoom room )
 }
 
 
-private void NormalGrow( LevelRoom room, int2 growthDirection )
+private void NormalGrow( LevelRoom room, int4 growthDirection )
 {
     
     NativeParallelMultiHashMap<int, LevelCollision> collisionResults = 
@@ -137,7 +139,7 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
     foreach ( LevelWall wall in changedWalls )
     {
         LevelCell levelCell = _floorNarrowPhase[wall.WallId];
-        levelCell.Bounds += GetGrowthDirection( growthDirection );
+        levelCell.Bounds += growthDirection ;
         _floorNarrowPhase[wall.WallId] = levelCell;
         
         _wallNarrowPhase.TryGetFirstValue( room.Id, out LevelWall fc,
@@ -284,34 +286,6 @@ private void NormalGrow( LevelRoom room, int2 growthDirection )
 }
 
 
-private int4 GetGrowthDirection( int2 growthDirection)
-{
-    if ( math.abs( growthDirection.x ) > math.abs( growthDirection.y ) )
-    {
-        if ( growthDirection.x < 0 )
-        {
-            return new int4(-1,0,0,0);
-        }
-        else
-        {
-            return new int4(0,0,1, 0);
-        }
-            
-    }
-    else
-    {
-        if ( growthDirection.y < 0 )
-        {
-            return new int4(0,-1,0,0);
-        }
-        else
-        {
-            return new int4(0,0,0, 1);
-        }
-            
-    }
-}
-
 private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
 {
     while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
@@ -345,7 +319,7 @@ private void AddConnections( NativeQueue<LevelConnectionInfo> connections, Level
 
 
 
-private int2 GetRandomGrowthDirection( LevelRoom room )
+private int4 GetRandomGrowthDirection( LevelRoom room )
 {
     
     bool hasHorizontal = room.XGrowthDirections.Count > 0;
