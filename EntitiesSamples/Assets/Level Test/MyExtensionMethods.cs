@@ -118,6 +118,17 @@ public static class MyExtensionMethods
         return horizontalEdge.Overlaps( otherBounds ) || verticalEdge.Overlaps( otherBounds );
     }
 
+    public static int4 Flatten( this int4 bounds, int4 flattenDirection )
+    {
+        int4 halfMask = math.abs( flattenDirection );//turns the direction into a mask that only keeps the axis that we will flatten against
+        int4 fullMask = math.max( halfMask.xyzw, halfMask.zwxy );//creates a mask that will only keep the correct axis, either both x values or both y values (1010 or 0101)
+        int4 inverseMask = fullMask.yxwz;
+        
+        int4 flattenedAxis = bounds * halfMask;
+        
+        return (fullMask * math.csum( flattenedAxis )) + ( inverseMask * bounds );
+    }
+
     public static int2 Origin( this int4 bounds )
     {
         return bounds.xy;

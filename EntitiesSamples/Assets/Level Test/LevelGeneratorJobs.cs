@@ -276,38 +276,42 @@ public struct LevelGrowQueryJob : IJobParallelFor
     {
         int4 newGrowth = wall.Bounds + GrowthDirection;
 
+        wall.Bounds = newGrowth.Flatten( GrowthDirection );
+/*
         int4 axis = math.abs( GrowthDirection );
         int4 growthBase = newGrowth * axis;
         int4 mask = math.max( axis.xyzw, axis.zwxy );
-        int4 inverseMask = mask.yzwz;
+        int4 inverseMask = mask.yxwz;
         int4 result = (mask * math.csum( growthBase )) + ( inverseMask * newGrowth );
+
+        wall.Bounds = result;
+
+        if ( GrowthDirection.x != 0 )
+        {
+            wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
+        }
+        else if(GrowthDirection.z != 0)
+        {
+            wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.z;
+        }
+        else if ( GrowthDirection.y != 0 )
+        {
+            wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
+        }
+        else
+        {
+            wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.w;
+        }
         
+
+        Debug.Log( $"{wall.Bounds} vs {result}" );
         
-        //Debug.Log( $"{GrowthDirection} -> {growthBase} | {mask} == {result}  " );//
-
-        //math.select(  )
-
-            if ( GrowthDirection.x != 0 )
-            {
-                wall.Bounds.x = wall.Bounds.z = wall.Bounds.x + GrowthDirection.x;
-            }
-            else if(GrowthDirection.z != 0)
-            {
-                wall.Bounds.x = wall.Bounds.z = wall.Bounds.z + GrowthDirection.z;
-            }
-            else if ( GrowthDirection.y != 0 )
-            {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.y + GrowthDirection.y;
-            }
-            else
-            {
-                wall.Bounds.y = wall.Bounds.w = wall.Bounds.w + GrowthDirection.w;
-            }
-
-            if ( !wall.Bounds.Equals( result ) )
-            {
-                Debug.Log( "wrong" );
-            }
+        if ( !wall.Bounds.Equals( result ) )
+        {
+            Debug.Log( "not equal" );
+        }
+        */
+        
         
         return wall;
     }
