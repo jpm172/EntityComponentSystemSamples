@@ -14,7 +14,8 @@ using UnityEngine;
 public struct LevelCheckCollisionsJob : IJobParallelFor
 {
 
-    [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> NarrowPhaseBounds;
+    [ReadOnly] public NativeParallelMultiHashMap<int, LevelWall> WallNarrowPhase;
+    [ReadOnly] public NativeHashMap<int, LevelCell> FloorNarrowPhase;
     [ReadOnly] public NativeParallelMultiHashMap<int, LevelCollision> Collisions;
     [ReadOnly] public int RoomId;
     [ReadOnly] public int RequiredLength;
@@ -26,7 +27,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     public void Execute( int index )
     {
         LevelWall wall = GetWall( index );
-        LevelWall potentialGrowth = GetPotentialGrowth( wall );
+        
 
         if ( !Collisions.ContainsKey( wall.WallId ) )
         {
@@ -35,6 +36,9 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             return;
         }
 
+        LevelCell floor = FloorNarrowPhase[wall.WallId];
+        LevelWall potentialGrowth = GetPotentialGrowth( wall, floor );
+        
         ApplyCollision( Collisions.GetValuesForKey( wall.WallId ), potentialGrowth, wall );
 
     }
@@ -42,11 +46,11 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelWall potentialGrowth, LevelWall wall)
     {
         int4 result = potentialGrowth.Bounds;
-        Debug.Log( result );
+        //Debug.Log( result );
         while ( colEnum.MoveNext() )
         {
             result = result.CutOut( colEnum.Current.CollidedWith.Bounds, out int cuts, out int4 cut2 );
-            if ( cuts == -1 || GetLength( result ) <  RequiredLength )
+            if ( cuts == -1 )
             {
                 //a cut value of -1 means the entire cell was cut away
                 return;
@@ -55,8 +59,15 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
             {
                 ApplyCollision( colEnum, new LevelWall(-1, cut2, wall.Thickness), wall  );
             }
+
+            if ( GetLength( result ) < RequiredLength )
+            {
+                return;
+            }
         }
+
         
+        result -= ( GrowthDirection.zwxy * (wall.Thickness*2));
         NewWalls.Enqueue( new LevelWall(-1, result, wall.Thickness) );
         
     }
@@ -76,7 +87,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     
     private LevelWall GetWall( int index )
     {
-        NativeParallelMultiHashMap<int, LevelWall>.Enumerator cells = NarrowPhaseBounds.GetValuesForKey( RoomId );
+        NativeParallelMultiHashMap<int, LevelWall>.Enumerator cells = WallNarrowPhase.GetValuesForKey( RoomId );
         
         int counter = 0;
         while ( cells.MoveNext() )
@@ -91,11 +102,15 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         
         return new LevelWall();
     }
-    
-    private LevelWall GetPotentialGrowth( LevelWall wall )
+
+    private LevelWall GetPotentialGrowth( LevelWall wall, LevelCell floor )
     {
         int4 newGrowth = wall.Bounds + GrowthDirection;
+        //int4 extendedFloor = floor.Bounds + GrowthDirection * ( wall.Thickness + 1 );
+
         wall.Bounds = newGrowth.Flatten( GrowthDirection );
+        //wall.Bounds = wall.Bounds.Boolean( extendedFloor );
+
         return wall;
     }
 

@@ -23,7 +23,10 @@ public void GrowRooms()
 {
     if ( StepWiseGrow )
     {
-        StepMainGrow();
+        for ( int i = 0; i < GrowIterations; i++ )
+        {
+            StepMainGrow();
+        }
     }
     else
     {
@@ -149,11 +152,12 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
     {
         Collisions = collisionResults,
         GrowthDirection = growthDirection,
-        NarrowPhaseBounds = _wallNarrowPhase,
+        WallNarrowPhase = _wallNarrowPhase,
+        FloorNarrowPhase = _floorNarrowPhase,
         NewWalls = newWalls.AsParallelWriter(),
         ChangedWalls = changedWalls.AsParallelWriter(),
         RoomId = room.Id,
-        RequiredLength = _minRoomSeedSize
+        RequiredLength = _minRoomSeedSize + 2*room.WallThickness
     };
 
     

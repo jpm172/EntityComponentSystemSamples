@@ -497,7 +497,7 @@ public partial class LevelGenerator : MonoBehaviour
     {
         newWall.WallId = _nextCellId;
         int wt = newWall.Thickness;
-        int4 cellBounds = newWall.Bounds; //+ new int4( wt, wt, -wt, -wt );
+        int4 cellBounds = newWall.Bounds + new int4( wt, wt, -wt, -wt );
         LevelCell innerCell = new LevelCell(_nextCellId, cellBounds);
         
         UpdateBroadPhase( room, newWall );
