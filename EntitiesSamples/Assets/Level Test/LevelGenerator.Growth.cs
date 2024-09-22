@@ -152,7 +152,8 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
         NarrowPhaseBounds = _wallNarrowPhase,
         NewWalls = newWalls.AsParallelWriter(),
         ChangedWalls = changedWalls.AsParallelWriter(),
-        RoomId = room.Id
+        RoomId = room.Id,
+        RequiredLength = _minRoomSeedSize
     };
 
     

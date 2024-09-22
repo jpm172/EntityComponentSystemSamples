@@ -21,7 +21,6 @@ public static class MyExtensionMethods
     }
     
     
-    
     public static int4 Boolean( this int4 bounds, int4 otherBounds )
     {
         int4 result = bounds;
