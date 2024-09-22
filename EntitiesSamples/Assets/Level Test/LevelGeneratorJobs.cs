@@ -136,7 +136,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
                 if ( collisionRoomId != RoomId && WallAlignedWithFloor(wall, otherWalls.Current)  )
                 {
                     int4 connectionBounds = GetConnectionBounds( wall, otherWalls.Current);
-                    LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds);
+                    LevelConnectionInfo newInfo = new LevelConnectionInfo(RoomId, collisionRoomId, connectionBounds, GrowthDirection);
 
                     NewConnections.Enqueue( newInfo );
                 }

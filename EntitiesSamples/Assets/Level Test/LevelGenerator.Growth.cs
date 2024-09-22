@@ -11,7 +11,7 @@ public partial class LevelGenerator
     private int _cornerLimit = 6;
     private int _counter = 0;
     private int _totalSteps = 0;
-    public int2 GrowthOverride;
+    public int4 GrowthOverride;
 
 
     public bool breakPoint;
@@ -23,15 +23,39 @@ public void GrowRooms()
 {
     if ( StepWiseGrow )
     {
-        //StepMainGrow();
+        StepMainGrow();
     }
     else
     {
         MainGrow();
     }
-    
 }
 
+private void StepMainGrow()
+{
+    _totalSteps = 0;
+    int totalConnections = 0;
+    
+    //while ( !hasPath && _totalSteps < 1 )
+    while (  _totalSteps < 1 )
+    {
+        LevelRoom room = _rooms[_counter];
+        int connections = _edgeDictionary[room.Id].Count;
+        GrowRoom( room );
+        totalConnections += _edgeDictionary[room.Id].Count - connections;
+
+        //if ( connections != _edgeDictionary[room.Id].Count )
+        if(totalConnections >= _rooms.Length-1)//only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
+        {
+             HasPath( room.Id );
+        }
+        
+        _counter = ( _counter + 1 ) % _rooms.Length;
+        _totalSteps++;
+    }
+    
+    //MakeRoomMeshes();
+}
 
 private void MainGrow()
 {
@@ -40,7 +64,7 @@ private void MainGrow()
     
     bool hasPath = false;
     //while ( !hasPath && _totalSteps < 1 )
-    while ( !hasPath )
+    while ( !hasPath  )
     {
         LevelRoom room = _rooms[_counter];
         int connections = _edgeDictionary[room.Id].Count;
@@ -70,13 +94,10 @@ private void GrowRoom( LevelRoom room )
     if ( room.GrowthType == LevelGrowthType.Normal )
     {
         int4 growthDirection = GetRandomGrowthDirection( room );
-        /*
-        if ( !GrowthOverride.xy.Equals( int2.zero ) )
+        
+        if ( StepWiseGrow && !GrowthOverride.Equals( int4.zero ) )
             growthDirection = GrowthOverride;
-            */
-
-        //for( int n = 0; n < 1; n++ )
-        //for ( int n = 0; n < _minRoomSeedSize; n++ )
+        
         for( int n = 0; n < StepsPerIteration; n++ )
         {
             int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
@@ -297,7 +318,7 @@ private void AddConnections( NativeQueue<LevelConnectionInfo> connections, Level
             _roomConnections[cnct.Connections] = new List<LevelConnection>();
         }
         
-        LevelConnection newConnection = new LevelConnection( cnct.Bounds );
+        LevelConnection newConnection = new LevelConnection( cnct.Bounds, cnct.Direction );
 
         _roomConnections[cnct.Connections].Add( newConnection );
         List<LevelConnection> roomConnections = _roomConnections[cnct.Connections];
