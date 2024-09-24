@@ -25,6 +25,10 @@ public class LevelGeneratorEditor : Editor
         {
             level.TestPath();
         }
+        if (GUILayout.Button("Make Compound Shapes")) 
+        {
+            level.MakeCompoundShapes();
+        }
 
         
 

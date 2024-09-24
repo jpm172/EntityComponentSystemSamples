@@ -27,7 +27,16 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
     public void Execute( int index )
     {
         LevelWall wall = GetWall( index );
-        
+        bool independent = GetRelevantLength( wall ) >= RequiredLength;
+
+        if ( !independent )
+            return;
+        /*
+                if ( wall.Size.x == 3 )
+        {
+            Debug.Log( $"{wall.Bounds} -> {GetRelevantLength( wall )}" );
+        }
+        */
 
         if ( !Collisions.ContainsKey( wall.WallId ) )
         {
@@ -41,6 +50,13 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
         
         ApplyCollision( Collisions.GetValuesForKey( wall.WallId ), potentialGrowth, wall );
 
+    }
+    
+    private int GetRelevantLength(LevelWall wall )
+    {
+        wall.Bounds = wall.Bounds.Flatten( GrowthDirection );
+        int2 size = wall.Bounds.Size();
+        return math.max( size.x, size.y );
     }
 
     private void ApplyCollision(NativeParallelMultiHashMap<int, LevelCollision>.Enumerator colEnum, LevelWall potentialGrowth, LevelWall wall)
@@ -116,7 +132,7 @@ public struct LevelCheckCollisionsJob : IJobParallelFor
 
 }
 
-[BurstCompile]
+//[BurstCompile]
 public struct LevelGrowQueryJob : IJobParallelFor
 {
     
@@ -124,6 +140,7 @@ public struct LevelGrowQueryJob : IJobParallelFor
     [ReadOnly] public NativeHashMap<int, LevelCell> FloorNarrowPhase;
     [ReadOnly] public NativeHashMap<int, int4> BroadPhaseBounds;
     [ReadOnly] public int RoomId;
+    [ReadOnly] public int RequiredLength;
     [ReadOnly] public int4 GrowthDirection;
     
     public NativeParallelMultiHashMap<int, LevelCollision>.ParallelWriter Collisions;
@@ -136,12 +153,15 @@ public struct LevelGrowQueryJob : IJobParallelFor
         LevelWall wallCell = GetWallCell( cellIndex );
         LevelWall potentialWall = GetPotentialGrowth( wallCell );
 
+        
+        
         if ( BroadPhaseBounds[broadPhaseIndex].Overlaps( potentialWall.Bounds ) )
         {
             NarrowPhaseCheck(broadPhaseIndex, potentialWall);
         }
 
     }
+
     
 
     private void NarrowPhaseCheck( int collisionRoomId, LevelWall wall )

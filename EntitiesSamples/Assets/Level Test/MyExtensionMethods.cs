@@ -138,5 +138,11 @@ public static class MyExtensionMethods
     {
         return ( bounds.zw - bounds.xy ) + Int2One;
     }
+
+    public static int Area( this int4 bounds )
+    {
+        int2 size = bounds.Size();
+        return size.x * size.y;
+    }
     
 }

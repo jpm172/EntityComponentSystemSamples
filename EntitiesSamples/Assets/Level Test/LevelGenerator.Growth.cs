@@ -25,8 +25,6 @@ public void GrowRooms()
     {
         for ( int i = 1; i <= GrowIterations; i++ )
         {
-            if(i == 54)
-            {}
             StepMainGrow();
         }
     }
@@ -137,7 +135,8 @@ private void NormalGrow( LevelRoom room, int4 growthDirection )
         NewConnections = connections.AsParallelWriter(),
         WallNarrowPhase = _wallNarrowPhase,
         GrowthDirection = growthDirection,
-        RoomId = room.Id
+        RoomId = room.Id,
+        RequiredLength = _minRoomSeedSize + room.WallThickness*2
     };
 
     JobHandle growQueryHandle = growQueryJob.Schedule( room.CellCount*_broadPhaseBounds.Count, 128 );

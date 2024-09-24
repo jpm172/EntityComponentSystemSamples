@@ -26,6 +26,7 @@ public partial class LevelGenerator : MonoBehaviour
     
     private List<LevelFloor> _floors;
     private List<LevelWallEntity> _walls;
+    private List<CompoundShape> _wallShapes;
     private LevelRoom[] _rooms;
 
     //cell variables
@@ -62,8 +63,7 @@ public partial class LevelGenerator : MonoBehaviour
     public bool Focus;
     public int FocusOnRoom;
     public bool ShowRoomBounds;
-    public bool UseMeshes;
-    public bool UseWireMeshes;
+    public bool UseCompoundShapes;
 
     public bool TestCase;
 
@@ -213,6 +213,15 @@ public partial class LevelGenerator : MonoBehaviour
                     Gizmos.DrawLine( source/GameSettings.PixelsPerUnit, destination/GameSettings.PixelsPerUnit );
                 }
             }
+        }
+
+        if ( _wallShapes == null || !UseCompoundShapes )
+        {
+            return;
+        }
+        foreach ( CompoundShape cs in _wallShapes )
+        {
+            cs.DrawGizmos();
         }
 
     }
@@ -480,11 +489,13 @@ public partial class LevelGenerator : MonoBehaviour
     private void AddCell(LevelRoom room, int2 origin, int2 size)
     {
         LevelCell newCell = new LevelCell( _nextCellId, origin, size );
+       // newCell.Bounds += new int4(-1, -1, 1, 1) * room.WallThickness;
         
-        int2 wallVector = new int2(room.WallThickness, room.WallThickness);
-        LevelWall newWall = new LevelWall(_nextCellId,origin - wallVector, size + wallVector*2, room.WallThickness);
-        
-        
+        int2 wallVector = new int2(room.WallThickness, room.WallThickness); 
+        int2 floorVector = new int2(room.WallThickness, room.WallThickness); //*****DEBUG*********
+        LevelWall newWall = new LevelWall(_nextCellId,origin - floorVector, size + wallVector*2, room.WallThickness);
+
+
         UpdateBroadPhase( room, newWall );
         _wallNarrowPhase.Add( room.Id, newWall );
         _floorNarrowPhase.Add( _nextCellId, newCell );
@@ -507,18 +518,40 @@ public partial class LevelGenerator : MonoBehaviour
         _nextCellId++;
         room.CellCount++;
     }
-    
-    /*
-    private void AddCell(LevelRoom room, LevelCell newCell)
-    {
-        newCell.CellId = _nextCellId;
-        UpdateBroadPhase( room, newCell );
-        _narrowPhaseBounds.Add( room.Id, newCell );
 
-        _nextCellId++;
-        room.CellCount++;
+
+    public void MakeCompoundShapes()
+    {
+        _wallShapes = new List<CompoundShape>();
+
+        foreach ( LevelRoom room in _rooms )
+        {
+            CompoundShape curShape = new CompoundShape();
+            bool initialized = false;
+            foreach ( LevelWall wall in _wallNarrowPhase.GetValuesForKey( room.Id ) )
+            {
+                int4 floorBounds = _floorNarrowPhase[wall.WallId].Bounds;
+                curShape.AddEmptySpace( floorBounds );
+                if ( !initialized )
+                {
+                    curShape.Initialize( wall.Bounds );
+                    initialized = true;
+                }
+                else
+                {
+                    curShape.AddShape( wall.Bounds );
+                    if ( room.Id == 1 )
+                    {
+                    }
+                }
+
+                
+                //curShape.Boolean( floorBounds );
+                
+            }
+            _wallShapes.Add( curShape );
+        }
     }
-    */
 
     private void UpdateBroadPhase( LevelRoom room, LevelCell newCell )
     {
