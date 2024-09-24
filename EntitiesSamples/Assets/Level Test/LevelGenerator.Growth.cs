@@ -23,8 +23,10 @@ public void GrowRooms()
 {
     if ( StepWiseGrow )
     {
-        for ( int i = 0; i < GrowIterations; i++ )
+        for ( int i = 1; i <= GrowIterations; i++ )
         {
+            if(i == 54)
+            {}
             StepMainGrow();
         }
     }
