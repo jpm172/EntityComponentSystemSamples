@@ -527,28 +527,14 @@ public partial class LevelGenerator : MonoBehaviour
         foreach ( LevelRoom room in _rooms )
         {
             CompoundShape curShape = new CompoundShape();
-            bool initialized = false;
             foreach ( LevelWall wall in _wallNarrowPhase.GetValuesForKey( room.Id ) )
             {
                 int4 floorBounds = _floorNarrowPhase[wall.WallId].Bounds;
-                curShape.AddEmptySpace( floorBounds );
-                if ( !initialized )
-                {
-                    curShape.Initialize( wall.Bounds );
-                    initialized = true;
-                }
-                else
-                {
-                    curShape.AddShape( wall.Bounds );
-                    if ( room.Id == 1 )
-                    {
-                    }
-                }
-
-                
-                //curShape.Boolean( floorBounds );
-                
+                //curShape.AddEmptySpace( floorBounds );
+                //curShape.AddShape( wall.Bounds );
+                curShape.AddShape( wall.Bounds, floorBounds );
             }
+            curShape.CreateShape();
             _wallShapes.Add( curShape );
         }
     }

@@ -10,35 +10,61 @@ public class CompoundShape
     private List<int4> _shapes;
     private List<int4> _emptySpace;
     private int4 _bounds;
-    
+
+    private bool _nullShape;
+
+    public bool NullShape => _nullShape;
+
     public CompoundShape()
     {
+        _nullShape = true;
         _shapes = new List<int4>();
         _emptySpace = new List<int4>();
     }
+    
 
-    public void Initialize( int4 initialShape )
+    public void CreateShape()
     {
-        _shapes.Add( initialShape );
-        _bounds = initialShape;
-    }
+        for ( int i = 0; i < _shapes.Count; i++ )
+        {
+            foreach ( int4 empty in _emptySpace )
+            {
+                ApplyBoolean( i, empty );
+            }
+        }
 
+
+        if ( _shapes.Count <= 0 )
+        {
+            _nullShape = true;
+            return;
+        }
+        
+        _nullShape = false;
+        _bounds = _shapes[0];
+        for ( int i = 1; i < _shapes.Count; i++ )
+        {
+            _bounds.xy = math.min( _bounds.xy, _shapes[i].xy );
+            _bounds.zw = math.max( _bounds.zw, _shapes[i].zw );
+        }
+
+    }
+    
     public void AddShape( int4 newShape )
     {
         _shapes.Add( newShape );
-        ApplyEmptySpace( _shapes.Count-1 );
-        
+
         _bounds.xy = math.min( newShape.xy, newShape.xy );
         _bounds.zw = math.max( newShape.zw, newShape.zw );
     }
 
-    private void ApplyEmptySpace(int index)
+    public void AddShape( int4 newShape, int4 newEmpty )
     {
-        foreach ( int4 empty in _emptySpace )
-        {
-            //todo USE A STACK, and keep queing/poppping
-        }
+        _shapes.Add( newShape );
+        _emptySpace.Add( newEmpty );
+        ApplyBoolean( _shapes.Count-1, newEmpty );
     }
+    
 
     public void AddEmptySpace( int4 emptySpace )
     {
@@ -62,11 +88,7 @@ public class CompoundShape
         }
     }
 
-    public void AddBooleanShape( int4 shape, int4 boolean )
-    {
-        _shapes.Add( shape );
-        ApplyBoolean( _shapes.Count-1, boolean );
-    }
+
     
     public void Boolean( int4 otherShape )
     {
@@ -80,7 +102,6 @@ public class CompoundShape
     //floor/ceiling corner bias
     private void ApplyBoolean(int index, int4 otherShape)
     {
-        int startCount = _shapes.Count;
         int4 shape = _shapes[index];
 
         if ( !shape.Overlaps( otherShape ) )
