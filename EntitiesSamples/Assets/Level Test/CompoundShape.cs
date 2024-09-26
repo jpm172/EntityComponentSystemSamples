@@ -27,9 +27,14 @@ public class CompoundShape
     {
         for ( int i = 0; i < _shapes.Count; i++ )
         {
-            foreach ( int4 empty in _emptySpace )
+            for ( int j = 0; j < _emptySpace.Count; j++ )
             {
-                ApplyBoolean( i, empty );
+                if ( ApplyBoolean( i, _emptySpace[j] ) )
+                {
+                    j = 0;
+                    if(i >= _shapes.Count)
+                        break;
+                }
             }
         }
 
@@ -87,25 +92,15 @@ public class CompoundShape
             Gizmos.DrawWireCube( pos, size );
         }
     }
-
-
     
-    public void Boolean( int4 otherShape )
-    {
-        int count = _shapes.Count;
-        for ( int i = count - 1; i >= 0; i-- )
-        {
-            ApplyBoolean(i, otherShape);
-        }
-    }
 
     //floor/ceiling corner bias
-    private void ApplyBoolean(int index, int4 otherShape)
+    private bool ApplyBoolean(int index, int4 otherShape)
     {
         int4 shape = _shapes[index];
 
         if ( !shape.Overlaps( otherShape ) )
-            return;
+            return false;
 
         int4 overlap = shape;
         overlap.xy = math.max( shape.xy, otherShape.xy );
@@ -117,6 +112,7 @@ public class CompoundShape
         int4 left = new int4(shape.x, overlap.y, overlap.x -1, overlap.w);
         int4 right = new int4(overlap.z+1, overlap.y, shape.z, overlap.w);
 
+        
         bool hasChangedIndex = false;
         if ( bottom.Area() > 0 )
         {
@@ -159,10 +155,15 @@ public class CompoundShape
                 _shapes.Add( right );
             }
         }
-        
-        if(!hasChangedIndex)
+
+        if ( !hasChangedIndex )
+        {
             _shapes.RemoveAt( index );
-        
+            return true;
+        }
+
+        return false;
+
 
     }
     
