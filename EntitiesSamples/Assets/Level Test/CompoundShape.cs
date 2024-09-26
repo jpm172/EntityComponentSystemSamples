@@ -31,7 +31,7 @@ public class CompoundShape
             {
                 if ( ApplyBoolean( i, _emptySpace[j] ) )
                 {
-                    j = 0;
+                    j = -1;//next iteration j will be set back to zero
                     if(i >= _shapes.Count)
                         break;
                 }
@@ -74,6 +74,11 @@ public class CompoundShape
     public void AddEmptySpace( int4 emptySpace )
     {
         _emptySpace.Add( emptySpace );
+    }
+
+    public void AddEmptySpaces( List<int4> emptySpaces )
+    {
+        _emptySpace.AddRange( emptySpaces );
     }
     
     public void DrawGizmos()
