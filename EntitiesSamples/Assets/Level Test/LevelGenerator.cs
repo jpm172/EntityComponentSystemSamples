@@ -530,9 +530,9 @@ public partial class LevelGenerator : MonoBehaviour
             foreach ( LevelWall wall in _wallNarrowPhase.GetValuesForKey( room.Id ) )
             {
                 int4 floorBounds = _floorNarrowPhase[wall.WallId].Bounds;
-                //curShape.AddEmptySpace( floorBounds );
-                //curShape.AddShape( wall.Bounds );
-                curShape.AddShape( wall.Bounds, floorBounds );
+                curShape.AddEmptySpace( floorBounds );
+                curShape.AddShape( wall.Bounds );
+                //curShape.AddShape( wall.Bounds, floorBounds );
 
                 
                 foreach ( int2 cnct in _roomConnections.Keys )
@@ -543,11 +543,8 @@ public partial class LevelGenerator : MonoBehaviour
                         {
                             curShape.AddEmptySpaces( lc.Pieces );
                         }
-                        
                     }
                 }
-                
-                
             }
 
             curShape.CreateShape();

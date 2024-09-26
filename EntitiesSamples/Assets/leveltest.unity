@@ -246,14 +246,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 2
   dimensions: {x: 0, y: 0}
-  layoutDimensions: {x: 1, y: 1}
+  layoutDimensions: {x: 5, y: 5}
   floorMaterials: []
   wallMaterial: {fileID: 0}
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 50
   _minRoomSeedSize: 20
-  _maxRoomSeedSize: 60
+  _maxRoomSeedSize: 200
   _seedBuffer: 20
   maxEdgeWeight: 10
   Focus: 0
@@ -269,7 +269,7 @@ MonoBehaviour:
     z: 0
     w: 0
   breakPoint: 0
-  StepWiseGrow: 1
+  StepWiseGrow: 0
   GrowIterations: 54
   StepsPerIteration: 20
 --- !u!4 &1265584669

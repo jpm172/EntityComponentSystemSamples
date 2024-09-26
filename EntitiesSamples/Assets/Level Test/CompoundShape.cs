@@ -53,6 +53,22 @@ public class CompoundShape
             _bounds.zw = math.max( _bounds.zw, _shapes[i].zw );
         }
 
+        /*
+        for ( int i = 0; i < _shapes.Count; i++ )
+        {
+            for ( int j = 0; j < _shapes.Count; j++ )
+            {
+                if(i == j)
+                    continue;
+
+                if ( _shapes[i].Overlaps( _shapes[j] ) )
+                {
+                    Debug.Log( "overlaps" );
+                }
+            }   
+        }
+        */
+
     }
     
     public void AddShape( int4 newShape )
