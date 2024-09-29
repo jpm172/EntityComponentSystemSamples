@@ -124,25 +124,20 @@ using UnityEngine;
         {
             int2 perpendicular = math.abs( GrowthDirection.yx );
             cell -= GrowthDirection;
-            for ( int x = -WallThickness; x <= WallThickness; x++ )
-            {
+            
+            //for ( int x = -WallThickness; x <= WallThickness; x++ )
+            //{
                 for ( int y = -WallThickness; y <= WallThickness; y++ )
                 {
-                    int2 pos = cell + new int2( x, y )*perpendicular;
+                    int2 pos = cell + perpendicular*y;
                     int index = pos.x + pos.y * LevelDimensions.x;
                     if ( !IsInBounds( pos.x, pos.y ) || LevelLayout[index] != WallId )
                         return false;
                 }
-            }
-
-            int2 bl = new int2(-1, -1);
-            int2 br = new int2(1, -1);
-            int2 tl = new int2(-1, 1);
-            int2 tr = new int2(1, 1);
-
+            //}
+            
 
             cell += GrowthDirection;
-            
             for ( int i = -WallThickness; i <= WallThickness; i++ )
             {
                 int2 pos = cell + perpendicular*i;

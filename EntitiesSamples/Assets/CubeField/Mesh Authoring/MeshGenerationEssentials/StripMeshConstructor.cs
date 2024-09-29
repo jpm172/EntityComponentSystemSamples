@@ -33,6 +33,7 @@ public class StripMeshConstructor
             LevelLayout = levelLayout,
             LevelDimensions = dimensions,
             RoomId = room.Id,
+            WallId = room.WallId,
             RoomOrigin = room.Origin,
             RoomSize = room.Size,
             Strips = stripMap.AsParallelWriter()

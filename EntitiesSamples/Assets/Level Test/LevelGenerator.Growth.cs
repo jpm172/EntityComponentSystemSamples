@@ -194,7 +194,7 @@ public partial class LevelGenerator
             LevelDimensions = dimensions,
             LevelLayout = _levelLayout,
             RoomId = room.Id,
-            WallId = room.Id + _rooms.Length,
+            WallId = room.WallId,
             WallThickness = room.WallThickness,
             RoomSize = room.Size,
             RoomOrigin = room.Origin,
@@ -227,7 +227,7 @@ public partial class LevelGenerator
                 LocalMaxima = localMaxima.AsParallelWriter(),
                 NewCells = newCellsArray,
                 RoomId = room.Id,
-                WallId = room.Id + _rooms.Length,
+                WallId = room.WallId,
                 WallThickness = room.WallThickness,
                 RoomBounds = room.Bounds
             };

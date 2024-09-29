@@ -387,9 +387,11 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
+
+                int id = index + 1;
+                int wallId = id + _rooms.Length;
                 
-                
-                LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
+                LevelRoom room = new LevelRoom(id, wallId, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _edgeDictionary[index] = new List<LevelEdge>();
                 

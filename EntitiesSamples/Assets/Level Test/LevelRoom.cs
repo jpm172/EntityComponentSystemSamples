@@ -13,6 +13,7 @@ public class LevelRoom
     private LevelGrowthType _growthType; 
     
     private int _id;
+    private int _wallId;
     private Color _debugColor;
     private int4 _bounds;
     private int2 _sizeRatio;
@@ -62,12 +63,14 @@ public class LevelRoom
 
     public LevelMaterial Material => _material;
     public int Id => _id;
+    public int WallId => _wallId;
     public Color DebugColor => _debugColor;
     
 
-    public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, int weight, LevelGrowthType growthType )
+    public LevelRoom( int id, int wallId, int2 graphPosition, int2 origin, int2 size, int2 sizeRatio, LevelMaterial mat, int wallThickness, int weight, LevelGrowthType growthType )
     {
         _id = id;
+        _wallId = wallId; 
         _material = mat;
         _growthType = growthType;
         _graphPosition = graphPosition;

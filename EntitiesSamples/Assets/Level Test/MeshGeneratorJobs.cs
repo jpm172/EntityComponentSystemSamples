@@ -14,6 +14,7 @@ public struct MakeMeshStripsJob : IJobParallelFor
     [ReadOnly] public Vector2Int LevelDimensions;
         
     [ReadOnly] public int RoomId;
+    [ReadOnly] public int WallId;
     [ReadOnly] public int2 RoomOrigin;
     [ReadOnly] public int2 RoomSize;
     
@@ -28,32 +29,24 @@ public struct MakeMeshStripsJob : IJobParallelFor
             return;
         }
 
-        if ( levelIndex < 0 )
-        {
-            
-        }
-        
         //makes vertical strips
         bool hasStrip = false;
         int2 stripStart = new int2(0,0);
         for ( int y = 0; y < RoomSize.y; y++ )
         {
-            if ( LevelLayout[levelIndex] == RoomId && !hasStrip )
+            if ( IsPartOfRoom( levelIndex ) && !hasStrip )
             {
                 stripStart = new int2(index, y);
                 hasStrip = true;
             }
 
-            if ( LevelLayout[levelIndex] != RoomId && hasStrip )
+            if ( !IsPartOfRoom( levelIndex ) && hasStrip )
             {
                 MeshStrip newStrip = new MeshStrip
                 {
                     Start = stripStart,
                     End = new int2( stripStart.x, y - 1 )
                 };
-                /*
-                Strips.Enqueue( );
-                */
                 Strips.Add( index, newStrip );
                 hasStrip = false;
             }
@@ -73,7 +66,11 @@ public struct MakeMeshStripsJob : IJobParallelFor
         }
         
     }
-    
+
+    private bool IsPartOfRoom( int index )
+    {
+        return LevelLayout[index] == RoomId || LevelLayout[index] == WallId;
+    }
     
     private bool IsInBounds( int x, int y )
     {
