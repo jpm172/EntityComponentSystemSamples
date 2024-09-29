@@ -69,98 +69,6 @@ public partial class LevelGenerator
         }
     }
     
-    /*
-    private void NormalGrowRandom( LevelRoom room )
-    {
-        Debug.Log( "need to setup resizing for random" );
-        return;
-        int2 growthDirection = GetRandomGrowthDirection( room );
-        
-        NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
-        
-        LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
-        {
-            GrowthDirection = growthDirection,
-            Required = _minRoomSeedSize + room.WallThickness*2,
-            LevelDimensions = dimensions,
-            LevelLayout = _levelLayout,
-            RoomId = room.Id,
-            RoomSize = room.Size,
-            RoomOrigin = room.Origin,
-            NewCells = newCells.AsParallelWriter()
-        };
-        
-        
-        JobHandle handle = growRoomJob.Schedule(room.Size.x * room.Size.y, 64);
-        handle.Complete();
-
-        bool removeDirection = false;
-        if ( newCells.Count > 0 )
-        {
-            //ResizeRoom( room, growthDirection );
-
-            NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
-            NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
-            
-            LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
-            {
-                LevelLayout = _levelLayout,
-                LevelDimensions = dimensions,
-                Neighbors = newNeighbors.AsParallelWriter(),
-                NewCells = newCellsArray,
-                RoomId = room.Id
-            };
-            
-            JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
-            applyHandle.Complete();
-            newNeighbors.Dispose();
-            newCellsArray.Dispose();
-            
-            NativeQueue<int> corners = new NativeQueue<int>(Allocator.TempJob);
-            
-            LevelAnalyzeNormalRoom analyzeJob = new LevelAnalyzeNormalRoom
-            {
-                LevelLayout = _levelLayout,
-                LevelDimensions = dimensions,
-                RoomId = room.Id,
-                RoomSize = room.Size,
-                RoomOrigin = room.Origin,
-                Corners = corners.AsParallelWriter()
-            };
-            
-            JobHandle analyzeHandle = analyzeJob.Schedule(room.Size.x * room.Size.y, 64);
-            analyzeHandle.Complete();
-
-            if ( corners.Count > _cornerLimit )
-            {
-                room.XGrowthDirections.Clear();
-                room.YGrowthDirections.Clear();
-            }
-
-            corners.Dispose();
-
-        }
-        else
-        {
-            removeDirection = true;
-        }
-
-        if ( removeDirection )
-        {
-            //if it didn't grow in the current direction, remove it from the list of valid growth directions
-            if ( math.abs( growthDirection.x ) > math.abs( growthDirection.y ) )
-            {
-                room.XGrowthDirections.Remove( growthDirection );
-            }
-            else
-            {
-                room.YGrowthDirections.Remove( growthDirection );
-            }
-        }
-
-        newCells.Dispose();
-    }
-*/
 
     private void StepMainPathGrow()
     {
@@ -278,7 +186,6 @@ public partial class LevelGenerator
         if(breakPoint)
         {}
         
-        //NativeQueue<int> newCells = new NativeQueue<int>( Allocator.TempJob);
         NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
@@ -287,6 +194,8 @@ public partial class LevelGenerator
             LevelDimensions = dimensions,
             LevelLayout = _levelLayout,
             RoomId = room.Id,
+            WallId = room.Id + _rooms.Length,
+            WallThickness = room.WallThickness,
             RoomSize = room.Size,
             RoomOrigin = room.Origin,
             NewCells = newCells.AsParallelWriter()
@@ -312,11 +221,14 @@ public partial class LevelGenerator
             {
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
+                GrowthDirection = growthDirection,
                 Neighbors = newNeighbors.AsParallelWriter(),
                 LocalMinima = localMinima.AsParallelWriter(),
                 LocalMaxima = localMaxima.AsParallelWriter(),
                 NewCells = newCellsArray,
                 RoomId = room.Id,
+                WallId = room.Id + _rooms.Length,
+                WallThickness = room.WallThickness,
                 RoomBounds = room.Bounds
             };
             
@@ -325,11 +237,7 @@ public partial class LevelGenerator
 
             if ( localMinima.Count + localMaxima.Count > 0 )
             {
-                //if(room.Id == 3)
-                   // Debug.Log( $"{room.Bounds} : {room.Size}" );
                 ResizeRoom( room, localMinima, localMaxima );
-               // if(room.Id == 3)
-                    //Debug.Log( $"{room.Bounds} : {room.Size}" );
             }
 
             localMaxima.Dispose();
@@ -425,8 +333,9 @@ public partial class LevelGenerator
         {
             maxima = math.max( value, maxima );
         }
-        
+        //Debug.Log( room.Bounds );
         room.Bounds = new int4(minima,maxima);
+        //Debug.Log( room.Bounds );
     }
     
     

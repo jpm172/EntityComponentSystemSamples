@@ -508,36 +508,10 @@ public partial class LevelGenerator : MonoBehaviour
                 {
                     _levelLayout[start + index] = room.Id;
                 }
-                
-                
-
             }
         }
     }
     
-    private void DrawBox( int xOrigin, int yOrigin, int width, int height, LevelRoom room )
-    {
-        int start = xOrigin + yOrigin * dimensions.x;
-
-        bool draw = false;
-        for ( int x = 0; x < width; x++ )
-        {
-            for ( int y = 0; y < height; y++ )
-            {
-                int index = x + y * dimensions.x;
-                _levelLayout[start + index] = room.Id;
-                /*
-                if ( draw )
-                {
-                    _levelLayout[start + index] = room.Id;
-                }
-
-                draw = !draw;
-                */
-
-            }
-        }
-    }
     
     private LevelMaterial GetRandomRoomMaterial()
     {
@@ -561,7 +535,6 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void MakeWalls()
     {
-        
         int blockSize = 4;
         for ( int x = 0; x < dimensions.x; x++ )
         {
