@@ -135,42 +135,24 @@ using UnityEngine;
                 }
             }
 
-            int2 bl = new int2(-WallThickness, -WallThickness);
-            int2 br = new int2(WallThickness, -WallThickness);
-            int2 tl = new int2(-WallThickness, WallThickness);
-            int2 tr = new int2(WallThickness, WallThickness);
+            int2 bl = new int2(-1, -1);
+            int2 br = new int2(1, -1);
+            int2 tl = new int2(-1, 1);
+            int2 tr = new int2(1, 1);
 
-            int2 diag = cell + bl;
-            int diagIndex = diag.x + diag.y * LevelDimensions.x;
-            if ( IsInBounds( diag.x, diag.y ) && (LevelLayout[diagIndex] > 0 && LevelLayout[diagIndex] != WallId && LevelLayout[diagIndex] != RoomId ) )
-                return false;
+
+            cell += GrowthDirection;
             
-            diag = cell + br;
-            diagIndex = diag.x + diag.y * LevelDimensions.x;
-            if ( IsInBounds( diag.x, diag.y ) && (LevelLayout[diagIndex] > 0 && LevelLayout[diagIndex] != WallId && LevelLayout[diagIndex] != RoomId ) )
-                return false;
-            
-            diag = cell + tl;
-            diagIndex = diag.x + diag.y * LevelDimensions.x;
-            if ( IsInBounds( diag.x, diag.y ) && (LevelLayout[diagIndex] > 0 && LevelLayout[diagIndex] != WallId && LevelLayout[diagIndex] != RoomId ) )
-                return false;
-            
-            diag = cell + tr;
-            diagIndex = diag.x + diag.y * LevelDimensions.x;
-            if ( IsInBounds( diag.x, diag.y ) && (LevelLayout[diagIndex] > 0 && LevelLayout[diagIndex] != WallId && LevelLayout[diagIndex] != RoomId ) )
-                return false;
-            
-            /*
-            int2 diag = new int2(1,1);
             for ( int i = -WallThickness; i <= WallThickness; i++ )
             {
-                int2 pos = cell + diag * i;
+                int2 pos = cell + perpendicular*i;
                 int index = pos.x + pos.y * LevelDimensions.x;
-                if ( !IsInBounds( pos.x, pos.y ) || (LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId ) )
+                if ( IsInBounds( pos.x, pos.y ) && LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId )
                     return false;
             }
-            */
-            
+
+
+
             return true;
         }
 
