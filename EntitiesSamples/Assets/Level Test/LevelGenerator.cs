@@ -333,29 +333,7 @@ public partial class LevelGenerator : MonoBehaviour
 
         return true;
     }
-
-    public void PaintWalls()
-    {
-        foreach ( LevelRoom room in _rooms )
-        {
-            int roomWallId = room.Id + _rooms.Length;
-
-            LevelPaintWallsJob analyzeJob  = new LevelPaintWallsJob
-            {
-                LevelLayout = _levelLayout,
-                LevelDimensions = dimensions,
-                RoomOrigin = room.Origin,
-                RoomSize = room.Size,
-                RoomId = room.Id,
-                WallId = roomWallId,
-                WallThickness = room.WallThickness
-                
-            };
-        
-            JobHandle handle = analyzeJob.Schedule(room.Size.x*room.Size.y, 64);
-            handle.Complete();
-        }
-    }
+    
 
     public void MakeRoomMeshes()
     {
@@ -409,9 +387,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelMaterial mat = GetRandomRoomMaterial();
                 LevelGrowthType growthType = LevelGrowthType.Normal;
-
-                if ( index == 2 ) 
-                {}
+                
                 
                 LevelRoom room = new LevelRoom(index+1, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
@@ -434,10 +410,10 @@ public partial class LevelGenerator : MonoBehaviour
         //create the level array and seed it with the rooms  
         dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
-        for(int i = 0; i < _rooms.Length; i++)
+        foreach ( LevelRoom room in _rooms )
         {
-            LevelRoom room = _rooms[i];
-            DrawBox( room.Origin.x, room.Origin.y, room.Size.x, room.Size.y, room );
+            
+            DrawRoomSeed( room );
         }
         
     }
@@ -510,6 +486,33 @@ public partial class LevelGenerator : MonoBehaviour
         int yResult = Mathf.Clamp( yOffset + shift.y, yOffset - _seedBuffer - wallThickness, yOffset + (adjustedMaxSize - size.y) + _seedBuffer + wallThickness );
         
         return new int2(xResult, yResult) ;
+    }
+
+
+    private void DrawRoomSeed( LevelRoom room )
+    {
+        
+        int start = room.Origin.x + room.Origin.y * dimensions.x;
+        
+        for ( int x = 0; x < room.Size.x; x++ )
+        {
+            for ( int y = 0; y < room.Size.y; y++ )
+            {
+                int index = x + y * dimensions.x;
+
+                if ( (y < room.WallThickness || x < room.WallThickness ) || (y >= room.Size.y - room.WallThickness || x >= room.Size.x - room.WallThickness))
+                {
+                    _levelLayout[start + index] = _rooms.Length + room.Id;
+                }
+                else
+                {
+                    _levelLayout[start + index] = room.Id;
+                }
+                
+                
+
+            }
+        }
     }
     
     private void DrawBox( int xOrigin, int yOrigin, int width, int height, LevelRoom room )

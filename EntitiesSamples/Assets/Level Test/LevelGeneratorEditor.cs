@@ -25,11 +25,7 @@ public class LevelGeneratorEditor : Editor
         {
             level.MakeRoomMeshes();
         }
-        if (GUILayout.Button("Paint Walls")) 
-        {
-            level.PaintWalls();
-        }
-        
+
 
     }
 }
