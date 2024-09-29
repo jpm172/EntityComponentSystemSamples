@@ -246,7 +246,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   seed: 2
   dimensions: {x: 0, y: 0}
-  layoutDimensions: {x: 5, y: 5}
+  layoutDimensions: {x: 3, y: 6}
   floorMaterials: []
   wallMaterial: {fileID: 0}
   useSeed: 1

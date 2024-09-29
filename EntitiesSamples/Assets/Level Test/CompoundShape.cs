@@ -115,7 +115,8 @@ public class CompoundShape
     }
     
 
-    //floor/ceiling corner bias
+    //splits the shape at index into 4 parts that will encapsulate otherShape
+    //returns true if the shape was completely removed by the boolean operation, and false otherwise
     private bool ApplyBoolean(int index, int4 otherShape)
     {
         int4 shape = _shapes[index];
