@@ -199,20 +199,15 @@ public struct LevelCell
                 int wcIndex = wallCheck.x + wallCheck.y * LevelDimensions.x;
                 LevelLayout[wcIndex] = RoomId;
             }
-
-            //int x = levelCell.Index % LevelDimensions.x;
-            //int y = levelCell.Index / LevelDimensions.x;
-
-            int x = levelCell.Cell.x;
-            int y = levelCell.Cell.y;
             
-            int2 origin = new int2(x,y);
+            
+            int2 origin = levelCell.Cell;
             CheckBounds( origin );
             
-            CheckNeighbor( x + 1, y, origin );
-            CheckNeighbor( x - 1, y, origin );
-            CheckNeighbor( x, y + 1, origin );
-            CheckNeighbor( x, y - 1, origin );
+            CheckNeighbor( origin.x + 1, origin.y, origin );
+            CheckNeighbor( origin.x - 1, origin.y, origin );
+            CheckNeighbor( origin.x, origin.y + 1, origin );
+            CheckNeighbor( origin.x, origin.y - 1, origin );
             
 
         }
