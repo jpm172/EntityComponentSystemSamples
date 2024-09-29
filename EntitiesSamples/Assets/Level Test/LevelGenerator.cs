@@ -30,6 +30,7 @@ public partial class LevelGenerator : MonoBehaviour
     
     
     private NativeArray<int> _levelLayout;
+    private NativeArray<int> _roomInfo; //just holds room thickness for now
 
 
     //seeding variables
@@ -348,14 +349,13 @@ public partial class LevelGenerator : MonoBehaviour
     private void InitializeLevel()
     {
         int count = layoutDimensions.x * layoutDimensions.y;
-
-        if ( _levelLayout.IsCreated )
-            _levelLayout.Dispose();
+        CleanUp();
         
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
+        _roomInfo = new NativeArray<int>(count, Allocator.Persistent);
 
         
         
@@ -393,6 +393,7 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 LevelRoom room = new LevelRoom(id, wallId, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
+                _roomInfo[index] = wallThickness;
                 _edgeDictionary[index] = new List<LevelEdge>();
                 
                 //add all growth directions to the room
@@ -693,11 +694,16 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void OnDestroy()
     {
+        CleanUp();
+    }
+
+    private void CleanUp()
+    {
         if ( _levelLayout.IsCreated )
         {
             _levelLayout.Dispose();
+            _roomInfo.Dispose();
         }
-            
     }
 }
 

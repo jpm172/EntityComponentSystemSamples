@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 
-    //[BurstCompile]
+    [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
@@ -123,26 +123,18 @@ using UnityEngine;
         private bool IsFloorCell(int2 cell)
         {
             int2 perpendicular = math.abs( GrowthDirection.yx );
-            cell -= GrowthDirection;
-            
-            //for ( int x = -WallThickness; x <= WallThickness; x++ )
-            //{
-                for ( int y = -WallThickness; y <= WallThickness; y++ )
-                {
-                    int2 pos = cell + perpendicular*y;
-                    int index = pos.x + pos.y * LevelDimensions.x;
-                    if ( !IsInBounds( pos.x, pos.y ) || LevelLayout[index] != WallId )
-                        return false;
-                }
-            //}
-            
-
-            cell += GrowthDirection;
             for ( int i = -WallThickness; i <= WallThickness; i++ )
             {
-                int2 pos = cell + perpendicular*i;
-                int index = pos.x + pos.y * LevelDimensions.x;
-                if ( IsInBounds( pos.x, pos.y ) && LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId )
+                //check the cell we grew from to see if it is near the edge of the room
+                int2 wallCheck = cell - GrowthDirection + perpendicular*i;
+                int index = wallCheck.x + wallCheck.y * LevelDimensions.x;
+                if ( !IsInBounds( wallCheck.x, wallCheck.y ) || LevelLayout[index] != WallId )
+                    return false;
+                
+                //check the new cell to see if it is in contact with another room
+                int2 cornerCheck = cell + perpendicular*i;
+                int cornerIndex = cornerCheck.x + cornerCheck.y * LevelDimensions.x;
+                if ( IsInBounds( cornerCheck.x, cornerCheck.y ) && IsOtherRoom( cornerIndex ) )
                     return false;
             }
 
@@ -151,6 +143,11 @@ using UnityEngine;
             return true;
         }
 
+        private bool IsOtherRoom( int index )
+        {
+            return LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
+        }
+        
         private bool IsInBounds( int x, int y )
         {
             if ( x < 0 || x >= LevelDimensions.x )
@@ -171,12 +168,13 @@ public struct LevelCell
     public int Index;
 }
 
-    [BurstCompile]
+    //[BurstCompile]
     public struct LevelApplyGrowthResultJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<int> LevelLayout;
 
+        [ReadOnly] public NativeArray<int> RoomInfo;
         [ReadOnly] public int4 RoomBounds;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int RoomId;
@@ -191,30 +189,17 @@ public struct LevelCell
         public NativeQueue<int2>.ParallelWriter LocalMaxima;
         public void Execute(int index)
         {
-            //int levelIndex = NewCells[index];
             LevelCell levelCell = NewCells[index];
-            //LevelLayout[levelIndex] = RoomId;
             LevelLayout[levelCell.Index] = WallId;
 
             
-            int2 floorCheck = levelCell.Cell - GrowthDirection * (WallThickness+1);
-            int2 wallCheck = levelCell.Cell - GrowthDirection * WallThickness;
-            int fcIndex = floorCheck.x + floorCheck.y * LevelDimensions.x;
-            int wcIndex = wallCheck.x + wallCheck.y * LevelDimensions.x;
-            
-            /*
-            if ( LevelLayout[fcIndex] == RoomId )
-                LevelLayout[wcIndex] = RoomId;
-                */
-                
-            
             if ( levelCell.IsFloorCell )
             {
+                int2 wallCheck = levelCell.Cell - GrowthDirection * WallThickness;
+                int wcIndex = wallCheck.x + wallCheck.y * LevelDimensions.x;
                 LevelLayout[wcIndex] = RoomId;
             }
-            
-            
-            
+
             //int x = levelCell.Index % LevelDimensions.x;
             //int y = levelCell.Index / LevelDimensions.x;
 
@@ -223,12 +208,12 @@ public struct LevelCell
             
             int2 origin = new int2(x,y);
             CheckBounds( origin );
-            /*
+            
             CheckNeighbor( x + 1, y, origin );
             CheckNeighbor( x - 1, y, origin );
             CheckNeighbor( x, y + 1, origin );
             CheckNeighbor( x, y - 1, origin );
-            */
+            
 
         }
 
@@ -254,14 +239,39 @@ public struct LevelCell
                 return;
 
             int index = x + y * LevelDimensions.x;
-            if ( LevelLayout[index] > 0 && LevelLayout[index] != RoomId )
+            if ( LevelLayout[index] > 0 && IsOtherRoom( index, new int2(x, y), origin, out int otherId ) )
             {
-                LevelConnection connect = new LevelConnection{Origin = origin, RoomId = LevelLayout[index]};
+                LevelConnection connect = new LevelConnection{Origin = origin, RoomId = otherId};
                 Neighbors.Enqueue( connect );
             }
-
         }
 
+        private bool IsOtherRoom( int index, int2 other, int2 origin, out int otherId )
+        {
+            otherId = 0;
+            bool isOther = LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
+            if ( !isOther )
+                return false;
+
+            otherId = math.select( LevelLayout[index], LevelLayout[index] - RoomInfo.Length, LevelLayout[index] > RoomInfo.Length );
+            
+            int thickness = RoomInfo[RoomId - 1];
+            int otherThickness = RoomInfo[otherId -1];
+            
+            int2 dir = other - origin;
+            int2 thicknessVector = new int2(thickness, thickness) * -dir ;
+            int2 otherThicknessVector = new int2(otherThickness + 1, otherThickness + 1) * dir ;
+            int2 check1 = origin + thicknessVector;
+            int2 check2 = origin + otherThicknessVector;
+
+            int index1 = check1.x + check1.y * LevelDimensions.x;
+            int index2 = check2.x + check2.y * LevelDimensions.x;
+            
+            
+            //Debug.Log( $" {RoomId} <-> {otherId} == {LevelLayout[index1]} <-> {LevelLayout[index2]} | {thickness} - {otherThickness}" );
+            
+            return LevelLayout[index1] == RoomId && LevelLayout[index2] == otherId;
+        }
         
         private bool IsInBounds( int x, int y )
         {

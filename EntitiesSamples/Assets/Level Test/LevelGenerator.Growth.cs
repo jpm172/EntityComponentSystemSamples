@@ -221,6 +221,7 @@ public partial class LevelGenerator
             {
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
+                RoomInfo = _roomInfo,
                 GrowthDirection = growthDirection,
                 Neighbors = newNeighbors.AsParallelWriter(),
                 LocalMinima = localMinima.AsParallelWriter(),
@@ -263,7 +264,7 @@ public partial class LevelGenerator
                         Source = room.Index,
                         Destination = neighborIndex
                     };
-                    if ( !_edgeDictionary[room.Index].Contains( check ) && IsValidConnection(room, _rooms[neighborIndex], neighborArray))
+                    if ( !_edgeDictionary[room.Index].Contains( check ) )//&& IsValidConnection(room, _rooms[neighborIndex], neighborArray))
                     {
                         SetNeighbors( room.Index, neighborIndex, room.Weight );
                     }
