@@ -339,6 +339,37 @@ public partial class LevelGenerator
     }
     
     
+    private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
+    {
+        while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
+        {
+            if ( !_roomConnections.ContainsKey( cnct.Connections ) )
+            {
+                _roomConnections[cnct.Connections] = new List<LevelConnectionManager>();
+            }
+            
+            LevelConnectionManager newConnection = new LevelConnectionManager( cnct.Bounds, cnct.Direction );
+    
+            _roomConnections[cnct.Connections].Add( newConnection );
+            List<LevelConnectionManager> roomConnections = _roomConnections[cnct.Connections];
+            for ( int i = roomConnections.Count-2; i >= 0 ; i-- )
+            {
+                if ( newConnection.TryMerge( roomConnections[i] ) )
+                {
+                    roomConnections.RemoveAt( i );
+    
+                    if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
+                    {
+                        //Debug.Log( "Valid Connection Made" );
+                        SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
+                    }
+                   //roomConnections[i].Pieces.Clear();
+                }
+            }
+        }
+    
+    }
+    
 
     private bool IsFinishedGrowing()
     {

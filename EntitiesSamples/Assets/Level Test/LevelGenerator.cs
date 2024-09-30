@@ -32,7 +32,7 @@ public partial class LevelGenerator : MonoBehaviour
     private NativeArray<int> _levelLayout;
     private NativeArray<int> _roomInfo; //just holds room thickness for now
 
-
+    private Dictionary<int2, List<LevelConnectionManager>> _roomConnections;
     //seeding variables
     public bool useSeed;
     [SerializeField]
@@ -338,7 +338,6 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void MakeRoomMeshes()
     {
-        
         foreach ( LevelRoom room in _rooms )
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
@@ -356,7 +355,7 @@ public partial class LevelGenerator : MonoBehaviour
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, List<LevelEdge>>();
         _roomInfo = new NativeArray<int>(count, Allocator.Persistent);
-
+        _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
