@@ -334,9 +334,8 @@ public partial class LevelGenerator
         {
             maxima = math.max( value, maxima );
         }
-        //Debug.Log( room.Bounds );
+
         room.Bounds = new int4(minima,maxima);
-        //Debug.Log( room.Bounds );
     }
     
     
