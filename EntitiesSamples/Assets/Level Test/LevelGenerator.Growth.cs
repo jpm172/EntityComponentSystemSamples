@@ -334,8 +334,7 @@ public partial class LevelGenerator
     
                     if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
                     {
-                        //Debug.Log( "Valid Connection Made" );
-                        SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
+                        SetNeighbors( cnct.Connections.x -1, cnct.Connections.y-1, room.Weight );
                     }
                 }
             }
