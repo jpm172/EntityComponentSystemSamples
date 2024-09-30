@@ -19,7 +19,7 @@ public class LevelConnectionManager
    public float Length => GetLength();
    
 
-   public LevelConnectionManager(int4 startingPiece, int4 direction)
+   public LevelConnectionManager(int4 startingPiece, int2 direction)
    {
       _pieces = new List<int4>();
       _pieces.Add( startingPiece );
@@ -28,10 +28,10 @@ public class LevelConnectionManager
       DebugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
    }
 
-   private void UpdateOffset( int4 piece, int4 direction )
+   private void UpdateOffset( int4 piece, int2 direction )
    {
       int2 size = piece.Size();
-      if ( direction.x != 0 || direction.z != 0 )
+      if ( direction.x != 0 )
       {
          _thicknessOffset.x = size.x - 1;
       }
@@ -93,9 +93,9 @@ public struct LevelConnectionInfo
 {
    public int4 Bounds;
    public int2 Connections;
-   public int4 Direction;
+   public int2 Direction;
 
-   public LevelConnectionInfo( int room1, int room2, int4 bounds, int4 direction )
+   public LevelConnectionInfo( int room1, int room2, int4 bounds, int2 direction )
    {
       Bounds = bounds;
       Connections = new int2(math.min( room1, room2 ), math.max( room1, room2 ));

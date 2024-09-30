@@ -209,7 +209,7 @@ public partial class LevelGenerator
         //if we added cells, playback the results to paint them onto the level
         if ( newCells.Count > 0 )
         {
-            NativeQueue<LevelConnection> newNeighbors = new NativeQueue<LevelConnection>(Allocator.TempJob);
+            NativeQueue<LevelConnectionInfo> newNeighbors = new NativeQueue<LevelConnectionInfo>(Allocator.TempJob);
             NativeQueue<int2> localMinima = new NativeQueue<int2>(Allocator.TempJob);
             NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
@@ -245,33 +245,7 @@ public partial class LevelGenerator
             localMinima.Dispose();
             newCellsArray.Dispose();
 
-            
-            if ( newNeighbors.Count > 0 )
-            {
-                HashSet<int> checkedNeighbors = new HashSet<int>();
-                NativeArray<LevelConnection> neighborArray = newNeighbors.ToArray( Allocator.TempJob );
-                //go through each neighbor, and if it can form a valid connection to the neighbor, mark it as a new edge in the level
-                for ( int i = 0; i < neighborArray.Length; i++ )
-                {
-                    int neighborIndex = neighborArray[i].RoomId-1;
-                    if(checkedNeighbors.Contains( neighborIndex ))
-                        continue;
-
-                    checkedNeighbors.Add( neighborIndex );
-                    
-                    LevelEdge check = new LevelEdge
-                    {
-                        Source = room.Index,
-                        Destination = neighborIndex
-                    };
-                    if ( !_edgeDictionary[room.Index].Contains( check ) )//&& IsValidConnection(room, _rooms[neighborIndex], neighborArray))
-                    {
-                        SetNeighbors( room.Index, neighborIndex, room.Weight );
-                    }
-                }
-
-                neighborArray.Dispose();
-            }
+            AddConnections( newNeighbors, room );
             
             newNeighbors.Dispose();
         }
@@ -363,7 +337,6 @@ public partial class LevelGenerator
                         //Debug.Log( "Valid Connection Made" );
                         SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
                     }
-                   //roomConnections[i].Pieces.Clear();
                 }
             }
         }

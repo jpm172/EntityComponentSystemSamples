@@ -145,8 +145,10 @@ public partial class LevelGenerator : MonoBehaviour
                     
                     }
                 }
-                
             }
+            
+            
+            
             return;
         }
         
@@ -184,6 +186,24 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
 
+        foreach ( int2 key in _roomConnections.Keys )
+        {
+            foreach ( LevelConnectionManager cnct in _roomConnections[key] )
+            {
+                Gizmos.color = cnct.DebugColor;
+                foreach ( int4 cell in cnct.Pieces )
+                {
+                    int2 cellSize = cell.Size();
+                    Vector3 pos = new Vector3(cell.x, cell.y) + new Vector3(cellSize.x-1, cellSize.y -1)/2;
+                    pos /= GameSettings.PixelsPerUnit;
+                    size = new Vector3( cellSize.x, cellSize.y ) / GameSettings.PixelsPerUnit;
+                
+                    Gizmos.DrawWireCube( pos, size );
+                }
+                
+                
+            }
+        }
         
         Gizmos.color = Color.red;
         for ( int i = 0; i < _rooms.Length; i++ )
@@ -192,7 +212,6 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 foreach ( LevelEdge e in _edgeDictionary[i] )
                 {
-                    
                     Vector3 source = new Vector3(_rooms[e.Source].Origin.x, _rooms[e.Source].Origin.y) + new Vector3(_rooms[e.Source].Size.x, _rooms[e.Source].Size.y)/2;
                     Vector3 destination = new Vector3(_rooms[e.Destination].Origin.x, _rooms[e.Destination].Origin.y)+ new Vector3(_rooms[e.Destination].Size.x, _rooms[e.Destination].Size.y)/2;;
                     
@@ -230,34 +249,7 @@ public partial class LevelGenerator : MonoBehaviour
         //MakeEntities();
         
     }
-
-    //Sets up the initial growth directions for each room to match the path created by FindPath()
-    private void SetGrowthInfo()
-    {
-        for ( int i = 0; i < _rooms.Length; i++ )
-        {
-            if ( !_edgeDictionary.ContainsKey( i ) )
-                continue;
-            
-            LevelRoom room = _rooms[i];
-
-            //go through all of the edges connected to this room and add that growth direction to the room
-            foreach ( LevelEdge edge in _edgeDictionary[i] )
-            {
-                LevelRoom neighbor = _rooms[edge.Destination];
-                int2 direction = neighbor.GraphPosition - room.GraphPosition;
-                
-                if ( math.abs( direction.x ) > math.abs( direction.y ) )
-                {
-                    room.XGrowthDirections.Add( direction );
-                }
-                else
-                {
-                    room.YGrowthDirections.Add( direction );
-                }
-            }
-        }
-    }
+    
 
     private bool HasPath(int startNode)
     {

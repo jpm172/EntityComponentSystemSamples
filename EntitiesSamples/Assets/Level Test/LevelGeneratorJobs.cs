@@ -184,7 +184,7 @@ public struct LevelCell
 
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
-        public NativeQueue<LevelConnection>.ParallelWriter Neighbors;
+        public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
         public NativeQueue<int2>.ParallelWriter LocalMinima;
         public NativeQueue<int2>.ParallelWriter LocalMaxima;
         public void Execute(int index)
@@ -264,7 +264,9 @@ public struct LevelCell
             if ( LevelLayout[index1] != RoomId || LevelLayout[index2] != otherId )
                 return;
             
-            LevelConnection connect = new LevelConnection{Origin = origin, RoomId = otherId};
+            //LevelConnectionInfo connect = new LevelConnectionInfo{Origin = origin, RoomId = otherId};
+            int4 bounds = new int4(math.min( check1,check2 ), math.max( check1, check2 ));
+            LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, GrowthDirection );
             Neighbors.Enqueue( connect );
         }
         
