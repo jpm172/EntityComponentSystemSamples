@@ -183,9 +183,6 @@ public partial class LevelGenerator
 
     private void NormalGrowPath( LevelRoom room, int2 growthDirection )
     {
-        if(breakPoint)
-        {}
-        
         NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
@@ -213,17 +210,14 @@ public partial class LevelGenerator
             NativeQueue<int2> localMinima = new NativeQueue<int2>(Allocator.TempJob);
             NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
-
-            //NativeArray<int> newCellsArray = newCells.ToArray( Allocator.TempJob );
+            
             NativeArray<LevelCell> newCellsArray = newCells.ToArray( Allocator.TempJob );
             
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
                 LevelLayout = _levelLayout,
                 LevelDimensions = dimensions,
-                RoomInfo = _roomInfo,
                 GrowthDirection = growthDirection,
-                Neighbors = newNeighbors.AsParallelWriter(),
                 LocalMinima = localMinima.AsParallelWriter(),
                 LocalMaxima = localMaxima.AsParallelWriter(),
                 NewCells = newCellsArray,
@@ -234,7 +228,22 @@ public partial class LevelGenerator
             };
             
             JobHandle applyHandle = applyJob.Schedule(newCellsArray.Length, 32);
-            applyHandle.Complete();
+            
+            
+            LevelCheckForConnectionsJob checkConnectJob = new LevelCheckForConnectionsJob
+            {
+                LevelLayout = _levelLayout,
+                LevelDimensions = dimensions,
+                RoomInfo = _roomInfo,
+                GrowthDirection = growthDirection,
+                Neighbors = newNeighbors.AsParallelWriter(),
+                NewCells = newCellsArray,
+                RoomId = room.Id,
+                WallId = room.WallId,
+            };
+            
+            JobHandle checkConnectHandle = checkConnectJob.Schedule(newCellsArray.Length, 32, applyHandle);
+            checkConnectHandle.Complete();
 
             if ( localMinima.Count + localMaxima.Count > 0 )
             {
@@ -342,6 +351,22 @@ public partial class LevelGenerator
     
     }
     
+    private void AddConnection( LevelConnectionInfo cnct, LevelRoom room )
+    {
+
+        if ( !_roomConnections.ContainsKey( cnct.Connections ) )
+        {
+            _roomConnections[cnct.Connections] = new List<LevelConnectionManager>();
+        }
+        
+        LevelConnectionManager newConnection = new LevelConnectionManager( cnct.Bounds, cnct.Direction );
+
+        _roomConnections[cnct.Connections].Add( newConnection );
+        if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
+        {
+            SetNeighbors( cnct.Connections.x -1, cnct.Connections.y-1, room.Weight );
+        }
+    }
 
     private bool IsFinishedGrowing()
     {

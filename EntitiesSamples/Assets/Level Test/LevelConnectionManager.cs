@@ -68,7 +68,6 @@ public class LevelConnectionManager
             if ( piece.Borders( otherPiece ) || piece.Overlaps( otherPiece ) )
             {
                Merge( otherConnection );
-               Debug.Log( "merge!" );
                return true;
             }
          }

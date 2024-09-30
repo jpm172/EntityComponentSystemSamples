@@ -168,13 +168,12 @@ public struct LevelCell
     public int Index;
 }
 
-    //[BurstCompile]
+    [BurstCompile]
     public struct LevelApplyGrowthResultJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
         public NativeArray<int> LevelLayout;
-
-        [ReadOnly] public NativeArray<int> RoomInfo;
+        
         [ReadOnly] public int4 RoomBounds;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int RoomId;
@@ -184,7 +183,6 @@ public struct LevelCell
 
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
-        public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
         public NativeQueue<int2>.ParallelWriter LocalMinima;
         public NativeQueue<int2>.ParallelWriter LocalMaxima;
         public void Execute(int index)
@@ -200,19 +198,9 @@ public struct LevelCell
                 LevelLayout[wcIndex] = RoomId;
             }
             
-            
             int2 origin = levelCell.Cell;
             CheckBounds( origin );
-            
-            CheckNeighbor( origin.x + 1, origin.y, origin );
-            CheckNeighbor( origin.x - 1, origin.y, origin );
-            CheckNeighbor( origin.x, origin.y + 1, origin );
-            CheckNeighbor( origin.x, origin.y - 1, origin );
-            
-
         }
-
-        
 
         private void CheckBounds( int2 cell )
         {
@@ -225,8 +213,37 @@ public struct LevelCell
             {
                 LocalMaxima.Enqueue( math.max( cell, RoomBounds.zw ) );
             }
-            
         }
+    }
+
+    [BurstCompile]
+    public struct LevelCheckForConnectionsJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> LevelLayout;
+
+        [ReadOnly] public NativeArray<int> RoomInfo;
+        [ReadOnly] public int2 GrowthDirection;
+        [ReadOnly] public int RoomId;
+        [ReadOnly] public int WallId;
+        [ReadOnly] public Vector2Int LevelDimensions;
+
+        [ReadOnly] public NativeArray<LevelCell> NewCells;
+        
+        public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
+        public void Execute(int index)
+        {
+            LevelCell levelCell = NewCells[index];
+
+
+            int2 origin = levelCell.Cell;
+
+            CheckNeighbor( origin.x + 1, origin.y, origin );
+            CheckNeighbor( origin.x - 1, origin.y, origin );
+            CheckNeighbor( origin.x, origin.y + 1, origin );
+            CheckNeighbor( origin.x, origin.y - 1, origin );
+        }
+        
 
         private void CheckNeighbor( int x, int y, int2 origin )
         {
@@ -255,6 +272,13 @@ public struct LevelCell
             int2 dir = other - origin;
             int2 thicknessVector = new int2(thickness, thickness) * -dir;
             int2 otherThicknessVector = new int2(otherThickness + 1, otherThickness + 1) * dir ;
+            
+            if ( !math.abs( dir ).Equals(  math.abs( GrowthDirection ) ) )
+            {
+                thicknessVector -= GrowthDirection;
+                otherThicknessVector -= GrowthDirection;
+            }
+            
             int2 check1 = origin + thicknessVector;
             int2 check2 = origin + otherThicknessVector;
 
@@ -280,9 +304,7 @@ public struct LevelCell
         
             return true;
         }
-        
     }
-
 
 
     [BurstCompile]

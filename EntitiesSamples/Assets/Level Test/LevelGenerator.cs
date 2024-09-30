@@ -406,10 +406,9 @@ public partial class LevelGenerator : MonoBehaviour
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         foreach ( LevelRoom room in _rooms )
         {
-            
             DrawRoomSeed( room );
         }
-        
+        CheckInitialConnections();
     }
 
     private void SetNeighbors( int room1, int room2, int weight )
@@ -420,7 +419,6 @@ public partial class LevelGenerator : MonoBehaviour
     
     private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
     {
-        
         int2 shift = new int2(0,0);
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -482,10 +480,64 @@ public partial class LevelGenerator : MonoBehaviour
         return new int2(xResult, yResult) ;
     }
 
+    /// <summary>
+    /// Will fetch any connections between the initial room seeds. 
+    /// This is to catch the edge case where two seeds are placed butting
+    /// up against each other, which is a connection that will not be caught
+    /// by the growth algorithm.
+    /// </summary>
+    private void CheckInitialConnections()
+    {
+        for ( int x = 0; x < layoutDimensions.x; x++ )
+        {
+            for ( int y = 0; y < layoutDimensions.y; y++ )
+            {
+                int index = x + y * layoutDimensions.x;
+                LevelRoom room = _rooms[index];
+                if ( x > 0 )
+                {
+                    int leftIndex = (x -1) + y * layoutDimensions.x;
+                    LevelRoom leftRoom = _rooms[leftIndex];
+                    if ( room.Bounds.Borders( leftRoom.Bounds ) )
+                    {
+                        int4 thicknessVector = new int4( room.WallThickness, room.WallThickness, -room.WallThickness, -room.WallThickness);
+                        int4 leftThicknessVector = new int4( leftRoom.WallThickness, leftRoom.WallThickness, -leftRoom.WallThickness, -leftRoom.WallThickness);
+                        int4 room1 = room.Bounds + thicknessVector;
+                        int4 room2 = leftRoom.Bounds + leftThicknessVector;
+                        
+                        int swap = room1.x;
+                        room1.x = room2.z;
+                        room2.z = swap;
+                        LevelConnectionInfo cnct = new LevelConnectionInfo(room.Id, leftRoom.Id, room1.Boolean( room2 ), new int2(-1, 0));
+                        AddConnection( cnct, room );
+                    }
+                }
 
+                if ( y > 0 )
+                {
+                    int bottomIndex = x + (y -1) * layoutDimensions.x;
+                    LevelRoom bottomRoom = _rooms[bottomIndex];
+                    if ( room.Bounds.Borders( bottomRoom.Bounds ) )
+                    {
+                        int4 thicknessVector = new int4( room.WallThickness, room.WallThickness, -room.WallThickness, -room.WallThickness );
+                        int4 bottomThicknessVector = new int4( bottomRoom.WallThickness, bottomRoom.WallThickness, -bottomRoom.WallThickness, -bottomRoom.WallThickness );
+                        int4 room1 = room.Bounds + thicknessVector;
+                        int4 room2 = bottomRoom.Bounds + bottomThicknessVector;
+
+                        int swap = room1.y;
+                        room1.y = room2.w;
+                        room2.w = swap;
+
+                        LevelConnectionInfo cnct = new LevelConnectionInfo(room.Id, bottomRoom.Id, room1.Boolean( room2 ), new int2(0, -1));
+                        AddConnection( cnct, room );
+                    }
+                }
+            }
+        }
+    }
+    
     private void DrawRoomSeed( LevelRoom room )
     {
-        
         int start = room.Origin.x + room.Origin.y * dimensions.x;
         
         for ( int x = 0; x < room.Size.x; x++ )
