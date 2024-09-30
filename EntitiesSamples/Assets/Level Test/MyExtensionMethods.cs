@@ -7,7 +7,7 @@ public static class MyExtensionMethods
 {
     public static readonly int2 Int2One = new int2(1,1);
     private static readonly int4 ExpandHorizontal = new int4(-1,0,1,0);
-    private static readonly int4 ExpandVertical = new int4(0,1,0,1);
+    private static readonly int4 ExpandVertical = new int4(0,-1,0,1);
 
     public static bool Overlaps( this int4 bounds, int4 otherBounds )
     {
