@@ -234,38 +234,38 @@ public struct LevelCell
                 return;
 
             int index = x + y * LevelDimensions.x;
-            if ( LevelLayout[index] > 0 && IsOtherRoom( index, new int2(x, y), origin, out int otherId ) )
+            if ( LevelLayout[index] > 0 )
             {
-                LevelConnection connect = new LevelConnection{Origin = origin, RoomId = otherId};
-                Neighbors.Enqueue( connect );
+                TryAddConnection( index, new int2(x, y), origin );
             }
         }
 
-        private bool IsOtherRoom( int index, int2 other, int2 origin, out int otherId )
+        private void TryAddConnection( int index, int2 other, int2 origin )
         {
-            otherId = 0;
             bool isOther = LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
             if ( !isOther )
-                return false;
+                return;
 
-            otherId = math.select( LevelLayout[index], LevelLayout[index] - RoomInfo.Length, LevelLayout[index] > RoomInfo.Length );
-            
+            //otherId = math.select( LevelLayout[index], LevelLayout[index] - RoomInfo.Length, LevelLayout[index] > RoomInfo.Length );
+            int otherId = (LevelLayout[index] % ( RoomInfo.Length + 1 ) ) + 1;
+
             int thickness = RoomInfo[RoomId - 1];
             int otherThickness = RoomInfo[otherId -1];
             
             int2 dir = other - origin;
-            int2 thicknessVector = new int2(thickness, thickness) * -dir ;
+            int2 thicknessVector = new int2(thickness, thickness) * -dir;
             int2 otherThicknessVector = new int2(otherThickness + 1, otherThickness + 1) * dir ;
             int2 check1 = origin + thicknessVector;
             int2 check2 = origin + otherThicknessVector;
 
             int index1 = check1.x + check1.y * LevelDimensions.x;
             int index2 = check2.x + check2.y * LevelDimensions.x;
+
+            if ( LevelLayout[index1] != RoomId || LevelLayout[index2] != otherId )
+                return;
             
-            
-            //Debug.Log( $" {RoomId} <-> {otherId} == {LevelLayout[index1]} <-> {LevelLayout[index2]} | {thickness} - {otherThickness}" );
-            
-            return LevelLayout[index1] == RoomId && LevelLayout[index2] == otherId;
+            LevelConnection connect = new LevelConnection{Origin = origin, RoomId = otherId};
+            Neighbors.Enqueue( connect );
         }
         
         private bool IsInBounds( int x, int y )

@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class LevelConnection
+public class LevelConnectionManager
 {
    private int4 _bounds;
    private int2 _thicknessOffset;
@@ -19,7 +19,7 @@ public class LevelConnection
    public float Length => GetLength();
    
 
-   public LevelConnection(int4 startingPiece, int4 direction)
+   public LevelConnectionManager(int4 startingPiece, int4 direction)
    {
       _pieces = new List<int4>();
       _pieces.Add( startingPiece );
@@ -53,7 +53,7 @@ public class LevelConnection
       return math.max( size.x, size.y );
    }
 
-   public bool TryMerge( LevelConnection otherConnection )
+   public bool TryMerge( LevelConnectionManager otherConnection )
    {
       bool broadphase = _bounds.Borders( otherConnection.Bounds ) || _bounds.Overlaps( otherConnection.Bounds );
       
@@ -76,7 +76,7 @@ public class LevelConnection
       return false;
    }
 
-   private void Merge( LevelConnection otherConnection )
+   private void Merge( LevelConnectionManager otherConnection )
    {
       _pieces.AddRange( otherConnection.Pieces );
 

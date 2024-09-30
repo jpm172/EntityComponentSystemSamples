@@ -38,9 +38,9 @@ public class LevelRoom
         set => _yGrowthDirections = value;
     }
 
-    public int2 Size=> _bounds.zw - _bounds.xy + Int2One;
+    public int2 Size=> _bounds.Size();
 
-    public int2 Origin => _bounds.xy;
+    public int2 Origin => _bounds.Origin();
 
     public int4 Bounds//(X,Y,Z,W)
     {
