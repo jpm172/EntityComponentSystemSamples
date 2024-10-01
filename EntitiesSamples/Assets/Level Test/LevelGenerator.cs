@@ -253,13 +253,25 @@ public partial class LevelGenerator : MonoBehaviour
     private void MakeDoorway( int2 key )
     {
         //todo: this is a race condition! the connections wont always be in the same order, so this wont always make the same doors in the same spots
+        int largest = -1;
+        LevelConnectionManager result = null;
         foreach ( LevelConnectionManager cnct in _roomConnections[key] )
         {
+            
             if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
             {
-                ConvertToFloor( cnct );
-                return;
+                if ( result == null || largest < cnct.Hash )
+                {
+                    largest = cnct.Hash;
+                    result = cnct;
+                }
+                //ConvertToFloor( cnct );
             }
+        }
+
+        if ( result != null )
+        {
+            ConvertToFloor( result );
         }
     }
 

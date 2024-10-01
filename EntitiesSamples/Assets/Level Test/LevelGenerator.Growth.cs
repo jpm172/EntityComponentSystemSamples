@@ -147,7 +147,9 @@ public partial class LevelGenerator
 
     private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
-        NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
+        NativeStream cellStream = new NativeStream(room.Size.x * room.Size.y, Allocator.TempJob);
+
+        
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
         {
             GrowthDirection = growthDirection,
@@ -159,7 +161,7 @@ public partial class LevelGenerator
             WallThickness = room.WallThickness,
             RoomSize = room.Size,
             RoomOrigin = room.Origin,
-            NewCells = newCells.AsParallelWriter()
+            CellStream = cellStream.AsWriter()
         };
         
         
@@ -168,14 +170,15 @@ public partial class LevelGenerator
 
         bool removeDirection = false;
         //if we added cells, playback the results to paint them onto the level
-        if ( newCells.Count > 0 )
+        if ( !cellStream.IsEmpty() )
         {
-            NativeQueue<LevelConnectionInfo> newNeighbors = new NativeQueue<LevelConnectionInfo>(Allocator.TempJob);
+            //NativeQueue<LevelConnectionInfo> newNeighbors = new NativeQueue<LevelConnectionInfo>(Allocator.TempJob);
+            NativeStream newNeighbors = new NativeStream(cellStream.Count(), Allocator.TempJob);
             NativeQueue<int2> localMinima = new NativeQueue<int2>(Allocator.TempJob);
             NativeQueue<int2> localMaxima = new NativeQueue<int2>(Allocator.TempJob);
             //NativeParallelMultiHashMap<int2, int> neighborMap = new NativeParallelMultiHashMap<int2, int>(newCells.Length*3, Allocator.TempJob);
             
-            NativeArray<LevelCell> newCellsArray = newCells.ToArray( Allocator.TempJob );
+            NativeArray<LevelCell> newCellsArray = cellStream.ToNativeArray<LevelCell>( Allocator.TempJob );
             
             LevelApplyGrowthResultJob applyJob = new LevelApplyGrowthResultJob
             {
@@ -200,7 +203,7 @@ public partial class LevelGenerator
                 LevelDimensions = dimensions,
                 RoomInfo = _roomInfo,
                 GrowthDirection = growthDirection,
-                Neighbors = newNeighbors.AsParallelWriter(),
+                Neighbors = newNeighbors.AsWriter(),
                 NewCells = newCellsArray,
                 RoomId = room.Id,
                 WallId = room.WallId,
@@ -217,8 +220,6 @@ public partial class LevelGenerator
             localMaxima.Dispose();
             localMinima.Dispose();
             newCellsArray.Dispose();
-
-            
             
             AddConnections( newNeighbors, room );
             
@@ -242,7 +243,7 @@ public partial class LevelGenerator
             }
         }
 
-        newCells.Dispose();
+        cellStream.Dispose();
     }
 
 
@@ -264,10 +265,10 @@ public partial class LevelGenerator
     }
     
     
-    private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
+    private void AddConnections( NativeStream connections, LevelRoom room )
     {
-
-        while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
+        NativeArray<LevelConnectionInfo> arr = connections.ToNativeArray<LevelConnectionInfo>( Allocator.TempJob );
+        foreach ( LevelConnectionInfo cnct in arr )
         {
             if ( !_roomConnections.ContainsKey( cnct.Connections ) )
             {
@@ -290,6 +291,8 @@ public partial class LevelGenerator
                 }
             }
         }
+
+        arr.Dispose();
     }
     
     private void AddConnection( LevelConnectionInfo cnct, LevelRoom room )

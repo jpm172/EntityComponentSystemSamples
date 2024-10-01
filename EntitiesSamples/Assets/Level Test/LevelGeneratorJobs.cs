@@ -24,8 +24,8 @@ using UnityEngine;
         [ReadOnly] public int2 RoomSize;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int Required;
-
-        public NativeQueue<LevelCell>.ParallelWriter NewCells;
+        
+        public NativeStream.Writer CellStream;
         public void Execute(int index)
         {
             int boundsX = index % RoomSize.x;
@@ -52,8 +52,10 @@ using UnityEngine;
                     IsFloorCell = IsFloorCell( cell ),
                     Index = checkIndex
                 };
-                //NewCells.Enqueue( checkIndex );
-                NewCells.Enqueue( c );
+
+                CellStream.BeginForEachIndex( index );
+                CellStream.Write( c );
+                CellStream.EndForEachIndex();
             }
         }
         
@@ -231,10 +233,8 @@ public struct LevelCell
 
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
-        public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
-        
-        [NativeDisableParallelForRestriction]
-        public NativeArray<LevelConnectionInfo> NeighborStream;
+        //public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
+        public NativeStream.Writer Neighbors;
         public void Execute(int index)
         {
             LevelCell levelCell = NewCells[index];
@@ -294,9 +294,10 @@ public struct LevelCell
             //LevelConnectionInfo connect = new LevelConnectionInfo{Origin = origin, RoomId = otherId};
             int4 bounds = new int4(math.min( check1,check2 ), math.max( check1, check2 ));
             LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, dir );
-            Neighbors.Enqueue( connect );
-            
-            NeighborStream[streamIndex] = connect;
+            //Neighbors.Enqueue( connect );
+            Neighbors.BeginForEachIndex( streamIndex );
+            Neighbors.Write( connect );
+            Neighbors.EndForEachIndex();
         }
         
         private bool IsInBounds( int x, int y )
