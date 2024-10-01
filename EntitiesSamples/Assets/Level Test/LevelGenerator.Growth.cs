@@ -218,6 +218,8 @@ public partial class LevelGenerator
             localMinima.Dispose();
             newCellsArray.Dispose();
 
+            
+            
             AddConnections( newNeighbors, room );
             
             newNeighbors.Dispose();
@@ -264,6 +266,7 @@ public partial class LevelGenerator
     
     private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
     {
+
         while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
         {
             if ( !_roomConnections.ContainsKey( cnct.Connections ) )
@@ -287,7 +290,6 @@ public partial class LevelGenerator
                 }
             }
         }
-    
     }
     
     private void AddConnection( LevelConnectionInfo cnct, LevelRoom room )

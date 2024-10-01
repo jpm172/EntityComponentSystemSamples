@@ -32,7 +32,7 @@ public partial class LevelGenerator : MonoBehaviour
     private NativeArray<int> _levelLayout;
     private NativeArray<int> _roomInfo; //just holds room thickness for now
 
-    private Dictionary<int2, List<LevelConnectionManager>> _roomConnections;
+    private Dictionary<int2, List< LevelConnectionManager>> _roomConnections;
     //seeding variables
     public bool useSeed;
     [SerializeField]

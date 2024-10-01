@@ -232,6 +232,9 @@ public struct LevelCell
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
         public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
+        
+        [NativeDisableParallelForRestriction]
+        public NativeArray<LevelConnectionInfo> NeighborStream;
         public void Execute(int index)
         {
             LevelCell levelCell = NewCells[index];
@@ -239,14 +242,14 @@ public struct LevelCell
 
             int2 origin = levelCell.Cell;
 
-            CheckNeighbor( origin.x + 1, origin.y, origin );
-            CheckNeighbor( origin.x - 1, origin.y, origin );
-            CheckNeighbor( origin.x, origin.y + 1, origin );
-            CheckNeighbor( origin.x, origin.y - 1, origin );
+            CheckNeighbor( origin.x + 1, origin.y, origin, index );
+            CheckNeighbor( origin.x - 1, origin.y, origin, index );
+            CheckNeighbor( origin.x, origin.y + 1, origin, index );
+            CheckNeighbor( origin.x, origin.y - 1, origin, index );
         }
         
 
-        private void CheckNeighbor( int x, int y, int2 origin )
+        private void CheckNeighbor( int x, int y, int2 origin, int streamIndex )
         {
             if ( !IsInBounds( x, y ) )
                 return;
@@ -254,11 +257,11 @@ public struct LevelCell
             int index = x + y * LevelDimensions.x;
             if ( LevelLayout[index] > 0 )
             {
-                TryAddConnection( index, new int2(x, y), origin );
+                TryAddConnection( index, new int2(x, y), origin, streamIndex );
             }
         }
 
-        private void TryAddConnection( int index, int2 other, int2 origin )
+        private void TryAddConnection( int index, int2 other, int2 origin, int streamIndex )
         {
             bool isOther = LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
             if ( !isOther )
@@ -292,6 +295,8 @@ public struct LevelCell
             int4 bounds = new int4(math.min( check1,check2 ), math.max( check1, check2 ));
             LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, dir );
             Neighbors.Enqueue( connect );
+            
+            NeighborStream[streamIndex] = connect;
         }
         
         private bool IsInBounds( int x, int y )
