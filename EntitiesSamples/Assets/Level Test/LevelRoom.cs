@@ -21,7 +21,7 @@ public class LevelRoom
 
     private List<int2> _xGrowthDirections;
     private List<int2> _yGrowthDirections;
-    private Dictionary<int, List<LevelConnection>> _roomConnections;
+    //private Dictionary<int, List<LevelConnection>> _roomConnections;
     
 
     public Mesh Mesh;

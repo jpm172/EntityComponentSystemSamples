@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 
 public class LevelConnectionManager
 {
+   private int4 _key;
    private int4 _bounds;
    private int2 _thicknessOffset;
    private int2 _axis;
@@ -14,6 +15,7 @@ public class LevelConnectionManager
    public List<int4> Pieces => _pieces;
 
    public int4 Bounds => _bounds;
+   public int4 Key => _key;
 
    public int2 Axis => _axis;
 
@@ -26,6 +28,7 @@ public class LevelConnectionManager
    {
       _pieces = new List<int4>();
       _pieces.Add( startingPiece );
+      _key = startingPiece;
       _bounds = startingPiece;
       _axis = math.abs(direction);
       UpdateOffset( startingPiece, direction );
@@ -57,12 +60,18 @@ public class LevelConnectionManager
       return math.max( size.x, size.y );
    }
 
+   public int4[] GetRandomSpan(int size)
+   {
+      return null;
+   }
+   
+   
    public bool TryMerge( LevelConnectionManager otherConnection )
    {
       bool broadphase = _bounds.Borders( otherConnection.Bounds ) || _bounds.Overlaps( otherConnection.Bounds );
       bool sameAxis = _axis.Equals(  otherConnection.Axis );
 
-      if ( !broadphase || !sameAxis )
+      if ( !broadphase || !sameAxis || otherConnection.Pieces.Count >= 20 )
          return false;
       
       List<int4> otherPieces = otherConnection.Pieces;
@@ -90,6 +99,11 @@ public class LevelConnectionManager
       _thicknessOffset = math.max( _thicknessOffset, otherConnection._thicknessOffset );
       _bounds.xy = math.min( _bounds.xy, otherBounds.xy );
       _bounds.zw = math.max( _bounds.zw, otherBounds.zw );
+   }
+
+   public int CompareTo( LevelConnectionManager other )
+   {
+      return _key.GetHashCode() - other.Key.GetHashCode();
    }
    
 }

@@ -367,7 +367,7 @@ MonoBehaviour:
   layoutDimensions: {x: 3, y: 3}
   floorMaterials: []
   wallMaterial: {fileID: 0}
-  useSeed: 1
+  useSeed: 0
   _minWallThickness: 1
   _maxWallThickness: 5
   _minRoomSeedSize: 20
@@ -377,8 +377,9 @@ MonoBehaviour:
   DraftLook: 0
   UseMeshes: 0
   UseWireMeshes: 0
+  UseConnections: 0
   breakPoint: 0
-  StepWiseGrow: 1
+  StepWiseGrow: 0
   GrowSteps: 1
 --- !u!4 &1289639036
 Transform:

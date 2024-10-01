@@ -48,7 +48,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     //dijkstas variables
     private Dictionary<int, Dictionary<int,int>> _edgeDictionary;//stores the edge weights used for dijsktras
-    private NativeArray<int> _adjacencyMatrix;
+    private NativeArray<int> _adjacencyMatrix;//stores the edge weights for burst dijsktras
     private int minEdgeWeight = 1;
     [SerializeField]
     private int maxEdgeWeight = 10;
@@ -58,6 +58,7 @@ public partial class LevelGenerator : MonoBehaviour
     public bool DraftLook;
     public bool UseMeshes;
     public bool UseWireMeshes;
+    public bool UseConnections;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -91,29 +92,6 @@ public partial class LevelGenerator : MonoBehaviour
                     Gizmos.DrawLine( linePos, linePos + Vector3.up*1000 );
                 }
             }
-
-            /*
-            int adjustedBuffer = _seedBuffer + _maxWallThickness;
-            int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
-            
-            Vector3 bufferSize = new Vector3(adjustedBuffer, adjustedBuffer)/GameSettings.PixelsPerUnit;
-            Gizmos.color = Color.black;
-            int xOffset = adjustedBuffer;
-            for ( int x = 0; x < layoutDimensions.x; x++ )
-            {
-                int yOffset = adjustedBuffer;
-                for ( int y = 0; y < layoutDimensions.y; y++ )
-                {
-                    yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
-                    
-                    
-                    Vector3 pos = new Vector3(xOffset,yOffset)/GameSettings.PixelsPerUnit;
-                    Gizmos.DrawWireCube( pos + bufferSize/2, bufferSize );
-                    
-                }
-                xOffset += adjustedMaxSize + (adjustedBuffer*2) ;
-            }
-            */
 
             return;
         }
@@ -188,8 +166,12 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
 
+        
         foreach ( int2 key in _roomConnections.Keys )
         {
+            if(!UseConnections)
+                break;
+            
             foreach ( LevelConnectionManager cnct in _roomConnections[key] )
             {
                 Gizmos.color = cnct.DebugColor;
@@ -201,8 +183,6 @@ public partial class LevelGenerator : MonoBehaviour
                     size = new Vector3( cellSize.x, cellSize.y ) / GameSettings.PixelsPerUnit;
                     Gizmos.DrawWireCube( pos, size );
                 }
-                
-                
             }
         }
         
@@ -242,17 +222,66 @@ public partial class LevelGenerator : MonoBehaviour
         
         
         InitializeLevel();
-        //VerifySeeds();
+        GrowRooms();
+        MakeDoorways();
         
-        
-        //GrowRooms();
         //MakeFloors();
         //MakeWalls();
         //MakeEntities();
-        
     }
 
+    /// <summary>
+    /// Makes doorways between the rooms corresponding to the path found from dijkstras
+    /// </summary>
+    public void MakeDoorways()
+    {
+        HashSet<int2> connectionsMade = new HashSet<int2>();
+        foreach ( LevelRoom room in _rooms )
+        {
+            foreach ( KeyValuePair<int, int> cnct in _edgeDictionary[room.Id] )
+            {
+                int2 key = new int2(math.min(room.Id, cnct.Key), math.max(room.Id, cnct.Key));
+                if ( !connectionsMade.Contains( key ) )
+                {
+                    connectionsMade.Add( key );
+                    MakeDoorway( key );
+                }
+            }
+        }
+    }
 
+    private void MakeDoorway( int2 key )
+    {
+        //todo: this is a race condition! the connections wont always be in the same order, so this wont always make the same doors in the same spots
+        foreach ( LevelConnectionManager cnct in _roomConnections[key] )
+        {
+            if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
+            {
+                ConvertToFloor( cnct );
+                return;
+            }
+        }
+    }
+
+    private void ConvertToFloor( LevelConnectionManager cnct )
+    {
+        
+        NativeArray<int4> pieces = new NativeArray<int4>(cnct.Pieces.ToArray(), Allocator.TempJob);
+        
+        LevelConvertToFloorJob convertJob = new LevelConvertToFloorJob
+        {
+            LevelLayout = _levelLayout,
+            LevelDimensions = dimensions,
+            Pieces = pieces,
+            RoomCount = _rooms.Length
+        };
+
+        JobHandle convertHandle = convertJob.Schedule( cnct.Pieces.Count, 1 );
+        convertHandle.Complete();
+
+        pieces.Dispose();
+    }
+    
     private bool BurstHasPath(int startNode)
     {
         NativeArray<int> jobPath = new NativeArray<int>(_rooms.Length, Allocator.TempJob);
@@ -295,6 +324,7 @@ public partial class LevelGenerator : MonoBehaviour
         for ( int i = 0; i < jobPath.Length; i++ )
         {
             int roomId = i + 1;
+            //skip past the start node since it is not assigned a connection in the algorithm
             if(roomId == startNode)
                 continue;
             
@@ -312,7 +342,6 @@ public partial class LevelGenerator : MonoBehaviour
     
     private bool HasPath(int startNode)
     {
-
         int INF = Int32.MaxValue;
         Dictionary<int, int> pathEdges = new Dictionary<int, int>();
         Dictionary<int, int> distances = new Dictionary<int, int>();
@@ -364,9 +393,10 @@ public partial class LevelGenerator : MonoBehaviour
             _edgeDictionary[room.Id] = new Dictionary<int, int>();
         }
 
-
+        //set up the graph to match the path we just found
         foreach ( int roomId in pathEdges.Keys )
         {
+            //skip past the start node since it is not assigned a connection in the algorithm
             if(roomId == startNode)
                 continue;
             
@@ -466,6 +496,7 @@ public partial class LevelGenerator : MonoBehaviour
     {
         _edgeDictionary[room1][room2] = weight;
         _edgeDictionary[room2][room1] = weight;
+        
         //update adjacency matrix
         int room1Index = room1 - 1;
         int room2Index = room2 - 1;
@@ -599,6 +630,7 @@ public partial class LevelGenerator : MonoBehaviour
         }
     }
     
+    //Places the initial seeds into the level array
     private void DrawRoomSeed( LevelRoom room )
     {
         int start = room.Origin.x + room.Origin.y * dimensions.x;
@@ -622,6 +654,7 @@ public partial class LevelGenerator : MonoBehaviour
     }
     
     
+    
     private LevelMaterial GetRandomRoomMaterial()
     {
         int types = Enum.GetNames(typeof(LevelMaterial)).Length;
@@ -637,9 +670,6 @@ public partial class LevelGenerator : MonoBehaviour
                 return LevelMaterial.Drywall;
         }
     }
-    
-    
-    
     
     
     private void MakeWalls()
@@ -845,10 +875,4 @@ public struct LevelEdge
 
         return ( edge.Source == Source && edge.Destination == Destination );
     }
-}
-
-public struct LevelConnection
-{
-    public int2 Origin;
-    public int RoomId;
 }

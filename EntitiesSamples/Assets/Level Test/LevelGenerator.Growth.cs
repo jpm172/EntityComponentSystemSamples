@@ -306,17 +306,7 @@ public partial class LevelGenerator
             SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
         }
     }
-
-    private bool IsFinishedGrowing()
-    {
-        foreach ( LevelRoom room in _rooms )
-        {
-            if ( room.CanGrow )
-                return false;
-        }
-
-        return true;
-    }
+    
     
     
 }

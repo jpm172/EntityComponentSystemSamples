@@ -306,7 +306,33 @@ public struct LevelCell
         }
     }
 
+    public struct LevelConvertToFloorJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<int> LevelLayout;
 
+        [ReadOnly] public int RoomCount;
+        [ReadOnly] public NativeArray<int4> Pieces;
+        [ReadOnly] public Vector2Int LevelDimensions;
+        
+        public void Execute(int index)
+        {
+            int4 bounds = Pieces[index];
+            int2 size = bounds.Size();
+
+            for ( int x = 0; x < size.x; x++ )
+            {
+                for ( int y = 0; y < size.y; y++ )
+                {
+                    int levelIndex = ( bounds.x + x ) + ( ( bounds.y + y ) * LevelDimensions.x );
+                    int value = LevelLayout[levelIndex];
+                    LevelLayout[levelIndex] = math.select( value, value - RoomCount, value > RoomCount );
+                }  
+            }
+           
+        }
+        
+    }
 
 
 [BurstCompile]
