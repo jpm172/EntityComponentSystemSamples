@@ -181,7 +181,15 @@ public partial class LevelGenerator : MonoBehaviour
                     Vector3 pos = new Vector3(cell.x, cell.y) + new Vector3(cellSize.x-1, cellSize.y -1)/2;
                     pos /= GameSettings.PixelsPerUnit;
                     size = new Vector3( cellSize.x, cellSize.y ) / GameSettings.PixelsPerUnit;
-                    Gizmos.DrawWireCube( pos, size );
+                    if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
+                    {
+                        Gizmos.DrawCube( pos, size );
+                    }
+                    else
+                    {
+                        Gizmos.DrawWireCube( pos, size );
+                    }
+                    
                 }
             }
         }
@@ -223,6 +231,10 @@ public partial class LevelGenerator : MonoBehaviour
         
         InitializeLevel();
         GrowRooms();
+        
+        //int2 target = new int2(1,2);
+        //_roomConnections[target].RemoveAt( 0 );
+        
         MakeDoorways();
         
         //MakeFloors();
@@ -252,14 +264,32 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void MakeDoorway( int2 key )
     {
+        int2 target = new int2(1,2);
         //todo: this is a race condition! the connections wont always be in the same order, so this wont always make the same doors in the same spots
+        int largest = -1;
+        LevelConnectionManager result = null;
         foreach ( LevelConnectionManager cnct in _roomConnections[key] )
         {
-            if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
+            if(key.Equals( target ) && cnct.Axis.y == 0)
+                continue;
+            
+            if ( cnct.GetLargestDimension() >= _minRoomSeedSize || key.Equals( target ) && cnct.Axis.y != 0 )
             {
-                ConvertToFloor( cnct );
-                return;
+                //ConvertToFloor( cnct );
+                //return;
+                
+                if ( result == null || largest < cnct.Hash )
+                {
+                    largest = cnct.Hash;
+                    result = cnct;
+                }
+                //ConvertToFloor( cnct );
             }
+        }
+
+        if ( result != null )
+        {
+            ConvertToFloor( result );
         }
     }
 
@@ -288,7 +318,7 @@ public partial class LevelGenerator : MonoBehaviour
         NativeReference<bool> success = new NativeReference<bool>(false, Allocator.TempJob);
         NativeArray<int> jobDistances = new NativeArray<int>(_rooms.Length, Allocator.TempJob);
         NativeArray<bool> sptSet = new NativeArray<bool>(_rooms.Length, Allocator.TempJob);
-        
+
         DijkstrasPathJob pathJob = new DijkstrasPathJob
         {
             AdjacencyMatrix = _adjacencyMatrix,
@@ -319,8 +349,8 @@ public partial class LevelGenerator : MonoBehaviour
         {
             _edgeDictionary[room.Id] = new Dictionary<int, int>();
         }
-
-
+        
+        
         for ( int i = 0; i < jobPath.Length; i++ )
         {
             int roomId = i + 1;
@@ -335,6 +365,7 @@ public partial class LevelGenerator : MonoBehaviour
         jobPath.Dispose();
         sptSet.Dispose();
         jobDistances.Dispose();
+        
         
         return true;
     }
@@ -462,7 +493,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 int id = index + 1;
                 int wallId = id + _rooms.Length;
-                
+
                 LevelRoom room = new LevelRoom(id, wallId, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
                 _roomInfo[index] = wallThickness;

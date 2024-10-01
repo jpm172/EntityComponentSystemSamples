@@ -6,7 +6,6 @@ using Random = UnityEngine.Random;
 
 public class LevelConnectionManager
 {
-   private int4 _key;
    private int4 _bounds;
    private int2 _thicknessOffset;
    private int2 _axis;
@@ -15,7 +14,7 @@ public class LevelConnectionManager
    public List<int4> Pieces => _pieces;
 
    public int4 Bounds => _bounds;
-   public int4 Key => _key;
+   public int Hash => _bounds.GetHashCode();
 
    public int2 Axis => _axis;
 
@@ -28,7 +27,6 @@ public class LevelConnectionManager
    {
       _pieces = new List<int4>();
       _pieces.Add( startingPiece );
-      _key = startingPiece;
       _bounds = startingPiece;
       _axis = math.abs(direction);
       UpdateOffset( startingPiece, direction );
@@ -71,7 +69,7 @@ public class LevelConnectionManager
       bool broadphase = _bounds.Borders( otherConnection.Bounds ) || _bounds.Overlaps( otherConnection.Bounds );
       bool sameAxis = _axis.Equals(  otherConnection.Axis );
 
-      if ( !broadphase || !sameAxis || otherConnection.Pieces.Count >= 20 )
+      if ( !broadphase || !sameAxis )
          return false;
       
       List<int4> otherPieces = otherConnection.Pieces;
@@ -101,11 +99,6 @@ public class LevelConnectionManager
       _bounds.zw = math.max( _bounds.zw, otherBounds.zw );
    }
 
-   public int CompareTo( LevelConnectionManager other )
-   {
-      return _key.GetHashCode() - other.Key.GetHashCode();
-   }
-   
 }
 
 public struct LevelConnectionInfo

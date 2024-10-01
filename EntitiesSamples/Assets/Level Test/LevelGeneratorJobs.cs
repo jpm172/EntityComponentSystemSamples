@@ -233,8 +233,6 @@ public struct LevelCell
         
         public NativeQueue<LevelConnectionInfo>.ParallelWriter Neighbors;
         
-        [NativeDisableParallelForRestriction]
-        public NativeArray<LevelConnectionInfo> NeighborStream;
         public void Execute(int index)
         {
             LevelCell levelCell = NewCells[index];
@@ -295,8 +293,6 @@ public struct LevelCell
             int4 bounds = new int4(math.min( check1,check2 ), math.max( check1, check2 ));
             LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, dir );
             Neighbors.Enqueue( connect );
-            
-            NeighborStream[streamIndex] = connect;
         }
         
         private bool IsInBounds( int x, int y )

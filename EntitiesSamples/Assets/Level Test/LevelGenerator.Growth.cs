@@ -11,6 +11,7 @@ public partial class LevelGenerator
     private int _cornerLimit = 6;
     private int _counter = 0;
     private int _totalSteps = 0;
+    private int _uniqueConnections = 0;
 
     public bool breakPoint = false;
     
@@ -57,23 +58,19 @@ public partial class LevelGenerator
     private void MainGrow()
     {
         _totalSteps = 0;
-        int totalConnections = 0;
+        _uniqueConnections = 0;
         bool hasPath = false;
         
         while ( !hasPath  )
         {
             LevelRoom room = _rooms[_counter];
             
-            //add any new connections to the counter after growing the room
-            int connections = _edgeDictionary[room.Id].Count;
             GrowRoom( room );
-            totalConnections += _edgeDictionary[room.Id].Count - connections;
 
-            if ( totalConnections >= _rooms.Length - 1 ) //only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
+            if ( _uniqueConnections >= _rooms.Length - 1 ) //only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
             {
                 hasPath = BurstHasPath( room.Id );
             }
-            
 
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
@@ -266,12 +263,13 @@ public partial class LevelGenerator
     
     private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
     {
-
+        int2 target = new int2(1,2);
         while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
         {
             if ( !_roomConnections.ContainsKey( cnct.Connections ) )
             {
                 _roomConnections[cnct.Connections] = new List<LevelConnectionManager>();
+                _uniqueConnections++;
             }
             
             LevelConnectionManager newConnection = new LevelConnectionManager( cnct.Bounds, cnct.Direction );
@@ -283,7 +281,7 @@ public partial class LevelGenerator
                 {
                     roomConnections.RemoveAt( i );
     
-                    if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
+                    if ( newConnection.GetLargestDimension() >= _minRoomSeedSize || cnct.Connections.Equals( target ) )
                     {
                         SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
                     }
