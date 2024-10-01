@@ -369,7 +369,7 @@ MonoBehaviour:
   wallMaterial: {fileID: 0}
   useSeed: 1
   _minWallThickness: 1
-  _maxWallThickness: 1
+  _maxWallThickness: 5
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
   _seedBuffer: 20

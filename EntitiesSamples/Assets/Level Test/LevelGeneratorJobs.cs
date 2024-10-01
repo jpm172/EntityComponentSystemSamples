@@ -262,8 +262,7 @@ public struct LevelCell
             bool isOther = LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
             if ( !isOther )
                 return;
-
-            //otherId = math.select( LevelLayout[index], LevelLayout[index] - RoomInfo.Length, LevelLayout[index] > RoomInfo.Length );
+            
             int otherId = (LevelLayout[index] % ( RoomInfo.Length + 1 ) ) + 1;
 
             int thickness = RoomInfo[RoomId - 1];
@@ -275,8 +274,8 @@ public struct LevelCell
             
             if ( !math.abs( dir ).Equals(  math.abs( GrowthDirection ) ) )
             {
-                thicknessVector -= GrowthDirection;
-                otherThicknessVector -= GrowthDirection;
+                thicknessVector -= GrowthDirection * thickness;
+                otherThicknessVector -= GrowthDirection * thickness;
             }
             
             int2 check1 = origin + thicknessVector;
