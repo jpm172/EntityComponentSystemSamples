@@ -71,11 +71,9 @@ public partial class LevelGenerator
 
             if ( totalConnections >= _rooms.Length - 1 ) //only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
             {
-                float startTime = Time.realtimeSinceStartup; 
-                hasPath = HasPath( room.Id );
-                Debug.Log( "Path done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
+                hasPath = BurstHasPath( room.Id );
             }
-                
+            
 
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;

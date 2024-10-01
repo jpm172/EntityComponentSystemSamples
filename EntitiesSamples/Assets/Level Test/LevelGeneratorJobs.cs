@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
@@ -382,71 +383,78 @@ public struct LevelCell
         }
     }
 
-
     [BurstCompile]
-    public struct LevelPaintWallsJob : IJobParallelFor
+    public struct DijkstrasPathJob : IJob
     {
-        [NativeDisableParallelForRestriction]
-        public NativeArray<int> LevelLayout;
+        [ReadOnly] public int StartRoom;
+        [ReadOnly] public int RoomCount;
+        private static readonly int INF = Int32.MaxValue;
+        [ReadOnly] public NativeArray<int> AdjacencyMatrix;
         
-        [ReadOnly] public Vector2Int LevelDimensions;
-        
-        [ReadOnly] public int RoomId;
-        [ReadOnly] public int WallId;
-        [ReadOnly] public int WallThickness;
-        [ReadOnly] public int2 RoomOrigin;
-        [ReadOnly] public int2 RoomSize;
-        
-        public void Execute(int index)
+        public NativeArray<int> Path;
+        public NativeArray<int> Distances;
+        public NativeArray<bool> sptSet;//shortest path tree set
+
+        public NativeReference<bool> Success;
+
+        public void Execute()
         {
-
-            int boundsX = index % RoomSize.x;
-            int boundsY = index / RoomSize.x;
-            
-            int levelIndex = (RoomOrigin.x + ( RoomOrigin.y * LevelDimensions.x )) + (boundsX + (boundsY*LevelDimensions.x));
-            
-            if ( LevelLayout[levelIndex] != RoomId )
-                return;
-            
-            int x = levelIndex % LevelDimensions.x;
-            int y = levelIndex / LevelDimensions.x;
-            
-
-            if ( IsWall( x, y ) )
+            for ( int i = 0; i < Distances.Length; i++ )
             {
-                LevelLayout[levelIndex] = WallId;
+                Distances[i] = INF;
+                sptSet[i] = false;
             }
+            Distances[StartRoom - 1] = 0;
             
-        }
+            
 
-
-        private bool IsWall( int cellX, int cellY )
-        {
-            for ( int x = -WallThickness; x <= WallThickness; x++ )
+            for ( int i = 0; i < RoomCount; i++ )
             {
-                for ( int y = -WallThickness; y <= WallThickness; y++ )
+                int u = MinDistance();
+
+                if ( u == -1 )
+                    return;
+                
+                sptSet[u] = true;
+
+                for ( int v = 0; v < RoomCount; v++ )
                 {
-                    if ( !IsInBounds( cellX + x, cellY + y ) )
-                        return true;
-                    int index = ( cellX + x ) + ( cellY + y ) * LevelDimensions.x;
-                    if ( LevelLayout[index] != RoomId && LevelLayout[index] != WallId )
-                        return true;
+                    // Update dist[v] only if is not in
+                    // sptSet, there is an edge from u
+                    // to v, and total weight of path
+                    // from src to v through u is smaller
+                    // than current value of dist[v]
+                    int index = ( u * RoomCount ) + v;
+                    if ( !sptSet[v] && AdjacencyMatrix[index] != 0
+                                    && Distances[u] != INF
+                                    && Distances[u] + AdjacencyMatrix[index] < Distances[v] )
+                    {
+                        Distances[v] = Distances[u] + AdjacencyMatrix[index];
+                        Path[v] = u;
+                    }
+                        
                 }
             }
-
-            return false;
+            
+            Success.Value = true;
         }
         
-        private bool IsInBounds( int x, int y )
+        private int MinDistance()
         {
-            if ( x < 0 || x >= LevelDimensions.x )
-                return false;
-            
-            
-            if ( y < 0 || y >= LevelDimensions.y )
-                return false;
-        
-            return true;
+            // Initialize min value
+            int min = INF, min_index = -1;
+
+            for ( int v = 0; v < RoomCount; v++ )
+            {
+                if (sptSet[v] == false && Distances[v] < min) 
+                {
+                    min = Distances[v];
+                    min_index = v;
+                }
+            }
+                
+
+            return min_index;
         }
     }
 

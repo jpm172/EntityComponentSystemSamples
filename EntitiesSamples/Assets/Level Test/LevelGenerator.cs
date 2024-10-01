@@ -48,6 +48,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     //dijkstas variables
     private Dictionary<int, Dictionary<int,int>> _edgeDictionary;//stores the edge weights used for dijsktras
+    private NativeArray<int> _adjacencyMatrix;
     private int minEdgeWeight = 1;
     [SerializeField]
     private int maxEdgeWeight = 10;
@@ -250,10 +251,68 @@ public partial class LevelGenerator : MonoBehaviour
         //MakeEntities();
         
     }
-    
 
+
+    private bool BurstHasPath(int startNode)
+    {
+        NativeArray<int> jobPath = new NativeArray<int>(_rooms.Length, Allocator.TempJob);
+        NativeReference<bool> success = new NativeReference<bool>(false, Allocator.TempJob);
+        NativeArray<int> jobDistances = new NativeArray<int>(_rooms.Length, Allocator.TempJob);
+        NativeArray<bool> sptSet = new NativeArray<bool>(_rooms.Length, Allocator.TempJob);
+        
+        DijkstrasPathJob pathJob = new DijkstrasPathJob
+        {
+            AdjacencyMatrix = _adjacencyMatrix,
+            StartRoom = startNode,
+            RoomCount = _rooms.Length,
+            Success = success,
+            Path = jobPath,
+            Distances = jobDistances,
+            sptSet = sptSet
+        };
+
+        JobHandle pathHandle = pathJob.Schedule();
+        pathHandle.Complete();
+
+        if ( !success.Value )
+        {
+            success.Dispose();
+            jobPath.Dispose();
+            sptSet.Dispose();
+            jobDistances.Dispose();
+            return false;
+            
+        }
+        
+        //reset all path information in the graph
+        _edgeDictionary.Clear();
+        foreach ( LevelRoom room in _rooms )
+        {
+            _edgeDictionary[room.Id] = new Dictionary<int, int>();
+        }
+
+
+        for ( int i = 0; i < jobPath.Length; i++ )
+        {
+            int roomId = i + 1;
+            if(roomId == startNode)
+                continue;
+            
+            SetNeighbors( roomId, jobPath[i]+1, jobDistances[i] );
+        }
+
+        success.Dispose();
+        jobPath.Dispose();
+        sptSet.Dispose();
+        jobDistances.Dispose();
+        
+        return true;
+    }
+    
+    
     private bool HasPath(int startNode)
     {
+
         int INF = Int32.MaxValue;
         Dictionary<int, int> pathEdges = new Dictionary<int, int>();
         Dictionary<int, int> distances = new Dictionary<int, int>();
@@ -314,6 +373,7 @@ public partial class LevelGenerator : MonoBehaviour
             SetNeighbors( roomId, pathEdges[roomId], distances[roomId] );
         }
 
+        
         return true;
     }
     
@@ -338,6 +398,7 @@ public partial class LevelGenerator : MonoBehaviour
         _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
         _roomInfo = new NativeArray<int>(count, Allocator.Persistent);
         _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
+        _adjacencyMatrix = new NativeArray<int>(count*count, Allocator.Persistent);
         
         
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
@@ -405,6 +466,16 @@ public partial class LevelGenerator : MonoBehaviour
     {
         _edgeDictionary[room1][room2] = weight;
         _edgeDictionary[room2][room1] = weight;
+        //update adjacency matrix
+        int room1Index = room1 - 1;
+        int room2Index = room2 - 1;
+
+        int index1 = ( room1Index * _rooms.Length ) + room2Index;
+        int index2 = ( room2Index * _rooms.Length ) + room1Index;
+
+        _adjacencyMatrix[index1] = weight;
+        _adjacencyMatrix[index2] = weight;
+
     }
     
     private int2 GetRandomAlignedRoomOrigin(int x, int y, int xOffset, int yOffset, int wallThickness,  int2 size)
@@ -738,6 +809,7 @@ public partial class LevelGenerator : MonoBehaviour
         {
             _levelLayout.Dispose();
             _roomInfo.Dispose();
+            _adjacencyMatrix.Dispose();
         }
     }
 }
