@@ -8,11 +8,14 @@ public class LevelConnectionManager
 {
    private int4 _bounds;
    private int2 _thicknessOffset;
+   private int2 _axis;
    private List<int4> _pieces;
 
    public List<int4> Pieces => _pieces;
 
    public int4 Bounds => _bounds;
+
+   public int2 Axis => _axis;
 
    public Color DebugColor;
    
@@ -24,6 +27,7 @@ public class LevelConnectionManager
       _pieces = new List<int4>();
       _pieces.Add( startingPiece );
       _bounds = startingPiece;
+      _axis = math.abs(direction);
       UpdateOffset( startingPiece, direction );
       DebugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
    }
@@ -56,8 +60,9 @@ public class LevelConnectionManager
    public bool TryMerge( LevelConnectionManager otherConnection )
    {
       bool broadphase = _bounds.Borders( otherConnection.Bounds ) || _bounds.Overlaps( otherConnection.Bounds );
-      
-      if ( !broadphase )
+      bool sameAxis = _axis.Equals(  otherConnection.Axis );
+
+      if ( !broadphase || !sameAxis )
          return false;
       
       List<int4> otherPieces = otherConnection.Pieces;

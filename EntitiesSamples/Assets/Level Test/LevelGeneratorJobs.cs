@@ -289,7 +289,7 @@ public struct LevelCell
             
             //LevelConnectionInfo connect = new LevelConnectionInfo{Origin = origin, RoomId = otherId};
             int4 bounds = new int4(math.min( check1,check2 ), math.max( check1, check2 ));
-            LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, GrowthDirection );
+            LevelConnectionInfo connect = new LevelConnectionInfo(RoomId, otherId, bounds, dir );
             Neighbors.Enqueue( connect );
         }
         
@@ -306,147 +306,9 @@ public struct LevelCell
     }
 
 
-    [BurstCompile]
-    public struct LevelAnalyzeConnection : IJobParallelFor
-    {
-        [ReadOnly] public NativeArray<int> LevelLayout;
-        [ReadOnly] public Vector2Int LevelDimensions;
-
-        [ReadOnly] public int Required;
-        [ReadOnly] public int RoomId;
-        [ReadOnly] public int NeighborId;
-        [ReadOnly] public NativeArray<LevelConnection> Connections;
-        
-        
-        public NativeQueue<LevelConnection>.ParallelWriter ValidConnections;
-
-        public void Execute(int index)
-        {
-            int arrIndex = index / 4;
-            if ( Connections[arrIndex].RoomId != NeighborId )
-                return;
-            
-            int2 cell = Connections[arrIndex].Origin;
-            int dir = index % 4;
-
-            if ( dir == 0 && GetHorizontalSpan( cell, -1 ) >= Required )
-            {
-                ValidConnections.Enqueue( Connections[arrIndex] );
-            }
-            else if ( dir == 1 && GetHorizontalSpan( cell, 1 ) >= Required )
-            {
-                ValidConnections.Enqueue( Connections[arrIndex] );
-            }
-            else if ( dir == 2 && GetVerticalSpan( cell, -1 ) >= Required )
-            {
-                ValidConnections.Enqueue( Connections[arrIndex] );
-            }
-            else if ( dir == 3 && GetVerticalSpan( cell, 1 ) >= Required )
-            {
-                ValidConnections.Enqueue( Connections[arrIndex] );
-            }
-
-        }
 
 
-        private float GetHorizontalSpan( int2 cell, int dir )
-        {
-            int2 curCell = cell;
-            bool foundCell = true;
-            float distance = 0;
-            while ( foundCell && distance < Required )
-            {
-                foundCell = false;
-                for ( int y = -1; y <= 1; y++ )
-                {
-                    if ( IsRoomCell( curCell.x + dir, curCell.y + y ) && RadiusCheck( curCell.x + dir, curCell.y + y ) )
-                    {
-                        curCell.x += dir;
-                        curCell.y += y;
-                        distance = math.distance( cell, curCell );
-                        foundCell = true;
-                    }
-                }
-                
-            }
-            
-            return distance;
-        }
-
-        private float GetVerticalSpan( int2 cell, int dir )
-        {
-            int2 curCell = cell;
-            bool foundCell = true;
-            float distance = 0;
-            while ( foundCell && distance < Required )
-            {
-                foundCell = false;
-                for ( int x = -1; x <= 1; x++ )
-                {
-                    if ( IsRoomCell( curCell.x + x, curCell.y + dir ) && RadiusCheck( curCell.x + x, curCell.y + dir ) )
-                    {
-                        curCell.x += x;
-                        curCell.y += dir;
-                        distance = math.distance( cell, curCell );
-                        foundCell = true;
-                    }
-                }
-                
-            }
-            
-            return distance;
-        }
-        
-        private bool RadiusCheck(int cellX, int cellY)
-        {
-            for ( int x = -1; x <= 1; x++ )
-            {
-                for ( int y = -1; y <= 1; y++ )
-                {
-                    if ( IsNeighborCell( cellX + x, cellY + y ) )
-                        return true;
-                }
-            }
-
-            return false;
-        }
-        
-        private bool IsRoomCell( int x, int y )
-        {
-            if ( !IsInBounds( x, y ) )
-                return false;
-
-            int index = x + y * LevelDimensions.x;
-
-            return LevelLayout[index] == RoomId;
-        }
-        
-        private bool IsNeighborCell( int x, int y )
-        {
-            if ( !IsInBounds( x, y ) )
-                return false;
-
-            int index = x + y * LevelDimensions.x;
-
-            return LevelLayout[index] == NeighborId;
-        }
-        
-        private bool IsInBounds( int x, int y )
-        {
-            if ( x < 0 || x >= LevelDimensions.x )
-                return false;
-            
-            
-            if ( y < 0 || y >= LevelDimensions.y )
-                return false;
-        
-            return true;
-        }
-    }
-
-
-
-    [BurstCompile]
+[BurstCompile]
     public struct LevelAnalyzeNormalRoom : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;

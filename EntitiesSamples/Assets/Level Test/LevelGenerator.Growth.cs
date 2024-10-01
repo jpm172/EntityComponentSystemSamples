@@ -20,70 +20,32 @@ public partial class LevelGenerator
     {
         if ( StepWiseGrow )
         {
-            StepMainPathGrow();
+            StepMainGrow();
         }
         else
         {
-            MainPathGrow();
+            MainGrow();
         }
         
-    }
-
-    public void RandomGrowRooms()
-    {
-        RandomGrow();
     }
 
     //float startTime = Time.realtimeSinceStartup; Debug.Log( "Random Grow done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-    private void RandomGrow()
-    {
-        int roomsToGrow = _totalSteps;
-        Debug.Log( roomsToGrow );
-        for ( int i = 0; i < roomsToGrow; i++ )
-        {
-            int index = Random.Range( 0, _rooms.Length );
-            LevelRoom room = _rooms[index];
 
-            int growthsPerRoom  = Random.Range( 20, 50 );
-            
-            for ( int x = 0; x < growthsPerRoom; x++ )
-            {
-                GrowRoomRandom( room );
-            }
-        }
-    }
-    
-    
-    private void GrowRoomRandom( LevelRoom room )
-    {
-        if ( !room.CanGrow )
-            return;
-        
-        if ( room.GrowthType == LevelGrowthType.Normal )
-        {
-            //NormalGrowRandom( room );
-        }
-        else if ( room.GrowthType == LevelGrowthType.Mold )
-        {
-            //TODO implement mold growth
-        }
-    }
-    
 
-    private void StepMainPathGrow()
+    private void StepMainGrow()
     {
         _totalSteps = 0;
         bool hasPath = false;
         while ( _totalSteps < GrowSteps )
         {
             LevelRoom room = _rooms[_counter];
-            int connections = _edgeDictionary[_counter].Count;
-            GrowRoomPath( room );
+            int connections = _edgeDictionary[room.Id].Count;
+            GrowRoom( room );
 
 
-            if ( connections != _edgeDictionary[_counter].Count )
+            if ( connections != _edgeDictionary[room.Id].Count )
             {
-                hasPath = HasPath( _counter );
+                hasPath = HasPath( room.Id );
             }
 
             _counter = ( _counter + 1 ) % _rooms.Length;
@@ -92,34 +54,39 @@ public partial class LevelGenerator
         MakeRoomMeshes();
     }
     
-    private void MainPathGrow()
+    private void MainGrow()
     {
         _totalSteps = 0;
+        int totalConnections = 0;
         bool hasPath = false;
+        
         while ( !hasPath  )
         {
             LevelRoom room = _rooms[_counter];
-            int connections = _edgeDictionary[_counter].Count;
-            GrowRoomPath( room );
-
-
-            if ( connections != _edgeDictionary[_counter].Count )
-            {
-                hasPath = HasPath( _counter );
-            }
             
+            //add any new connections to the counter after growing the room
+            int connections = _edgeDictionary[room.Id].Count;
+            GrowRoom( room );
+            totalConnections += _edgeDictionary[room.Id].Count - connections;
+
+            if ( totalConnections >= _rooms.Length - 1 ) //only run the pathfinding once we have at least the minimum connections (# of rooms - 1)
+            {
+                float startTime = Time.realtimeSinceStartup; 
+                hasPath = HasPath( room.Id );
+                Debug.Log( "Path done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
+            }
+                
+
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
         }
         
         MakeRoomMeshes();
-        
-        
     }
     
     
 
-    private void GrowRoomPath( LevelRoom room )
+    private void GrowRoom( LevelRoom room )
     {
         
         if ( !room.CanGrow )
@@ -129,12 +96,11 @@ public partial class LevelGenerator
         {
             int2 growthDirection = GetRandomGrowthDirection( room );
             
-            //for( int n = 0; n < 1; n++ )
             for ( int n = 0; n < _minRoomSeedSize; n++ )
             {
                 int dirsBefore = room.XGrowthDirections.Count + room.YGrowthDirections.Count;
                 
-                NormalGrowPath( room, growthDirection );
+                NormalGrow( room, growthDirection );
                 
                 if ( room.XGrowthDirections.Count + room.YGrowthDirections.Count != dirsBefore )
                     return;
@@ -181,7 +147,7 @@ public partial class LevelGenerator
         
     }
 
-    private void NormalGrowPath( LevelRoom room, int2 growthDirection )
+    private void NormalGrow( LevelRoom room, int2 growthDirection )
     {
         NativeQueue<LevelCell> newCells = new NativeQueue<LevelCell>( Allocator.TempJob);
         LevelGrowRoomJob growRoomJob = new LevelGrowRoomJob
@@ -279,30 +245,6 @@ public partial class LevelGenerator
         newCells.Dispose();
     }
 
-    private bool IsValidConnection(LevelRoom room1, LevelRoom room2, NativeArray<LevelConnection> connections)
-    {
-        
-        NativeQueue<LevelConnection> validConnections = new NativeQueue<LevelConnection>(Allocator.TempJob); 
-        LevelAnalyzeConnection analyzeJob  = new LevelAnalyzeConnection
-        {
-            LevelLayout = _levelLayout,
-            LevelDimensions = dimensions,
-            Connections = connections,
-            ValidConnections =  validConnections.AsParallelWriter(),
-            RoomId = room1.Id,
-            NeighborId = room2.Id,
-            Required = _minRoomSeedSize + 2*math.max( room1.WallThickness, room2.WallThickness )
-        }; 
-        
-        JobHandle handle = analyzeJob.Schedule(connections.Length*4, 16);
-        handle.Complete();
-
-        bool result = validConnections.Count > 0;
-        validConnections.Dispose();
-
-        return result;
-    }
-
 
     private void ResizeRoom( LevelRoom room,  NativeQueue<int2> localMinima,  NativeQueue<int2> localMaxima )
     {
@@ -332,7 +274,6 @@ public partial class LevelGenerator
             }
             
             LevelConnectionManager newConnection = new LevelConnectionManager( cnct.Bounds, cnct.Direction );
-    
             _roomConnections[cnct.Connections].Add( newConnection );
             List<LevelConnectionManager> roomConnections = _roomConnections[cnct.Connections];
             for ( int i = roomConnections.Count-2; i >= 0 ; i-- )
@@ -343,7 +284,7 @@ public partial class LevelGenerator
     
                     if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
                     {
-                        SetNeighbors( cnct.Connections.x -1, cnct.Connections.y-1, room.Weight );
+                        SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
                     }
                 }
             }
@@ -364,7 +305,7 @@ public partial class LevelGenerator
         _roomConnections[cnct.Connections].Add( newConnection );
         if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
         {
-            SetNeighbors( cnct.Connections.x -1, cnct.Connections.y-1, room.Weight );
+            SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
         }
     }
 
