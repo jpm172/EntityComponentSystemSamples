@@ -15,7 +15,7 @@ using UnityEngine;
     public struct LevelGrowRoomJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
-        [ReadOnly] public Vector2Int LevelDimensions;
+        [ReadOnly] public int2 LevelDimensions;
         
         [ReadOnly] public int RoomId;
         [ReadOnly] public int WallThickness;
@@ -180,7 +180,7 @@ public struct LevelCell
         [ReadOnly] public int RoomId;
         [ReadOnly] public int WallId;
         [ReadOnly] public int WallThickness;
-        [ReadOnly] public Vector2Int LevelDimensions;
+        [ReadOnly] public int2 LevelDimensions;
 
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
@@ -227,7 +227,7 @@ public struct LevelCell
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int RoomId;
         [ReadOnly] public int WallId;
-        [ReadOnly] public Vector2Int LevelDimensions;
+        [ReadOnly] public int2 LevelDimensions;
 
         [ReadOnly] public NativeArray<LevelCell> NewCells;
         
@@ -314,7 +314,7 @@ public struct LevelCell
 
         [ReadOnly] public int RoomCount;
         [ReadOnly] public NativeArray<int4> Pieces;
-        [ReadOnly] public Vector2Int LevelDimensions;
+        [ReadOnly] public int2 LevelDimensions;
         
         public void Execute(int index)
         {
@@ -340,7 +340,7 @@ public struct LevelCell
     public struct LevelAnalyzeNormalRoom : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;
-        [ReadOnly] public Vector2Int LevelDimensions;
+        [ReadOnly] public int2 LevelDimensions;
         
         [ReadOnly] public int RoomId;
         [ReadOnly] public int2 RoomOrigin;

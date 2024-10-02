@@ -13,10 +13,10 @@ public partial class LevelGenerator : MonoBehaviour
     [SerializeField] private int seed;
     
     [SerializeField]
-    private Vector2Int dimensions;//dimensions of level in pixels
+    private int2 dimensions;//dimensions of level in pixels
     
     [SerializeField]
-    private Vector2Int layoutDimensions;//dimensions of level in room nodes
+    private int2 layoutDimensions;//dimensions of level in room nodes
 
     [SerializeField]
     private Material[] floorMaterials;
@@ -55,8 +55,9 @@ public partial class LevelGenerator : MonoBehaviour
     
 
     //gizmos variables
-    public bool DraftLook;
     public bool UseMeshes;
+    public bool ShowFloorMesh;
+    public bool ShowWallMesh;
     public bool UseWireMeshes;
     public bool UseConnections;
     
@@ -66,50 +67,37 @@ public partial class LevelGenerator : MonoBehaviour
         if ( !_levelLayout.IsCreated )
             return;
 
-        if ( DraftLook )
-        {
-            Gizmos.color = Color.white;
-            Vector3 levelPos = new Vector3(dimensions.x, dimensions.y)/ (2*GameSettings.PixelsPerUnit);
-            Vector3 levelSize = new Vector3( dimensions.x, dimensions.y ) / GameSettings.PixelsPerUnit;
-            Gizmos.DrawCube( levelPos, levelSize );
-            
-            foreach ( LevelRoom room in _rooms )
-            {
-                Vector3 pos = (new Vector3(room.Origin.x, room.Origin.y) + new Vector3(room.Size.x, room.Size.y)/2)/GameSettings.PixelsPerUnit;
-                Vector3 roomSize = new Vector3( room.Size.x, room.Size.y ) / GameSettings.PixelsPerUnit;
-                
-                Gizmos.color = Color.black;
-                Gizmos.DrawCube( pos, roomSize );
-                
-                Gizmos.color = room.DebugColor;
-                roomSize = new Vector3( room.Size.x-(room.WallThickness*2), room.Size.y-(room.WallThickness*2 )) / GameSettings.PixelsPerUnit;
-                Gizmos.DrawCube( pos, roomSize );
-
-                if ( room.GraphPosition.x == 0 && room.GraphPosition.y == 0 )
-                {
-                    Gizmos.color = Color.red;
-                    Vector3 linePos = new Vector3( room.Origin.x, room.Origin.y ) / GameSettings.PixelsPerUnit;
-                    Gizmos.DrawLine( linePos, linePos + Vector3.up*1000 );
-                }
-            }
-
-            return;
-        }
-
         if ( UseMeshes || UseWireMeshes )
         {
             foreach ( LevelRoom room in _rooms )
             {
                 if ( UseMeshes )
                 {
-                    Gizmos.color = room.DebugColor;
-                    Gizmos.DrawMesh(  room.Mesh );
+                    if ( ShowFloorMesh )
+                    {
+                        Gizmos.color = room.DebugColor;
+                        Gizmos.DrawMesh(  room.FloorMesh );
+                    }
+
+                    if ( ShowWallMesh )
+                    {
+                        Gizmos.color = room.DebugColor *new Color(.3f, .3f, .3f,1);
+                        Gizmos.DrawMesh( room.WallMesh );
+                    }
+                    
                 }
 
                 if ( UseWireMeshes )
                 {
                     Gizmos.color = Color.black;
-                    Gizmos.DrawWireMesh(  room.Mesh );
+                    if ( ShowFloorMesh )
+                    {
+                        Gizmos.DrawWireMesh(  room.FloorMesh );
+                    }
+                    if ( ShowWallMesh )
+                    {
+                        Gizmos.DrawWireMesh( room.WallMesh );
+                    }
                 }
 
                 if ( _edgeDictionary.ContainsKey( room.Id ) )
@@ -233,6 +221,7 @@ public partial class LevelGenerator : MonoBehaviour
         GrowRooms();
         MakeDoorways();
         
+        MakeRoomMeshes();
         //MakeFloors();
         //MakeWalls();
         //MakeEntities();
@@ -288,8 +277,7 @@ public partial class LevelGenerator : MonoBehaviour
     {
         
         NativeArray<int4> pieces = cnct.GetRandomSpan(_minRoomSeedSize, out int4 doorBounds, out newCncts);
-        Debug.Log( newCncts.Count );
-        
+
         LevelConvertToFloorJob convertJob = new LevelConvertToFloorJob
         {
             LevelLayout = _levelLayout,
@@ -436,7 +424,9 @@ public partial class LevelGenerator : MonoBehaviour
         foreach ( LevelRoom room in _rooms )
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
-            room.Mesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room );
+            room.FloorMesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room, room.Id );
+            meshConstructor = new StripMeshConstructor();
+            room.WallMesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room, room.WallId );
         }
     }
     
@@ -506,7 +496,7 @@ public partial class LevelGenerator : MonoBehaviour
         }
         
         //create the level array and seed it with the rooms  
-        dimensions = new Vector2Int((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
+        dimensions = new int2((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
         foreach ( LevelRoom room in _rooms )
         {
@@ -731,8 +721,14 @@ public partial class LevelGenerator : MonoBehaviour
     {
         int blockSize = 64;
         
-        int[] solidPointField = new int[blockSize*blockSize];
-        
+
+
+        foreach ( LevelRoom room in _rooms )
+        {
+            StripMeshConstructor meshConstructor = new StripMeshConstructor();
+            room.FloorMesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room, room.Id );
+        }
+        /*
         for ( int n = 0; n < solidPointField.Length; n++ )
         {
             solidPointField[n] = 1;
@@ -758,6 +754,7 @@ public partial class LevelGenerator : MonoBehaviour
                 _floors.Add( newFloor  );
             }
         }
+        */
     }
 
 

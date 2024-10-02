@@ -24,7 +24,7 @@ public class StripMeshConstructor
         _normals = new List<Vector3>();
     }
     
-    public Mesh ConstructMesh( NativeArray<int> levelLayout, Vector2Int dimensions, LevelRoom room )
+    public Mesh ConstructMesh( NativeArray<int> levelLayout, int2 dimensions, LevelRoom room, int targetId )
     {
         NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(room.Size.x*room.Size.y, Allocator.TempJob);
 
@@ -32,8 +32,7 @@ public class StripMeshConstructor
         {
             LevelLayout = levelLayout,
             LevelDimensions = dimensions,
-            RoomId = room.Id,
-            WallId = room.WallId,
+            TargetId = targetId,
             RoomOrigin = room.Origin,
             RoomSize = room.Size,
             Strips = stripMap.AsParallelWriter()
@@ -54,6 +53,7 @@ public class StripMeshConstructor
         mergeHandle.Complete();
         
         StripsToMesh( mergedStrips, room );
+        
         
         stripMap.Dispose();
         mergedStrips.Dispose();
@@ -76,7 +76,6 @@ public class StripMeshConstructor
     
     private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, LevelRoom room)
     {
-        
         NativeArray<int> keys = mergedStrips.GetKeyArray( Allocator.TempJob );
 
 

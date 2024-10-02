@@ -24,7 +24,8 @@ public class LevelRoom
     //private Dictionary<int, List<LevelConnection>> _roomConnections;
     
 
-    public Mesh Mesh;
+    public Mesh FloorMesh;
+    public Mesh WallMesh;
     
     public List<int2> XGrowthDirections
     {
@@ -88,4 +89,10 @@ public class LevelRoom
     {
         return (_xGrowthDirections.Count + _yGrowthDirections.Count) > 0;
     }
+}
+
+public struct RoomInfo
+{
+    public int WallThickness;
+    public LevelMaterial WallMaterial;
 }

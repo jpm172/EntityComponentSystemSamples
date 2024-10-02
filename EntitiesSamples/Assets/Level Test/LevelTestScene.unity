@@ -363,13 +363,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   seed: 10
-  dimensions: {x: 0, y: 0}
-  layoutDimensions: {x: 2, y: 2}
+  dimensions:
+    x: 0
+    y: 0
+  layoutDimensions:
+    x: 2
+    y: 1
   floorMaterials: []
   wallMaterial: {fileID: 0}
   useSeed: 1
   _minWallThickness: 1
-  _maxWallThickness: 1
+  _maxWallThickness: 5
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
   _seedBuffer: 20

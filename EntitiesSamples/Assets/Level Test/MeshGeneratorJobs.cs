@@ -11,10 +11,9 @@ using UnityEngine;
 public struct MakeMeshStripsJob : IJobParallelFor
 {
     [ReadOnly] public NativeArray<int> LevelLayout;
-    [ReadOnly] public Vector2Int LevelDimensions;
+    [ReadOnly] public int2 LevelDimensions;
         
-    [ReadOnly] public int RoomId;
-    [ReadOnly] public int WallId;
+    [ReadOnly] public int TargetId;
     [ReadOnly] public int2 RoomOrigin;
     [ReadOnly] public int2 RoomSize;
     
@@ -69,7 +68,7 @@ public struct MakeMeshStripsJob : IJobParallelFor
 
     private bool IsPartOfRoom( int index )
     {
-        return LevelLayout[index] == RoomId || LevelLayout[index] == WallId;
+        return LevelLayout[index] == TargetId;
     }
     
     private bool IsInBounds( int x, int y )
@@ -98,7 +97,7 @@ public struct MergeMeshStripsJob : IJobParallelFor
             return;
 
         NativeParallelMultiHashMap<int, MeshStrip>.Enumerator values = Strips.GetValuesForKey( index );
-        while (  values.MoveNext() )
+        while ( values.MoveNext() )
         {
             TryMergeStrip( values.Current, index );
         }

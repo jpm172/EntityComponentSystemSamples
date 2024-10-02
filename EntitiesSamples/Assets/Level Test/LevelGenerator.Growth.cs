@@ -52,7 +52,6 @@ public partial class LevelGenerator
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
         }
-        MakeRoomMeshes();
     }
     
     private void MainGrow()
@@ -75,8 +74,6 @@ public partial class LevelGenerator
             _counter = ( _counter + 1 ) % _rooms.Length;
             _totalSteps++;
         }
-        
-        MakeRoomMeshes();
     }
     
     
