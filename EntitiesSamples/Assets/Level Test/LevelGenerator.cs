@@ -231,10 +231,6 @@ public partial class LevelGenerator : MonoBehaviour
         
         InitializeLevel();
         GrowRooms();
-        
-        //int2 target = new int2(1,2);
-        //_roomConnections[target].RemoveAt( 0 );
-        
         MakeDoorways();
         
         //MakeFloors();
@@ -264,39 +260,35 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void MakeDoorway( int2 key )
     {
-        int2 target = new int2(1,2);
-        //todo: this is a race condition! the connections wont always be in the same order, so this wont always make the same doors in the same spots
         int largest = -1;
+        int index = -1;
         LevelConnectionManager result = null;
-        foreach ( LevelConnectionManager cnct in _roomConnections[key] )
+        for ( int i = 0; i <_roomConnections[key].Count; i++ )
         {
-            if(key.Equals( target ) && cnct.Axis.y == 0)
-                continue;
-            
-            if ( cnct.GetLargestDimension() >= _minRoomSeedSize || key.Equals( target ) && cnct.Axis.y != 0 )
+            LevelConnectionManager cnct = _roomConnections[key][i];
+            if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
             {
-                //ConvertToFloor( cnct );
-                //return;
-                
+                //use the bounds of the connection to solve race condition
                 if ( result == null || largest < cnct.Hash )
                 {
                     largest = cnct.Hash;
                     result = cnct;
+                    index = i;
                 }
-                //ConvertToFloor( cnct );
             }
         }
-
-        if ( result != null )
-        {
-            ConvertToFloor( result );
-        }
+        
+        PlaceDoorAtConnection( result, out List<LevelConnectionManager> cncts);
+        _roomConnections[key].RemoveAt( index );
+        _roomConnections[key].AddRange( cncts );
+        
     }
 
-    private void ConvertToFloor( LevelConnectionManager cnct )
+    private void PlaceDoorAtConnection( LevelConnectionManager cnct, out List<LevelConnectionManager> newCncts )
     {
         
-        NativeArray<int4> pieces = new NativeArray<int4>(cnct.Pieces.ToArray(), Allocator.TempJob);
+        NativeArray<int4> pieces = cnct.GetRandomSpan(_minRoomSeedSize, out int4 doorBounds, out newCncts);
+        Debug.Log( newCncts.Count );
         
         LevelConvertToFloorJob convertJob = new LevelConvertToFloorJob
         {
@@ -306,7 +298,7 @@ public partial class LevelGenerator : MonoBehaviour
             RoomCount = _rooms.Length
         };
 
-        JobHandle convertHandle = convertJob.Schedule( cnct.Pieces.Count, 1 );
+        JobHandle convertHandle = convertJob.Schedule( pieces.Length, 1 );
         convertHandle.Complete();
 
         pieces.Dispose();

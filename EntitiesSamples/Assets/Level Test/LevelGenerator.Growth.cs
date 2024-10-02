@@ -263,7 +263,6 @@ public partial class LevelGenerator
     
     private void AddConnections( NativeQueue<LevelConnectionInfo> connections, LevelRoom room )
     {
-        int2 target = new int2(1,2);
         while ( connections.TryDequeue( out LevelConnectionInfo cnct ) )
         {
             if ( !_roomConnections.ContainsKey( cnct.Connections ) )
@@ -281,7 +280,7 @@ public partial class LevelGenerator
                 {
                     roomConnections.RemoveAt( i );
     
-                    if ( newConnection.GetLargestDimension() >= _minRoomSeedSize || cnct.Connections.Equals( target ) )
+                    if ( newConnection.GetLargestDimension() >= _minRoomSeedSize )
                     {
                         SetNeighbors( cnct.Connections.x, cnct.Connections.y, room.Weight );
                     }

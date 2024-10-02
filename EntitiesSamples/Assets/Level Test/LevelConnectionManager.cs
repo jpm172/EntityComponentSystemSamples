@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -58,9 +59,48 @@ public class LevelConnectionManager
       return math.max( size.x, size.y );
    }
 
-   public int4[] GetRandomSpan(int size)
+   public NativeArray<int4> GetRandomSpan(int minSize, out int4 doorBounds, out List<LevelConnectionManager> cncts)
    {
-      return null;
+      cncts = new List<LevelConnectionManager>();
+
+      //calculate the bounds of the doorway we want to take from the connection
+      int connectionSize = GetLargestDimension();
+      int spanOffset = Random.Range( 0, connectionSize - minSize + 1 );
+      
+      int2 sizeAxis = _axis.yx;
+      int2 startVector = new int2(spanOffset, spanOffset)*sizeAxis;
+
+      int adjust = -(connectionSize - minSize) + spanOffset;
+      int2 endVector = new int2( adjust, adjust ) * sizeAxis;
+      doorBounds = _bounds + new int4(startVector, endVector );
+
+      //take all of the pieces that are within that bounds and add them to the array that will become the door
+      NativeArray<int4> result = new NativeArray<int4>(minSize, Allocator.TempJob);
+      int counter = 0;
+      for ( int i = _pieces.Count - 1; i >= 0; i-- )
+      {
+         if ( _pieces[i].Overlaps( doorBounds ) )
+         {
+            result[counter] = _pieces[i];
+            counter++;
+            _pieces.RemoveAt( i );
+         }
+         else
+         {
+            LevelConnectionManager newConnection = new LevelConnectionManager( _pieces[i], _axis );
+            cncts.Add( newConnection );
+            for ( int x = cncts.Count-2; x >= 0 ; x-- )
+            {
+               if ( newConnection.TryMerge( cncts[x] ) )
+               {
+                  cncts.RemoveAt( x );
+               }
+            }
+            
+         }
+      }
+      
+      return result;
    }
    
    
@@ -98,7 +138,6 @@ public class LevelConnectionManager
       _bounds.xy = math.min( _bounds.xy, otherBounds.xy );
       _bounds.zw = math.max( _bounds.zw, otherBounds.zw );
    }
-
 }
 
 public struct LevelConnectionInfo
