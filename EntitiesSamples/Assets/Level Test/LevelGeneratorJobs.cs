@@ -189,14 +189,14 @@ public struct LevelCell
         public void Execute(int index)
         {
             LevelCell levelCell = NewCells[index];
-            LevelLayout[levelCell.Index].ChangeValue( WallId );
+            LevelLayout[levelCell.Index] = new CellStruct(WallId,LevelLayout[levelCell.Index].Material );
 
             
             if ( levelCell.IsFloorCell )
             {
                 int2 wallCheck = levelCell.Cell - GrowthDirection * WallThickness;
                 int wcIndex = wallCheck.x + wallCheck.y * LevelDimensions.x;
-                LevelLayout[wcIndex].ChangeValue( RoomId ); 
+                LevelLayout[wcIndex] = new CellStruct(RoomId,LevelMaterial.None );
             }
             
             int2 origin = levelCell.Cell;
@@ -307,6 +307,7 @@ public struct LevelCell
         }
     }
 
+    [BurstCompile]
     public struct LevelConvertToFloorJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
@@ -327,7 +328,7 @@ public struct LevelCell
                 {
                     int levelIndex = ( bounds.x + x ) + ( ( bounds.y + y ) * LevelDimensions.x );
                     int value = LevelLayout[levelIndex].Value;
-                    LevelLayout[levelIndex].ChangeValue( math.select( value, value - RoomCount, value > RoomCount ) );
+                    LevelLayout[levelIndex] = new CellStruct( math.select( value, value - RoomCount, value > RoomCount ), LevelMaterial.None );
                 }  
             }
            
@@ -335,6 +336,76 @@ public struct LevelCell
         
     }
 
+    [BurstCompile]
+    public struct LevelApplyMaterialsJob : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<CellStruct> LevelLayout;
+        
+        [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
+        
+        [ReadOnly] public int2 RoomOrigin; 
+        [ReadOnly] public int2 RoomSize;
+        
+        [ReadOnly] public int2 LevelDimensions;
+        
+        public void Execute(int index)
+        {
+                
+            int x = RoomOrigin.x + (index % RoomSize.x);
+            int y = RoomOrigin.y + (index / RoomSize.x);
+            
+            int levelIndex = x  +  ( y * LevelDimensions.x );
+            
+            if ( LevelLayout[levelIndex].Value == 0 || LevelLayout[levelIndex].Value <= RoomInfo.Length )
+                return;
+            
+            int id = (LevelLayout[index].Value % ( RoomInfo.Length + 1 ) ) + 1;
+            LevelMaterial mat = GetStrongestMaterialInRadius(x, y,LevelLayout[levelIndex].Material, RoomInfo[id-1].WallThickness, LevelLayout[index].Value );
+
+        }
+
+        private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, LevelMaterial result, int thickness, int WallId)
+        {
+            for ( int x = -thickness; x <= thickness; x++ )
+            {
+                for ( int y = -thickness; y <= thickness; y++ )
+                {
+                    int xPos = startX + x;
+                    int yPos = startY + y;
+
+                    if ( !IsInBounds( xPos, yPos ) )
+                        return LevelMaterial.Indestructible;
+
+                    int index = xPos + yPos * LevelDimensions.x;
+                    
+                    if(LevelLayout[index].Value == 0)
+                        return LevelMaterial.Indestructible;
+
+                    if ( LevelLayout[index].Value > RoomInfo.Length && LevelLayout[index].Value != WallId && result < LevelLayout[index].Material )
+                        result = LevelLayout[index].Material;
+
+                }
+            }
+            
+
+            return result;
+        }
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+        
+                
+    }
 
     public struct LevelFetchWallsOfMaterialJob : IJobParallelFor
     {

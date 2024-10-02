@@ -222,7 +222,7 @@ public partial class LevelGenerator : MonoBehaviour
         GrowRooms();
         MakeDoorways();
         
-        //MakeRoomMeshes();
+        MakeRoomMeshes();
         MakeFloors();
         MakeWalls();
         //MakeEntities();
@@ -692,10 +692,23 @@ public partial class LevelGenerator : MonoBehaviour
     private void MakeWalls()
     {
 
-        foreach ( LevelMaterial mat in _matertialsUsed )
+        foreach ( LevelRoom room in _rooms )
         {
+            LevelApplyMaterialsJob matJob = new LevelApplyMaterialsJob
+            {
+                LevelDimensions = dimensions,
+                LevelLayout = _levelLayout,
+                RoomInfo = _roomInfo,
+                RoomSize = room.Size,
+                RoomOrigin = room.Origin,
+            };
+
+            JobHandle matHandle = matJob.Schedule( room.Size.x * room.Size.y, 64 );
+            matHandle.Complete();
+            
             
         }
+        
         
         /*
         int blockSize = 4;
