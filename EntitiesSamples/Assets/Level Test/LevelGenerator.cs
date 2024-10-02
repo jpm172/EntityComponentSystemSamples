@@ -444,6 +444,8 @@ public partial class LevelGenerator : MonoBehaviour
         _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
         _adjacencyMatrix = new NativeArray<int>(count*count, Allocator.Persistent);
         _matertialsUsed = new List<LevelMaterial>();
+        
+        _matertialsUsed.Add( LevelMaterial.Indestructible );
 
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;
@@ -694,7 +696,14 @@ public partial class LevelGenerator : MonoBehaviour
 
         foreach ( LevelMaterial mat in _matertialsUsed )
         {
-            
+            LevelFetchWallsOfMaterialJob fetchJob = new LevelFetchWallsOfMaterialJob
+            {
+                LevelLayout   = _levelLayout,
+                LevelDimensions = layoutDimensions,
+                BinSize = 64,
+                RoomInfo = _roomInfo,
+                TargetMaterial = mat
+            };
         }
         
         /*

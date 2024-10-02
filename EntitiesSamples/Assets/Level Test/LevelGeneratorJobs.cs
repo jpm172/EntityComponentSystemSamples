@@ -341,7 +341,7 @@ public struct LevelCell
         [ReadOnly]public NativeArray<int> LevelLayout;
         [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         
-        [ReadOnly] public int RoomCount;
+        [ReadOnly] public int BinSize;
         [ReadOnly] public LevelMaterial TargetMaterial;
         [ReadOnly] public int2 LevelDimensions;
 
@@ -349,7 +349,7 @@ public struct LevelCell
         public void Execute(int index)
         {
             
-            if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomCount )
+            if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomInfo.Length )
                 return;
             
             
