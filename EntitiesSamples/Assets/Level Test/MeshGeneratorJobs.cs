@@ -10,7 +10,7 @@ using UnityEngine;
 [BurstCompile]
 public struct MakeMeshStripsJob : IJobParallelFor
 {
-    [ReadOnly] public NativeArray<int> LevelLayout;
+    [ReadOnly] public NativeArray<CellStruct> LevelLayout;
     [ReadOnly] public int2 LevelDimensions;
         
     [ReadOnly] public int TargetId;
@@ -68,7 +68,7 @@ public struct MakeMeshStripsJob : IJobParallelFor
 
     private bool IsPartOfRoom( int index )
     {
-        return LevelLayout[index] == TargetId;
+        return LevelLayout[index].Value == TargetId;
     }
     
     private bool IsInBounds( int x, int y )

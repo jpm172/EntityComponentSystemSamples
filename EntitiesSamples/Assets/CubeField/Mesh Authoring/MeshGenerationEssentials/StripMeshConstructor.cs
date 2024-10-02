@@ -24,7 +24,7 @@ public class StripMeshConstructor
         _normals = new List<Vector3>();
     }
     
-    public Mesh ConstructMesh( NativeArray<int> levelLayout, int2 dimensions, LevelRoom room, int targetId )
+    public Mesh ConstructMesh( NativeArray<CellStruct> levelLayout, int2 dimensions, LevelRoom room, int targetId )
     {
         NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(room.Size.x*room.Size.y, Allocator.TempJob);
 

@@ -29,7 +29,7 @@ public partial class LevelGenerator : MonoBehaviour
     private LevelRoom[] _rooms;
     
     
-    private NativeArray<int> _levelLayout;
+    private NativeArray<CellStruct> _levelLayout;
     private NativeArray<RoomInfo> _roomInfo; //holds room info needed in jobs
     private List<LevelMaterial> _matertialsUsed;
     
@@ -127,16 +127,16 @@ public partial class LevelGenerator : MonoBehaviour
             for ( int y = 0; y < dimensions.y; y++ )
             {
                 int index = x + y * dimensions.x;
-                if ( _levelLayout[index] > 0 )
+                if ( _levelLayout[index].Value > 0 )
                 {
-                    if ( _levelLayout[index] > _rooms.Length )
+                    if ( _levelLayout[index].Value > _rooms.Length )
                     {
-                        LevelRoom room = _rooms[_levelLayout[index] - _rooms.Length - 1];
+                        LevelRoom room = _rooms[_levelLayout[index].Value - _rooms.Length - 1];
                         Gizmos.color = room.DebugColor *new Color(.3f, .3f, .3f,1);
                     }
                     else
                     {
-                        LevelRoom room = _rooms[_levelLayout[index] - 1];
+                        LevelRoom room = _rooms[_levelLayout[index].Value - 1];
                         Gizmos.color = room.DebugColor;
                     }
                     
@@ -501,7 +501,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         //create the level array and seed it with the rooms  
         dimensions = new int2((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
-        _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
+        _levelLayout = new NativeArray<CellStruct>(dimensions.x*dimensions.y, Allocator.Persistent);
         foreach ( LevelRoom room in _rooms )
         {
             DrawRoomSeed( room );
@@ -660,11 +660,11 @@ public partial class LevelGenerator : MonoBehaviour
 
                 if ( (y < room.WallThickness || x < room.WallThickness ) || (y >= room.Size.y - room.WallThickness || x >= room.Size.x - room.WallThickness))
                 {
-                    _levelLayout[start + index] = _rooms.Length + room.Id;
+                    _levelLayout[start + index] = new CellStruct(_rooms.Length + room.Id, room.Material);
                 }
                 else
                 {
-                    _levelLayout[start + index] = room.Id;
+                    _levelLayout[start + index] = new CellStruct(room.Id, LevelMaterial.None);
                 }
             }
         }
@@ -910,5 +910,22 @@ public struct LevelEdge
         LevelEdge edge = (LevelEdge) obj;
 
         return ( edge.Source == Source && edge.Destination == Destination );
+    }
+}
+
+public struct CellStruct
+{
+    public int Value;
+    public LevelMaterial Material;
+
+    public CellStruct( int value, LevelMaterial material )
+    {
+        Value = value;
+        Material = material;
+    }
+
+    public void ChangeValue( int newValue )
+    {
+        Value = newValue;
     }
 }

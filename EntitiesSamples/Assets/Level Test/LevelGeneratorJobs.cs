@@ -14,7 +14,7 @@ using UnityEngine;
     [BurstCompile]
     public struct LevelGrowRoomJob : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<int> LevelLayout;
+        [ReadOnly] public NativeArray<CellStruct> LevelLayout;
         [ReadOnly] public int2 LevelDimensions;
         
         [ReadOnly] public int RoomId;
@@ -34,7 +34,7 @@ using UnityEngine;
             int levelIndex = RoomOrigin.x + boundsX  +  ( (RoomOrigin.y + boundsY) * LevelDimensions.x );
             
             
-            if ( LevelLayout[levelIndex] != WallId )
+            if ( LevelLayout[levelIndex].Value != WallId )
                 return;
             
             int x = RoomOrigin.x + boundsX + GrowthDirection.x;
@@ -42,7 +42,7 @@ using UnityEngine;
             
             int checkIndex = x + (y * LevelDimensions.x);
 
-            if ( IsInBounds( x, y ) && LevelLayout[checkIndex] == 0 && IsValidGrowthCell( x, y, Required ) )
+            if ( IsInBounds( x, y ) && LevelLayout[checkIndex].Value == 0 && IsValidGrowthCell( x, y, Required ) )
             {
                 int2 cell =new int2(x, y);
                 
@@ -72,7 +72,7 @@ using UnityEngine;
                 int2 curPos = startPos - (perpendicular * i);
                 int index = curPos.x + curPos.y * LevelDimensions.x;
 
-                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index] != WallId )
+                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index].Value != WallId )
                 {
                     break;
                 }
@@ -80,7 +80,7 @@ using UnityEngine;
                 curPos += GrowthDirection;
                 index = curPos.x + curPos.y * LevelDimensions.x;
 
-                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
+                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index].Value == 0 )
                 {
                     countBelow++;
                     if ( countBelow + 1 >= threshold )
@@ -98,7 +98,7 @@ using UnityEngine;
                 int2 curPos = startPos + (perpendicular * i);
                 int index = curPos.x + curPos.y * LevelDimensions.x;
 
-                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index] != WallId )
+                if ( !IsInBounds( curPos.x, curPos.y ) || LevelLayout[index].Value != WallId )
                 {
                     break;
                 }
@@ -106,7 +106,7 @@ using UnityEngine;
                 curPos += GrowthDirection;
                 index = curPos.x + curPos.y * LevelDimensions.x;
 
-                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index] == 0 )
+                if ( IsInBounds( curPos.x, curPos.y ) && LevelLayout[index].Value == 0 )
                 {
                     countAbove++;
                     if ( countAbove + countBelow + 1 >= threshold )
@@ -129,7 +129,7 @@ using UnityEngine;
                 //check the cell we grew from to see if it is near the edge of the room
                 int2 wallCheck = cell - GrowthDirection + perpendicular*i;
                 int index = wallCheck.x + wallCheck.y * LevelDimensions.x;
-                if ( !IsInBounds( wallCheck.x, wallCheck.y ) || LevelLayout[index] != WallId )
+                if ( !IsInBounds( wallCheck.x, wallCheck.y ) || LevelLayout[index].Value != WallId )
                     return false;
                 
                 //check the new cell to see if it is in contact with another room
@@ -146,7 +146,7 @@ using UnityEngine;
 
         private bool IsOtherRoom( int index )
         {
-            return LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
+            return LevelLayout[index].Value > 0 && LevelLayout[index].Value != WallId && LevelLayout[index].Value != RoomId;
         }
         
         private bool IsInBounds( int x, int y )
@@ -173,7 +173,7 @@ public struct LevelCell
     public struct LevelApplyGrowthResultJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<int> LevelLayout;
+        public NativeArray<CellStruct> LevelLayout;
         
         [ReadOnly] public int4 RoomBounds;
         [ReadOnly] public int2 GrowthDirection;
@@ -189,14 +189,14 @@ public struct LevelCell
         public void Execute(int index)
         {
             LevelCell levelCell = NewCells[index];
-            LevelLayout[levelCell.Index] = WallId;
+            LevelLayout[levelCell.Index].ChangeValue( WallId );
 
             
             if ( levelCell.IsFloorCell )
             {
                 int2 wallCheck = levelCell.Cell - GrowthDirection * WallThickness;
                 int wcIndex = wallCheck.x + wallCheck.y * LevelDimensions.x;
-                LevelLayout[wcIndex] = RoomId;
+                LevelLayout[wcIndex].ChangeValue( RoomId ); 
             }
             
             int2 origin = levelCell.Cell;
@@ -221,7 +221,7 @@ public struct LevelCell
     public struct LevelCheckForConnectionsJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<int> LevelLayout;
+        public NativeArray<CellStruct> LevelLayout;
 
         [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         [ReadOnly] public int2 GrowthDirection;
@@ -253,7 +253,7 @@ public struct LevelCell
                 return;
 
             int index = x + y * LevelDimensions.x;
-            if ( LevelLayout[index] > 0 )
+            if ( LevelLayout[index].Value > 0 )
             {
                 TryAddConnection( index, new int2(x, y), origin, streamIndex );
             }
@@ -261,11 +261,11 @@ public struct LevelCell
 
         private void TryAddConnection( int index, int2 other, int2 origin, int streamIndex )
         {
-            bool isOther = LevelLayout[index] > 0 && LevelLayout[index] != WallId && LevelLayout[index] != RoomId;
+            bool isOther = LevelLayout[index].Value > 0 && LevelLayout[index].Value != WallId && LevelLayout[index].Value != RoomId;
             if ( !isOther )
                 return;
             
-            int otherId = (LevelLayout[index] % ( RoomInfo.Length + 1 ) ) + 1;
+            int otherId = (LevelLayout[index].Value % ( RoomInfo.Length + 1 ) ) + 1;
 
             int thickness = RoomInfo[RoomId - 1].WallThickness;
             int otherThickness = RoomInfo[otherId -1].WallThickness;
@@ -286,7 +286,7 @@ public struct LevelCell
             int index1 = check1.x + check1.y * LevelDimensions.x;
             int index2 = check2.x + check2.y * LevelDimensions.x;
 
-            if ( LevelLayout[index1] != RoomId || LevelLayout[index2] != otherId )
+            if ( LevelLayout[index1].Value != RoomId || LevelLayout[index2].Value != otherId )
                 return;
             
             //LevelConnectionInfo connect = new LevelConnectionInfo{Origin = origin, RoomId = otherId};
@@ -310,7 +310,7 @@ public struct LevelCell
     public struct LevelConvertToFloorJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
-        public NativeArray<int> LevelLayout;
+        public NativeArray<CellStruct> LevelLayout;
 
         [ReadOnly] public int RoomCount;
         [ReadOnly] public NativeArray<int4> Pieces;
@@ -326,8 +326,8 @@ public struct LevelCell
                 for ( int y = 0; y < size.y; y++ )
                 {
                     int levelIndex = ( bounds.x + x ) + ( ( bounds.y + y ) * LevelDimensions.x );
-                    int value = LevelLayout[levelIndex];
-                    LevelLayout[levelIndex] = math.select( value, value - RoomCount, value > RoomCount );
+                    int value = LevelLayout[levelIndex].Value;
+                    LevelLayout[levelIndex].ChangeValue( math.select( value, value - RoomCount, value > RoomCount ) );
                 }  
             }
            
