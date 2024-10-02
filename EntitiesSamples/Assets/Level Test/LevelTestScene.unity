@@ -369,7 +369,8 @@ MonoBehaviour:
   layoutDimensions:
     x: 2
     y: 1
-  floorMaterials: []
+  floorMaterials:
+  - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   wallMaterial: {fileID: 0}
   useSeed: 1
   _minWallThickness: 1
@@ -378,8 +379,9 @@ MonoBehaviour:
   _maxRoomSeedSize: 60
   _seedBuffer: 20
   maxEdgeWeight: 10
-  DraftLook: 0
   UseMeshes: 0
+  ShowFloorMesh: 0
+  ShowWallMesh: 0
   UseWireMeshes: 0
   UseConnections: 0
   breakPoint: 0

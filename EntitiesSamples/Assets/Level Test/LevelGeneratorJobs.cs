@@ -223,7 +223,7 @@ public struct LevelCell
         [NativeDisableParallelForRestriction]
         public NativeArray<int> LevelLayout;
 
-        [ReadOnly] public NativeArray<int> RoomInfo;
+        [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         [ReadOnly] public int2 GrowthDirection;
         [ReadOnly] public int RoomId;
         [ReadOnly] public int WallId;
@@ -267,8 +267,8 @@ public struct LevelCell
             
             int otherId = (LevelLayout[index] % ( RoomInfo.Length + 1 ) ) + 1;
 
-            int thickness = RoomInfo[RoomId - 1];
-            int otherThickness = RoomInfo[otherId -1];
+            int thickness = RoomInfo[RoomId - 1].WallThickness;
+            int otherThickness = RoomInfo[otherId -1].WallThickness;
             
             int2 dir = other - origin;
             int2 thicknessVector = new int2(thickness, thickness) * -dir;
@@ -335,6 +335,28 @@ public struct LevelCell
         
     }
 
+
+    public struct LevelFetchWallsOfMaterialJob : IJobParallelFor
+    {
+        [ReadOnly]public NativeArray<int> LevelLayout;
+        [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
+        
+        [ReadOnly] public int RoomCount;
+        [ReadOnly] public LevelMaterial TargetMaterial;
+        [ReadOnly] public int2 LevelDimensions;
+
+        private NativeQueue<int2>.ParallelWriter Cells;
+        public void Execute(int index)
+        {
+            
+            if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomCount )
+                return;
+            
+            
+
+        }
+            
+    }
 
 [BurstCompile]
     public struct LevelAnalyzeNormalRoom : IJobParallelFor

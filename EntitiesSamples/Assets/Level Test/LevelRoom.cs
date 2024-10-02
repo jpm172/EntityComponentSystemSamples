@@ -95,4 +95,10 @@ public struct RoomInfo
 {
     public int WallThickness;
     public LevelMaterial WallMaterial;
+
+    public RoomInfo( int wallThickness, LevelMaterial wallMaterial )
+    {
+        WallThickness = wallThickness;
+        WallMaterial = wallMaterial;
+    }
 }

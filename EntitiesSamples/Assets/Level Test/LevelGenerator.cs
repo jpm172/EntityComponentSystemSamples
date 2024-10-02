@@ -30,8 +30,9 @@ public partial class LevelGenerator : MonoBehaviour
     
     
     private NativeArray<int> _levelLayout;
-    private NativeArray<int> _roomInfo; //just holds room thickness for now
-
+    private NativeArray<RoomInfo> _roomInfo; //holds room info needed in jobs
+    private List<LevelMaterial> _matertialsUsed;
+    
     private Dictionary<int2, List< LevelConnectionManager>> _roomConnections;
     //seeding variables
     public bool useSeed;
@@ -221,9 +222,9 @@ public partial class LevelGenerator : MonoBehaviour
         GrowRooms();
         MakeDoorways();
         
-        MakeRoomMeshes();
-        //MakeFloors();
-        //MakeWalls();
+        //MakeRoomMeshes();
+        MakeFloors();
+        MakeWalls();
         //MakeEntities();
     }
 
@@ -439,11 +440,11 @@ public partial class LevelGenerator : MonoBehaviour
         _walls = new List<LevelWall>();
         _rooms = new LevelRoom[count];
         _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
-        _roomInfo = new NativeArray<int>(count, Allocator.Persistent);
+        _roomInfo = new NativeArray<RoomInfo>(count, Allocator.Persistent);
         _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
         _adjacencyMatrix = new NativeArray<int>(count*count, Allocator.Persistent);
-        
-        
+        _matertialsUsed = new List<LevelMaterial>();
+
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;
         
@@ -471,6 +472,9 @@ public partial class LevelGenerator : MonoBehaviour
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( x, y, xOffset , yOffset, wallThickness, roomSize );
 
                 LevelMaterial mat = GetRandomRoomMaterial();
+                if(!_matertialsUsed.Contains( mat ))
+                    _matertialsUsed.Add( mat );
+                
                 LevelGrowthType growthType = LevelGrowthType.Normal;
 
                 int id = index + 1;
@@ -478,7 +482,7 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelRoom room = new LevelRoom(id, wallId, graphPosition, roomOrigin, roomSize, roomSizeRatio, mat, wallThickness, weight, growthType);
                 _rooms[index] = room;
-                _roomInfo[index] = wallThickness;
+                _roomInfo[index] = new RoomInfo(wallThickness, mat);
                 _edgeDictionary[id] = new Dictionary<int, int>();
                 
                 //add all growth directions to the room
@@ -687,6 +691,13 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void MakeWalls()
     {
+
+        foreach ( LevelMaterial mat in _matertialsUsed )
+        {
+            
+        }
+        
+        /*
         int blockSize = 4;
         for ( int x = 0; x < dimensions.x; x++ )
         {
@@ -715,18 +726,23 @@ public partial class LevelGenerator : MonoBehaviour
                 _walls.Add( newWall  );
             }
         }
+        */
     }
     
     private void MakeFloors()
     {
-        int blockSize = 64;
-        
-
-
         foreach ( LevelRoom room in _rooms )
         {
             StripMeshConstructor meshConstructor = new StripMeshConstructor();
             room.FloorMesh = meshConstructor.ConstructMesh( _levelLayout, dimensions, room, room.Id );
+            LevelFloor newFloor = new LevelFloor
+            {
+                FloorMesh = room.FloorMesh, 
+                FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
+                Position = new Vector2(room.Origin.x, room.Origin.y)
+            };
+                
+            _floors.Add( newFloor  );
         }
         /*
         for ( int n = 0; n < solidPointField.Length; n++ )
