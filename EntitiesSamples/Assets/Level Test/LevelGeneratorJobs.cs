@@ -336,22 +336,23 @@ public struct LevelCell
     }
 
 
-    public struct LevelFetchWallsOfMaterialJob : IJobParallelFor
+    public struct LevelFetchWallsJob : IJobParallelFor
     {
         [ReadOnly]public NativeArray<int> LevelLayout;
         [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         
         [ReadOnly] public int BinSize;
-        [ReadOnly] public LevelMaterial TargetMaterial;
         [ReadOnly] public int2 LevelDimensions;
 
         private NativeQueue<int2>.ParallelWriter Cells;
         public void Execute(int index)
         {
-            
+            //skip past empty space/floor cells
             if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomInfo.Length )
                 return;
-            
+
+            int wallId = LevelLayout[index];
+            int id = wallId - RoomInfo.Length;
             
 
         }

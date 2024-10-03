@@ -694,6 +694,9 @@ public partial class LevelGenerator : MonoBehaviour
     private void MakeWalls()
     {
 
+        //NativeStream stream = new NativeStream(1, Allocator.TempJob);
+        
+        
         foreach ( LevelMaterial mat in _matertialsUsed )
         {
             LevelFetchWallsOfMaterialJob fetchJob = new LevelFetchWallsOfMaterialJob
@@ -782,96 +785,7 @@ public partial class LevelGenerator : MonoBehaviour
         */
     }
 
-
-    private bool VerifySeeds()
-    {
-
-        for ( int x = 0; x < layoutDimensions.x; x++ )
-        {
-            for ( int y = 0; y < layoutDimensions.y; y++ )
-            {
-                int index = x + y * layoutDimensions.x;
-                LevelRoom curRoom = _rooms[index];
-                if ( x > 0 )
-                {
-                    int neighborIndex = ( x - 1 ) + y * layoutDimensions.x;
-                    LevelRoom leftNeighbor = _rooms[neighborIndex];
-                    if ( !IsAlignedWithRoom( curRoom, leftNeighbor, true ) )
-                        return false;
-                }
-
-                if (  x < layoutDimensions.x-1 )
-                {
-                    int neighborIndex = ( x + 1 ) + y * layoutDimensions.x;
-                    LevelRoom rightNeighbor = _rooms[neighborIndex];
-                    if ( !IsAlignedWithRoom( curRoom, rightNeighbor, true ) )
-                        return false;
-                }
-
-                if ( y > 0 )
-                {
-                    int neighborIndex = x + (y-1) * layoutDimensions.x;
-                    LevelRoom bottomNeighbor = _rooms[neighborIndex];
-                    if ( !IsAlignedWithRoom( curRoom, bottomNeighbor, false ) )
-                        return false;
-                }
-                
-                if ( y < layoutDimensions.y-1 )
-                {
-                    int neighborIndex = x + (y+1) * layoutDimensions.x;
-                    LevelRoom topNeighbor = _rooms[neighborIndex];
-                    if ( !IsAlignedWithRoom( curRoom, topNeighbor, false ) )
-                        return false;
-                }
-            }
-        }
-        
-        return true;
-    }
-
-    private bool IsAlignedWithRoom( LevelRoom room1, LevelRoom room2, bool xAxis )
-    {
-        int count = 0;
-
-        if ( xAxis )
-        {
-            for ( int y = room1.Origin.y; y < room1.Origin.y + room1.Size.y; y++ )
-            {
-                if ( y >= room2.Origin.y && y < room2.Origin.y + room2.Size.y )
-                {
-                    /*
-                    Vector3 from = new Vector3(room1.Origin.x, y)/GameSettings.PixelsPerUnit;
-                    Vector3 to = new Vector3(room2.Origin.x, y)/GameSettings.PixelsPerUnit;
-                    Debug.DrawLine( from, to, Color.red, 20 );
-                    */
-                    count++;
-                }
-            }
-        }
-        else
-        {
-            for ( int x = room1.Origin.x; x < room1.Origin.x + room1.Size.x; x++ )
-            {
-                if ( x >= room2.Origin.x && x < room2.Origin.x + room2.Size.x )
-                {
-                    count++;
-                }
-            }
-        }
-        
-        
-        int required = math.min( _minRoomSeedSize + room1.WallThickness * 2,
-            _minRoomSeedSize + room2.WallThickness * 2 );
-
-        bool result = count >= required;
-
-        if ( !result )
-        {
-            Debug.Log($"{room1.GraphPosition} and {room2.GraphPosition} == {count}" );
-        }
-        
-        return result;
-    }
+    
     
     private void OnDestroy()
     {
