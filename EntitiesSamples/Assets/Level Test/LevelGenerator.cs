@@ -696,6 +696,7 @@ public partial class LevelGenerator : MonoBehaviour
     {
 
         //NativeStream stream = new NativeStream(1, Allocator.TempJob);
+        NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
         NativeParallelMultiHashMap<int, int2> materialMap = new NativeParallelMultiHashMap<int, int2>(_levelLayout.Length, Allocator.TempJob);
         LevelFetchWallsJob fetchJob = new LevelFetchWallsJob
         {
@@ -703,7 +704,8 @@ public partial class LevelGenerator : MonoBehaviour
             LevelDimensions = dimensions,
             BinSize = 64,
             RoomInfo = _roomInfo,
-            MaterialMap = materialMap.AsParallelWriter()
+            MaterialMap = materialMap.AsParallelWriter(),
+            WallCells = wallCells.AsParallelWriter()
         };
 
         //JobHandle fetchHandle= fetchJob.Schedule( _levelLayout.Length, 128 );
@@ -711,6 +713,7 @@ public partial class LevelGenerator : MonoBehaviour
         fetchHandle.Complete();
 
         materialMap.Dispose();
+        wallCells.Dispose();
 
         /*
         int blockSize = 4;

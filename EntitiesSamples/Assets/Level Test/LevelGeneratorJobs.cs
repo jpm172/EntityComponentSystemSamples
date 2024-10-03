@@ -345,6 +345,7 @@ public struct LevelCell
         [ReadOnly] public int2 LevelDimensions;
 
         public NativeParallelMultiHashMap<int, int2>.ParallelWriter MaterialMap;
+        public NativeQueue<WallInfo>.ParallelWriter WallCells;
         public void Execute(int index)
         {
             int x = index % LevelDimensions.x;
@@ -359,8 +360,12 @@ public struct LevelCell
             int roomIndex = wallId - RoomInfo.Length - 1;
 
             LevelMaterial mat = GetStrongestMaterialInRadius( x, y, RoomInfo[roomIndex], wallId );
-            Debug.Log( mat );
             MaterialMap.Add( mat.GetHashCode(), new int2(x,y) );
+            WallCells.Enqueue( new WallInfo
+            {
+                Material = mat,
+                Position = new int2(x,y)
+            } );
 
         }
         
@@ -368,8 +373,7 @@ public struct LevelCell
         {
             int thickness = info.WallThickness;
             LevelMaterial result = info.WallMaterial;
-            Debug.Log( $"start = {result}" );
-            
+
             for ( int x = -thickness; x <= thickness; x++ )
             {
                 for ( int y = -thickness; y <= thickness; y++ )
@@ -411,6 +415,12 @@ public struct LevelCell
         
             
     }
+
+public struct WallInfo
+{
+    public int2 Position;
+    public LevelMaterial Material;
+}
 
 [BurstCompile]
     public struct LevelAnalyzeNormalRoom : IJobParallelFor
