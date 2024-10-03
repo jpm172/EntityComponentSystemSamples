@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
 
@@ -695,20 +696,22 @@ public partial class LevelGenerator : MonoBehaviour
     {
 
         //NativeStream stream = new NativeStream(1, Allocator.TempJob);
-        
-        
-        foreach ( LevelMaterial mat in _matertialsUsed )
+        NativeParallelMultiHashMap<int, int2> materialMap = new NativeParallelMultiHashMap<int, int2>(_levelLayout.Length, Allocator.TempJob);
+        LevelFetchWallsJob fetchJob = new LevelFetchWallsJob
         {
-            LevelFetchWallsOfMaterialJob fetchJob = new LevelFetchWallsOfMaterialJob
-            {
-                LevelLayout   = _levelLayout,
-                LevelDimensions = layoutDimensions,
-                BinSize = 64,
-                RoomInfo = _roomInfo,
-                TargetMaterial = mat
-            };
-        }
-        
+            LevelLayout  = _levelLayout,
+            LevelDimensions = dimensions,
+            BinSize = 64,
+            RoomInfo = _roomInfo,
+            MaterialMap = materialMap.AsParallelWriter()
+        };
+
+        //JobHandle fetchHandle= fetchJob.Schedule( _levelLayout.Length, 128 );
+        JobHandle fetchHandle= fetchJob.Schedule( _levelLayout.Length, _levelLayout.Length );
+        fetchHandle.Complete();
+
+        materialMap.Dispose();
+
         /*
         int blockSize = 4;
         for ( int x = 0; x < dimensions.x; x++ )

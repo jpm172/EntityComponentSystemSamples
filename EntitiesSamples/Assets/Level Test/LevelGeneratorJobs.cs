@@ -344,18 +344,71 @@ public struct LevelCell
         [ReadOnly] public int BinSize;
         [ReadOnly] public int2 LevelDimensions;
 
-        private NativeQueue<int2>.ParallelWriter Cells;
+        public NativeParallelMultiHashMap<int, int2>.ParallelWriter MaterialMap;
         public void Execute(int index)
         {
+            int x = index % LevelDimensions.x;
+            int y = index / LevelDimensions.x;
+            
+            
             //skip past empty space/floor cells
             if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomInfo.Length )
                 return;
 
             int wallId = LevelLayout[index];
-            int id = wallId - RoomInfo.Length;
-            
+            int roomIndex = wallId - RoomInfo.Length - 1;
+
+            LevelMaterial mat = GetStrongestMaterialInRadius( x, y, RoomInfo[roomIndex], wallId );
+            Debug.Log( mat );
+            MaterialMap.Add( mat.GetHashCode(), new int2(x,y) );
 
         }
+        
+        private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, RoomInfo info, int WallId)
+        {
+            int thickness = info.WallThickness;
+            LevelMaterial result = info.WallMaterial;
+            Debug.Log( $"start = {result}" );
+            
+            for ( int x = -thickness; x <= thickness; x++ )
+            {
+                for ( int y = -thickness; y <= thickness; y++ )
+                {
+                    int xPos = startX + x;
+                    int yPos = startY + y;
+
+                    if ( !IsInBounds( xPos, yPos ) )
+                        return LevelMaterial.Indestructible;
+
+                    int index = xPos + yPos * LevelDimensions.x;
+                    
+                    if(LevelLayout[index] == 0)
+                        return LevelMaterial.Indestructible;
+
+
+                    int otherIndex = LevelLayout[index] - RoomInfo.Length - 1;
+                    if ( LevelLayout[index] > RoomInfo.Length && LevelLayout[index] != WallId && result < RoomInfo[otherIndex].WallMaterial )
+                        result = RoomInfo[otherIndex].WallMaterial;
+                }
+            }
+            
+
+            return result;
+        }
+        
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+
+        
             
     }
 
