@@ -307,6 +307,7 @@ public struct LevelCell
         }
     }
 
+    [BurstCompile]
     public struct LevelConvertToFloorJob : IJobParallelFor
     {
         [NativeDisableParallelForRestriction]
@@ -335,7 +336,7 @@ public struct LevelCell
         
     }
 
-
+    [BurstCompile]
     public struct LevelFetchWallsJob : IJobParallelFor
     {
         [ReadOnly]public NativeArray<int> LevelLayout;
@@ -413,37 +414,98 @@ public struct LevelCell
             
     }
 
-
+    [BurstCompile]
     public struct LevelBinWallsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<WallInfo> WallCells;
-        [ReadOnly] public int2 LevelDimensions;
         [ReadOnly] public LevelMaterial TargetMaterial;
         
         [ReadOnly] public int BinSize;
         [ReadOnly] public int XBins;
 
         public NativeArray<bool> BinTracker;
+        public NativeParallelMultiHashMap<int2, int2>.ParallelWriter BinnedWalls;
         public void Execute( int index )
         {
             int binX = index % XBins;
             int binY = index / XBins;
-
+            int2 key = new int2(binX, binY);
 
             foreach ( WallInfo wall in WallCells )
             {
+                if ( wall.Material != TargetMaterial )
+                    continue;
+                
                 int x = wall.Position.x / BinSize;
                 int y = wall.Position.y / BinSize;
 
-                bool sameBin = ( x == binX && y == binY );
-                if ( sameBin && wall.Material == TargetMaterial  )
+                if (  x == binX && y == binY   )
                 {
+                    BinnedWalls.Add( key, wall.Position );
                     BinTracker[index] = true;
                 }
             }
             
         }
     }
+
+
+
+public struct LevelCreateWallsJob : IJobParallelFor
+{
+    [ReadOnly] public NativeParallelMultiHashMap<int2, int2> BinnedWalls;
+    [ReadOnly] public NativeArray<bool> BinTracker;
+
+    [ReadOnly] public int BinSize;
+    [ReadOnly] public int XBins;
+
+    [NativeDisableParallelForRestriction]
+    public NativeArray<int> PointFields;
+    
+    [NativeDisableParallelForRestriction]
+    public NativeArray<int> Counts;
+    
+    [NativeDisableParallelForRestriction]
+    public NativeArray<int2> Positions;
+    public void Execute( int index )
+    {
+        
+        if(!BinTracker[index])
+            return;
+
+        
+        int startIndex = 0;
+        int countsIndex = 0;
+        for ( int i = 0; i < index; i++ )
+        {
+            if ( BinTracker[i] )
+            {
+                startIndex += BinSize * BinSize;
+                countsIndex++;
+            }
+                
+        }
+        
+        int binX = index % XBins;
+        int binY = index / XBins;
+        int2 key = new int2(binX, binY);
+
+        int2 origin = key * BinSize;
+        Positions[countsIndex] = origin;
+        
+        NativeParallelMultiHashMap<int2, int2>.Enumerator enumerator =  BinnedWalls.GetValuesForKey( key );
+
+        while ( enumerator.MoveNext() )
+        {
+            int2 pos = enumerator.Current - origin;
+            int posIndex = startIndex + pos.x + pos.y * BinSize;
+            PointFields[posIndex] = 1;
+            Counts[countsIndex]++;
+        }
+
+    }
+}
+
 public struct WallInfo
 {
     public int2 Position;
@@ -538,6 +600,8 @@ public struct WallInfo
 
         public NativeReference<bool> Success;
 
+
+        
         public void Execute()
         {
             for ( int i = 0; i < Distances.Length; i++ )

@@ -153,6 +153,58 @@ public struct MergeMeshStripsJob : IJobParallelFor
 }
 
 
+[BurstCompile]
+public struct MakeMeshStripsPointFieldJob : IJobParallelFor
+{
+    [ReadOnly] public NativeArray<int> PointField;
+
+    [ReadOnly] public int BinSize;
+
+    public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter Strips;
+    public void Execute( int index )
+    {
+        int pointIndex = index;
+
+        //makes vertical strips
+        bool hasStrip = false;
+        int2 stripStart = new int2(0,0);
+        for ( int y = 0; y < BinSize; y++ )
+        {
+            if ( PointField[pointIndex] > 0 && !hasStrip )
+            {
+                stripStart = new int2(index, y);
+                hasStrip = true;
+            }
+
+            if ( PointField[pointIndex] <= 0 && hasStrip )
+            {
+                MeshStrip newStrip = new MeshStrip
+                {
+                    Start = stripStart,
+                    End = new int2( stripStart.x, y - 1 )
+                };
+                Strips.Add( index, newStrip );
+                hasStrip = false;
+            }
+            
+            pointIndex += BinSize;
+        }
+
+        if ( hasStrip )
+        {
+            MeshStrip newStrip = new MeshStrip
+            {
+                Start = stripStart,
+                End = new int2( stripStart.x, BinSize-1 )
+            };
+            Strips.Add( index, newStrip );
+        }
+        
+    }
+    
+    
+}
+
 public struct MeshStrip
 {
     public int2 Start;

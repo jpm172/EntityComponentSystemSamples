@@ -226,7 +226,7 @@ public partial class LevelGenerator : MonoBehaviour
         //MakeRoomMeshes();
         MakeFloors();
         MakeWalls();
-        //MakeEntities();
+        MakeEntities();
     }
 
     /// <summary>
@@ -718,34 +718,70 @@ public partial class LevelGenerator : MonoBehaviour
         foreach ( LevelMaterial targetMat in _matertialsUsed )
         {
             NativeArray<bool> binTracker = new NativeArray<bool>(binCount, Allocator.TempJob);
+            NativeParallelMultiHashMap<int2, int2> binnedWalls = new NativeParallelMultiHashMap<int2, int2>(wallArr.Length, Allocator.TempJob);
             
             LevelBinWallsJob binWallsJob = new LevelBinWallsJob
             {
-                LevelDimensions = dimensions,
                 WallCells = wallArr,
                 BinSize = binSize,
                 XBins = xBins,
                 TargetMaterial = targetMat,
-                BinTracker = binTracker
+                BinTracker = binTracker,
+                BinnedWalls = binnedWalls.AsParallelWriter()
             };
 
             JobHandle binHandle = binWallsJob.Schedule( binCount, 1 );
             binHandle.Complete();
 
-            int cnt = 0;
-            foreach ( bool b in binTracker )
+            int usedBins = 0;
+            foreach ( bool notEmpty in binTracker )
             {
-                if ( b )
-                {
-                    cnt++;
-                }
+                if ( notEmpty )
+                    usedBins++;
             }
-            Debug.Log( $"{targetMat}: {cnt}" );
+
+            NativeArray<int> pointFields = new NativeArray<int>(usedBins*(binSize*binSize), Allocator.TempJob);
+            NativeArray<int> counts = new NativeArray<int>(usedBins, Allocator.TempJob);
+            NativeArray<int2> positions = new NativeArray<int2>(usedBins, Allocator.TempJob);
+
+            LevelCreateWallsJob createWallsJob = new LevelCreateWallsJob
+            {
+                BinnedWalls = binnedWalls,
+                BinTracker = binTracker,
+                BinSize = binSize,
+                XBins = xBins,
+                PointFields = pointFields,
+                Counts = counts,
+                Positions = positions
+            };
+
+            JobHandle createHandle = createWallsJob.Schedule( binCount, 1 );
+            createHandle.Complete();
+
+
+            for ( int i = 0; i < usedBins; i++ )
+            {
+                NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
+                StripMeshConstructor meshConstructor = new StripMeshConstructor();
+                
+                LevelWall newWall = new LevelWall
+                {
+                    Material = wallMaterial,
+                    Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
+                    PointField = pointField.ToArray(),
+                    Position = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit
+                };
+                _walls.Add( newWall );
+            }
             
+            binnedWalls.Dispose();
             binTracker.Dispose();
+            pointFields.Dispose();
+            counts.Dispose();
+            positions.Dispose();
         }
         
-        
+        Debug.Log( _walls.Count );
 
         wallArr.Dispose();
         wallCells.Dispose();
@@ -792,7 +828,7 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 FloorMesh = room.FloorMesh, 
                 FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
-                Position = new Vector2(room.Origin.x, room.Origin.y)
+                Position = new Vector2(room.Origin.x, room.Origin.y)/GameSettings.PixelsPerUnit
             };
                 
             _floors.Add( newFloor  );

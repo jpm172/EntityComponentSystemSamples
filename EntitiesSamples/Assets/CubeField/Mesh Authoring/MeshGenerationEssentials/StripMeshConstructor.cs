@@ -52,7 +52,7 @@ public class StripMeshConstructor
         JobHandle mergeHandle = mergeJob.Schedule( room.Size.x, 8 );
         mergeHandle.Complete();
         
-        StripsToMesh( mergedStrips, room );
+        StripsToMesh( mergedStrips, room.Origin );
         
         
         stripMap.Dispose();
@@ -61,6 +61,39 @@ public class StripMeshConstructor
         return FinishMesh();
     }
 
+    public Mesh ConstructMesh( NativeArray<int> pointField, int binSize, int2 blockOrigin )
+    {
+        NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
+
+        MakeMeshStripsPointFieldJob stripJob = new MakeMeshStripsPointFieldJob
+        {
+            PointField = pointField,
+            BinSize = binSize,
+            Strips = stripMap.AsParallelWriter()
+        };
+            
+        JobHandle applyHandle = stripJob.Schedule(binSize, 16);
+        applyHandle.Complete();
+        
+        NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
+            
+        MergeMeshStripsJob mergeJob = new MergeMeshStripsJob
+        {
+            Strips = stripMap,
+            MergedStrips = mergedStrips.AsParallelWriter()
+        };
+        
+        JobHandle mergeHandle = mergeJob.Schedule( binSize, 8 );
+        mergeHandle.Complete();
+        
+        StripsToMesh( mergedStrips, blockOrigin );
+        
+        
+        stripMap.Dispose();
+        mergedStrips.Dispose();
+        
+        return FinishMesh();
+    }
 
     private Mesh FinishMesh()
     {
@@ -74,7 +107,7 @@ public class StripMeshConstructor
         return mesh;
     }
     
-    private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, LevelRoom room)
+    private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, int2 origin)
     {
         NativeArray<int> keys = mergedStrips.GetKeyArray( Allocator.TempJob );
 
@@ -85,8 +118,8 @@ public class StripMeshConstructor
             while ( values.MoveNext() )
             {
                 MeshStrip strip = values.Current;
-                int2 bottomLeft = room.Origin + strip.Start;
-                int2 topRight = room.Origin + strip.End;
+                int2 bottomLeft = origin + strip.Start;
+                int2 topRight = origin + strip.End;
                 float2[] floorPoints =
                 {
                     new float2(bottomLeft.x-.5f, bottomLeft.y-.5f), //bottom left
