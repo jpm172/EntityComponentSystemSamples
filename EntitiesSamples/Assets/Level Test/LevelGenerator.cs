@@ -21,6 +21,13 @@ public partial class LevelGenerator : MonoBehaviour
 
     [SerializeField]
     private Material[] floorMaterials;
+    
+    [SerializeField]
+    private List<LevelMaterial> _textureKeys;
+    [SerializeField]
+    private List<Texture2D> _textureValues;
+
+    private Dictionary<LevelMaterial, Texture2D> _textureDict;
 
     [SerializeField]
     private Material wallMaterial;
@@ -40,7 +47,7 @@ public partial class LevelGenerator : MonoBehaviour
     [SerializeField]
     private int _minWallThickness = 1;
     [SerializeField]
-    private int _maxWallThickness = 200;
+    private int _maxWallThickness = 5;
     [SerializeField]
     private int _minRoomSeedSize = 20;
     [SerializeField]
@@ -217,8 +224,8 @@ public partial class LevelGenerator : MonoBehaviour
         _counter = 0;
         if ( useSeed )
             Random.seed = seed;
-        
-        
+
+        CreateTextureDictionary();
         InitializeLevel();
         GrowRooms();
         MakeDoorways();
@@ -229,6 +236,15 @@ public partial class LevelGenerator : MonoBehaviour
         MakeEntities();
     }
 
+    private void CreateTextureDictionary()
+    {
+        _textureDict = new Dictionary<LevelMaterial, Texture2D>();
+        for ( int i = 0; i < _textureKeys.Count; i++ )
+        {
+            _textureDict[_textureKeys[i]] = _textureValues[i];
+        }
+    }
+    
     /// <summary>
     /// Makes doorways between the rooms corresponding to the path found from dijkstras
     /// </summary>
@@ -764,13 +780,18 @@ public partial class LevelGenerator : MonoBehaviour
                 NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
                 StripMeshConstructor meshConstructor = new StripMeshConstructor();
                 
+                //Material mat = new Material( wallMaterial ) {mainTexture = _textureDict[targetMat]};
+                Material mat = new Material( wallMaterial );
+                mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
+
                 LevelWall newWall = new LevelWall
                 {
-                    Material = wallMaterial,
+                    Material = mat,
                     Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
                     PointField = pointField.ToArray(),
-                    Position = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit
+                    Position = Vector2.zero
                 };
+                pointField.Dispose();
                 _walls.Add( newWall );
             }
             
@@ -780,8 +801,6 @@ public partial class LevelGenerator : MonoBehaviour
             counts.Dispose();
             positions.Dispose();
         }
-        
-        Debug.Log( _walls.Count );
 
         wallArr.Dispose();
         wallCells.Dispose();
@@ -828,7 +847,7 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 FloorMesh = room.FloorMesh, 
                 FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
-                Position = new Vector2(room.Origin.x, room.Origin.y)/GameSettings.PixelsPerUnit
+                Position = new Vector2(0,0 )
             };
                 
             _floors.Add( newFloor  );

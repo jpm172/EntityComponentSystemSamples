@@ -367,11 +367,21 @@ MonoBehaviour:
     x: 0
     y: 0
   layoutDimensions:
-    x: 2
-    y: 1
+    x: 10
+    y: 10
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
-  wallMaterial: {fileID: 0}
+  - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
+  - {fileID: 2100000, guid: ed260cb326f56454cabea2688a415c79, type: 2}
+  - {fileID: 2100000, guid: bd2bd65ddb71c284bb3834fe0b8ee006, type: 2}
+  - {fileID: 2100000, guid: 61514f3719f610c4da08cf6875c70fef, type: 2}
+  - {fileID: 2100000, guid: 135c06844cdd979458be08b94fbadb23, type: 2}
+  _textureKeys: 030001000200
+  _textureValues:
+  - {fileID: 2800000, guid: e51cee94b42a4194eba8b2eecbefaf78, type: 3}
+  - {fileID: 2800000, guid: 0aa26ae6587a2ae4eb3001c81169e13d, type: 3}
+  - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
+  wallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 5

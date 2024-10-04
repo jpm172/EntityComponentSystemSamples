@@ -75,7 +75,8 @@ public partial class LevelGenerator
             }
             
             
-            matList.Add( new Material(wall.Material) );
+            //matList.Add( new Material(wall.Material) );
+            matList.Add( wall.Material );
             
             
             EntityRenderInfo info = new EntityRenderInfo

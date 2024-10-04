@@ -83,7 +83,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 output.color = input.color;
                 if(_PointsBuffer[0] == 0)
                 {
-                    output.color = float4(0,0,0,0);
+                    //output.color = float4(0,0,0,0);
                 }
                 
                 
