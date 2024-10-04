@@ -697,22 +697,57 @@ public partial class LevelGenerator : MonoBehaviour
 
         //NativeStream stream = new NativeStream(1, Allocator.TempJob);
         NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
-        NativeParallelMultiHashMap<int, int2> materialMap = new NativeParallelMultiHashMap<int, int2>(_levelLayout.Length, Allocator.TempJob);
         LevelFetchWallsJob fetchJob = new LevelFetchWallsJob
         {
             LevelLayout  = _levelLayout,
             LevelDimensions = dimensions,
-            BinSize = 64,
             RoomInfo = _roomInfo,
-            MaterialMap = materialMap.AsParallelWriter(),
             WallCells = wallCells.AsParallelWriter()
         };
-
-        //JobHandle fetchHandle= fetchJob.Schedule( _levelLayout.Length, 128 );
-        JobHandle fetchHandle= fetchJob.Schedule( _levelLayout.Length, _levelLayout.Length );
+        
+        JobHandle fetchHandle = fetchJob.Schedule( _levelLayout.Length, 256 );
         fetchHandle.Complete();
 
-        materialMap.Dispose();
+        int binSize = 64;
+        int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
+        int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
+        int binCount = xBins * yBins;
+
+        NativeArray<WallInfo> wallArr = wallCells.ToArray( Allocator.TempJob );
+        
+        foreach ( LevelMaterial targetMat in _matertialsUsed )
+        {
+            NativeArray<bool> binTracker = new NativeArray<bool>(binCount, Allocator.TempJob);
+            
+            LevelBinWallsJob binWallsJob = new LevelBinWallsJob
+            {
+                LevelDimensions = dimensions,
+                WallCells = wallArr,
+                BinSize = binSize,
+                XBins = xBins,
+                TargetMaterial = targetMat,
+                BinTracker = binTracker
+            };
+
+            JobHandle binHandle = binWallsJob.Schedule( binCount, 1 );
+            binHandle.Complete();
+
+            int cnt = 0;
+            foreach ( bool b in binTracker )
+            {
+                if ( b )
+                {
+                    cnt++;
+                }
+            }
+            Debug.Log( $"{targetMat}: {cnt}" );
+            
+            binTracker.Dispose();
+        }
+        
+        
+
+        wallArr.Dispose();
         wallCells.Dispose();
 
         /*

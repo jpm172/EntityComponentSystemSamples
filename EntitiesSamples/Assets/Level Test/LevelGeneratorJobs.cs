@@ -341,10 +341,8 @@ public struct LevelCell
         [ReadOnly]public NativeArray<int> LevelLayout;
         [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         
-        [ReadOnly] public int BinSize;
         [ReadOnly] public int2 LevelDimensions;
-
-        public NativeParallelMultiHashMap<int, int2>.ParallelWriter MaterialMap;
+        
         public NativeQueue<WallInfo>.ParallelWriter WallCells;
         public void Execute(int index)
         {
@@ -360,7 +358,6 @@ public struct LevelCell
             int roomIndex = wallId - RoomInfo.Length - 1;
 
             LevelMaterial mat = GetStrongestMaterialInRadius( x, y, RoomInfo[roomIndex], wallId );
-            MaterialMap.Add( mat.GetHashCode(), new int2(x,y) );
             WallCells.Enqueue( new WallInfo
             {
                 Material = mat,
@@ -369,7 +366,7 @@ public struct LevelCell
 
         }
         
-        private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, RoomInfo info, int WallId)
+        private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, RoomInfo info, int wallId)
         {
             int thickness = info.WallThickness;
             LevelMaterial result = info.WallMaterial;
@@ -391,7 +388,7 @@ public struct LevelCell
 
 
                     int otherIndex = LevelLayout[index] - RoomInfo.Length - 1;
-                    if ( LevelLayout[index] > RoomInfo.Length && LevelLayout[index] != WallId && result < RoomInfo[otherIndex].WallMaterial )
+                    if ( LevelLayout[index] > RoomInfo.Length && LevelLayout[index] != wallId && result < RoomInfo[otherIndex].WallMaterial )
                         result = RoomInfo[otherIndex].WallMaterial;
                 }
             }
@@ -416,6 +413,37 @@ public struct LevelCell
             
     }
 
+
+    public struct LevelBinWallsJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<WallInfo> WallCells;
+        [ReadOnly] public int2 LevelDimensions;
+        [ReadOnly] public LevelMaterial TargetMaterial;
+        
+        [ReadOnly] public int BinSize;
+        [ReadOnly] public int XBins;
+
+        public NativeArray<bool> BinTracker;
+        public void Execute( int index )
+        {
+            int binX = index % XBins;
+            int binY = index / XBins;
+
+
+            foreach ( WallInfo wall in WallCells )
+            {
+                int x = wall.Position.x / BinSize;
+                int y = wall.Position.y / BinSize;
+
+                bool sameBin = ( x == binX && y == binY );
+                if ( sameBin && wall.Material == TargetMaterial  )
+                {
+                    BinTracker[index] = true;
+                }
+            }
+            
+        }
+    }
 public struct WallInfo
 {
     public int2 Position;
