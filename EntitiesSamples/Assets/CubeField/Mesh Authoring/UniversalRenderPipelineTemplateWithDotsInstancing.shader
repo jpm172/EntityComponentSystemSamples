@@ -5,6 +5,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
         _BaseMap ("Base Texture", 2D) = "white" {}
         _BaseColor ("Base Colour", Color) = (1, 1, 1, 1)
         _BlockPosition ("Block Position", Vector) = (0,0,0,0)
+        _BlockSize ("Block Size", int) = 0
     }
 
     SubShader
@@ -62,7 +63,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             
             float4 _BlockPosition;
             //float4 _CompositeOrigin;
-            //int _BlockSize;
+            int _BlockSize;
             
             StructuredBuffer<int> _PointsBuffer;
             CBUFFER_END
@@ -92,24 +93,6 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 output.color = input.color;
                 
                 
-                //int x = (output.uv.x/ _BaseMap_TexelSize.x) - _CompositeOrigin.x - _BlockPosition.x;
-                //int y = (output.uv.y/ _BaseMap_TexelSize.y) - _CompositeOrigin.y - _BlockPosition.y;
-                
-                int x = (output.uv.x/ _BaseMap_TexelSize.x) - _BlockPosition.x;
-                int y = (output.uv.y/ _BaseMap_TexelSize.y) - _BlockPosition.y;
-                
-                x = clamp(x, 0, 64-1);
-                y = clamp(y, 0, 64-1);
-
-                int index = x + 64*y;
-                
-                //if(_PointsBuffer[index] == 0)
-                if(x == 63)
-                {
-                    output.color = float4(0,0,0,0);
-                }
-                
-                
                 return output;
             }
 
@@ -117,6 +100,20 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 half4 baseMap = half4(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv));
+                
+                int x = (input.uv.x/ _BaseMap_TexelSize.x) - _BlockPosition.x;
+                int y = (input.uv.y/ _BaseMap_TexelSize.y) - _BlockPosition.y;
+                
+                x = clamp(x, 0, _BlockSize-1);
+                y = clamp(y, 0, _BlockSize-1);
+                
+                 int index = x + _BlockSize*y;
+                
+                if(_PointsBuffer[index] == 0)
+                {
+                    input.color = float4(0,0,0,0);
+                }
+                
                 return baseMap * _BaseColor * input.color;
             }
             ENDHLSL
