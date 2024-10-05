@@ -4,6 +4,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
     {
         _BaseMap ("Base Texture", 2D) = "white" {}
         _BaseColor ("Base Colour", Color) = (1, 1, 1, 1)
+        _BlockPosition ("Block Position", Vector) = (0,0,0,0)
     }
 
     SubShader
@@ -57,12 +58,19 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _BaseColor;
+            uniform float4 _BaseMap_TexelSize;
+            
+            float4 _BlockPosition;
+            //float4 _CompositeOrigin;
+            //int _BlockSize;
+            
             StructuredBuffer<int> _PointsBuffer;
             CBUFFER_END
 
             #ifdef UNITY_DOTS_INSTANCING_ENABLED
                 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
                     UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
+                    UNITY_DOTS_INSTANCED_PROP(float4, _BlockPosition)
                 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
                 #define _BaseColor UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor)
             #endif
@@ -78,12 +86,27 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
                 const VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                
                 output.positionCS = positionInputs.positionCS;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
-                if(_PointsBuffer[0] == 0)
+                
+                
+                //int x = (output.uv.x/ _BaseMap_TexelSize.x) - _CompositeOrigin.x - _BlockPosition.x;
+                //int y = (output.uv.y/ _BaseMap_TexelSize.y) - _CompositeOrigin.y - _BlockPosition.y;
+                
+                int x = (output.uv.x/ _BaseMap_TexelSize.x) - _BlockPosition.x;
+                int y = (output.uv.y/ _BaseMap_TexelSize.y) - _BlockPosition.y;
+                
+                x = clamp(x, 0, 64-1);
+                y = clamp(y, 0, 64-1);
+
+                int index = x + 64*y;
+                
+                //if(_PointsBuffer[index] == 0)
+                if(x == 63)
                 {
-                    //output.color = float4(0,0,0,0);
+                    output.color = float4(0,0,0,0);
                 }
                 
                 

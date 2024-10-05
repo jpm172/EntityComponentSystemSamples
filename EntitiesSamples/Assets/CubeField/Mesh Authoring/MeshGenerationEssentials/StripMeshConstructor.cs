@@ -149,6 +149,9 @@ public class StripMeshConstructor
     private VertexData CoordinatesToVertex(float x, float y)
     {
         //offset the UVs by .5 to counteract the bottomLeft vector
+        //float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
+        //float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
+        
         float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
         float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
         

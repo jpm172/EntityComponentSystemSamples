@@ -784,6 +784,8 @@ public partial class LevelGenerator : MonoBehaviour
                 //Material mat = new Material( wallMaterial ) {mainTexture = _textureDict[targetMat]};
                 Material mat = new Material( wallMaterial );
                 mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
+                mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
+
 
                 LevelWall newWall = new LevelWall
                 {
