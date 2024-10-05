@@ -343,16 +343,28 @@ public struct LevelCell
         [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
         
         [ReadOnly] public int2 LevelDimensions;
+        [ReadOnly] public int WallRadius;
         
         public NativeQueue<WallInfo>.ParallelWriter WallCells;
         public void Execute(int index)
         {
             int x = index % LevelDimensions.x;
             int y = index / LevelDimensions.x;
-            
-            
+
+            //todo: this works to enforce a minimum border, but need to handle the edge case for walls against the border of the level
+            /*
+            if ( LevelLayout[index] == 0 && IsBorderingCell( x, y ) )
+            {
+                WallCells.Enqueue( new WallInfo
+                {
+                    Material = LevelMaterial.Indestructible,
+                    Position = new int2(x,y)
+                } );
+            }
+            */
+                
             //skip past empty space/floor cells
-            if ( LevelLayout[index] == 0 || LevelLayout[index] <= RoomInfo.Length )
+            if ( LevelLayout[index] <= RoomInfo.Length )
                 return;
 
             int wallId = LevelLayout[index];
@@ -365,6 +377,32 @@ public struct LevelCell
                 Position = new int2(x,y)
             } );
 
+        }
+
+
+        private bool IsBorderingCell( int startX, int startY )
+        {
+            int thickness = 3;
+
+            for ( int x = -thickness; x <= thickness; x++ )
+            {
+                for ( int y = -thickness; y <= thickness; y++ )
+                {
+                    int xPos = startX + x;
+                    int yPos = startY + y;
+
+                    if ( !IsInBounds( xPos, yPos ) )
+                        continue;
+
+                    int index = xPos + yPos * LevelDimensions.x;
+
+
+                    if(LevelLayout[index] > 0 && LevelLayout[index] <= RoomInfo.Length)
+                        return true;
+                }
+            }
+
+            return false;
         }
         
         private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, RoomInfo info, int wallId)

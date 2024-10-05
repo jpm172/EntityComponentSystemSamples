@@ -718,7 +718,8 @@ public partial class LevelGenerator : MonoBehaviour
             LevelLayout  = _levelLayout,
             LevelDimensions = dimensions,
             RoomInfo = _roomInfo,
-            WallCells = wallCells.AsParallelWriter()
+            WallCells = wallCells.AsParallelWriter(),
+            WallRadius = _maxWallThickness
         };
         
         JobHandle fetchHandle = fetchJob.Schedule( _levelLayout.Length, 256 );
