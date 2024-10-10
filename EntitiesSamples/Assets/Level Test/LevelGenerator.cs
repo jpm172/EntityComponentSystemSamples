@@ -451,7 +451,7 @@ public partial class LevelGenerator : MonoBehaviour
     private void InitializeLevel()
     {
         int count = layoutDimensions.x * layoutDimensions.y;
-        CleanUp();
+        CleanUp(false);
         
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
@@ -853,7 +853,7 @@ public partial class LevelGenerator : MonoBehaviour
                 FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
                 Position = new Vector2(0,0 )
             };
-                
+
             _floors.Add( newFloor  );
         }
         /*
@@ -889,17 +889,25 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void OnDestroy()
     {
-        CleanUp();
+        CleanUp(true);
     }
 
-    private void CleanUp()
+    private void CleanUp(bool isExit)
     {
         if ( _levelLayout.IsCreated )
         {
             _levelLayout.Dispose();
             _roomInfo.Dispose();
             _adjacencyMatrix.Dispose();
-            ClearLevel();
+
+            if ( !isExit )
+            {
+                ClearLevelEntities();
+                //removes the materials that were made for the level
+                Resources.UnloadUnusedAssets();
+            }
+                
+                
         }
     }
 }

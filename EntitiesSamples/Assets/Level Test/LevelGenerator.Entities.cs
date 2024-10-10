@@ -17,16 +17,17 @@ public partial class LevelGenerator
 
     public void ClearLeverButton()
     {
-        ClearLevel();
+        ClearLevelEntities();
         
     }
-    private void ClearLevel()
+
+    private void ClearLevelEntities()
     {
         World world = World.DefaultGameObjectInjectionWorld;
         EntityManager entityManager = world.EntityManager;
 
         NativeArray<Entity> entities = entityManager.GetAllEntities();
-
+        
     
         foreach ( Entity e in entities )
         {
@@ -130,7 +131,7 @@ public partial class LevelGenerator
             FilterSettings = filterSettings,
             LightProbeUsage = LightProbeUsage.Off,
         };
-
+        
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
         /*
         BlobAssetReference<Unity.Physics.Collider> blob = Unity.Physics.BoxCollider.Create( new BoxGeometry { BevelRadius = .1f,

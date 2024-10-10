@@ -367,8 +367,8 @@ MonoBehaviour:
     x: 0
     y: 0
   layoutDimensions:
-    x: 1
-    y: 3
+    x: 5
+    y: 5
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
