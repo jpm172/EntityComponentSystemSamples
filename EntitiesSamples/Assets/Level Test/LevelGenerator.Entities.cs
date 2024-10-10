@@ -21,17 +21,16 @@ public partial class LevelGenerator
         
     }
 
+    //disposes+removes all entities made for the level
     private void ClearLevelEntities()
     {
         World world = World.DefaultGameObjectInjectionWorld;
         EntityManager entityManager = world.EntityManager;
-
-        NativeArray<Entity> entities = entityManager.GetAllEntities();
         
-    
+        NativeArray<Entity> entities = entityManager.GetAllEntities();
+
         foreach ( Entity e in entities )
         {
-
             if(!entityManager.HasComponent( e, typeof(ClearOnNewLevelTag) ))
                 continue;
             
@@ -141,6 +140,7 @@ public partial class LevelGenerator
         entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
         */
         CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
+        
 
         
         var bounds = new NativeArray<RenderBounds>(meshList.Count, Allocator.TempJob);

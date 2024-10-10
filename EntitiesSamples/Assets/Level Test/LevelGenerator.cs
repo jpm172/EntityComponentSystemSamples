@@ -899,14 +899,15 @@ public partial class LevelGenerator : MonoBehaviour
             _levelLayout.Dispose();
             _roomInfo.Dispose();
             _adjacencyMatrix.Dispose();
-
+            
+            //only dispose of the entities if not exiting (exit == OnDestroy is called)
+            //The world will dispose of everything on exiting, and trying to call it during OnDestroy can cause errors
             if ( !isExit )
             {
                 ClearLevelEntities();
-                //removes the materials that were made for the level
-                Resources.UnloadUnusedAssets();
             }
-                
+            //removes the materials that were made for the level
+            Resources.UnloadUnusedAssets();
                 
         }
     }
