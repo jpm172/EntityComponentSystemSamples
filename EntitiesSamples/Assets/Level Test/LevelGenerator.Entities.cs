@@ -14,12 +14,43 @@ using Material = UnityEngine.Material;
 
 public partial class LevelGenerator
 {
+
+    public void ClearLeverButton()
+    {
+        ClearLevel();
+        
+    }
+    private void ClearLevel()
+    {
+        World world = World.DefaultGameObjectInjectionWorld;
+        EntityManager entityManager = world.EntityManager;
+
+        NativeArray<Entity> entities = entityManager.GetAllEntities();
+
+    
+        foreach ( Entity e in entities )
+        {
+
+            if(!entityManager.HasComponent( e, typeof(ClearOnNewLevelTag) ))
+                continue;
+            
+            if ( entityManager.HasComponent( e, typeof( BufferData ) ) )
+            {
+                entityManager.GetComponentData<BufferData>(e).Dispose();
+            }
+
+            entityManager.DestroyEntity( e );
+            
+        }
+        
+        entities.Dispose();
+    }
+    
     private void MakeEntities()
     {
         World world = World.DefaultGameObjectInjectionWorld;
         EntityManager entityManager = world.EntityManager;
         EntityCommandBuffer ecbJob = new EntityCommandBuffer(Allocator.TempJob);
-        
 
         RenderFilterSettings filterSettings = RenderFilterSettings.Default;
         filterSettings.ShadowCastingMode = ShadowCastingMode.Off;
@@ -101,13 +132,13 @@ public partial class LevelGenerator
         };
 
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
-        
+        /*
         BlobAssetReference<Unity.Physics.Collider> blob = Unity.Physics.BoxCollider.Create( new BoxGeometry { BevelRadius = .1f,
             Center = new float3(0),
             Orientation = new quaternion(1,1,1,1),
             Size = new float3(1)} );
         entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
-        
+        */
         CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
 
         
@@ -166,6 +197,7 @@ public partial class LevelGenerator
             entityManager.AddComponentData( prototype, new EntityCollider() );
             entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
 
+            entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
             entityManager.AddComponentData( prototype, new BufferData
             {
                 PointField = wall.PointField,
@@ -183,6 +215,7 @@ public partial class LevelGenerator
     {
         //create the base entity that will be used as a template for spawning the reset
         Entity prototype = entityManager.CreateEntity();
+        entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
         
         #if UNITY_EDITOR
         entityManager.SetName( prototype, "Floor" );

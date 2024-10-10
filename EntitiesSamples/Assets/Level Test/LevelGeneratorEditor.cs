@@ -25,6 +25,11 @@ public class LevelGeneratorEditor : Editor
         {
             level.MakeRoomMeshes();
         }
+        if (GUILayout.Button("Clear Level")) 
+        {
+            level.ClearLeverButton();
+        }
+        
 
 
     }

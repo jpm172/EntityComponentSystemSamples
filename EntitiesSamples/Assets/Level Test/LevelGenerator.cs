@@ -899,6 +899,7 @@ public partial class LevelGenerator : MonoBehaviour
             _levelLayout.Dispose();
             _roomInfo.Dispose();
             _adjacencyMatrix.Dispose();
+            ClearLevel();
         }
     }
 }
