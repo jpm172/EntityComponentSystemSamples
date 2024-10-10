@@ -13,8 +13,6 @@ public partial class LevelGenerator
     private int _totalSteps = 0;
     private int _uniqueConnections = 0;
 
-    public bool breakPoint = false;
-    
     public bool StepWiseGrow;
     public int GrowSteps;
     public void GrowRooms()

@@ -927,21 +927,3 @@ public struct LevelWall
     public Vector2 Position;
     public int[] PointField;
 }
-
-public struct LevelEdge
-{
-    public int Source;
-    public int Destination;
-    public int Weight;
-
-
-    public override bool Equals( object obj )
-    {
-        if ( obj == null )
-            return false;
-
-        LevelEdge edge = (LevelEdge) obj;
-
-        return ( edge.Source == Source && edge.Destination == Destination );
-    }
-}
