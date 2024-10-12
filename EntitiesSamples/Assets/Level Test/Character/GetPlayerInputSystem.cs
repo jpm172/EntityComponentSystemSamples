@@ -24,6 +24,12 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnUpdate()
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
+        
+        foreach (var playerInputs in SystemAPI.Query<RefRW<PlayerInputs>>())
+        {
+            playerInputs.ValueRW.MoveInput = moveInput;
+            Debug.Log( playerInputs.ValueRO.MoveInput );
+        }
 
     }
 
