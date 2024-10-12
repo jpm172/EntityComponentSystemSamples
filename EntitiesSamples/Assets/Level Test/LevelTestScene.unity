@@ -439,7 +439,6 @@ MonoBehaviour:
   ShowWallMesh: 0
   UseWireMeshes: 0
   UseConnections: 0
-  breakPoint: 0
   StepWiseGrow: 0
   GrowSteps: 1
 --- !u!4 &1289639036

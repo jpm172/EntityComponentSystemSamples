@@ -15,6 +15,8 @@ using Material = UnityEngine.Material;
 public partial class LevelGenerator
 {
 
+    private List<BlobAssetReference<Unity.Physics.Collider>> _collidersMade;
+    
     public void ClearLeverButton()
     {
         ClearLevelEntities();
@@ -139,6 +141,7 @@ public partial class LevelGenerator
             Size = new float3(1)} );
         entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
         */
+        
         CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
         
 
@@ -206,8 +209,14 @@ public partial class LevelGenerator
             } );
             entityManager.GetComponentData<BufferData>(prototype).SetBuffer();
             renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
-            
 
+            BlobAssetReference<Unity.Physics.Collider> col = Unity.Physics.MeshCollider.Create( wall.Mesh, CollisionFilter.Default, Unity.Physics.Material.Default );
+            entityManager.AddComponentData(prototype, new PhysicsCollider()
+            {
+                Value = col
+            });
+            entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
+            _collidersMade.Add( col );
 
         }
     }

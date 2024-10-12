@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 using Unity.Mathematics;
 using Unity.VisualScripting;
+using Collider = Unity.Physics.Collider;
 using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
 
@@ -461,6 +463,7 @@ public partial class LevelGenerator : MonoBehaviour
         _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
         _adjacencyMatrix = new NativeArray<int>(count*count, Allocator.Persistent);
         _matertialsUsed = new List<LevelMaterial>();
+        _collidersMade = new List<BlobAssetReference<Collider>>();
         
         _matertialsUsed.Add( LevelMaterial.Indestructible );
 
@@ -899,13 +902,20 @@ public partial class LevelGenerator : MonoBehaviour
             _levelLayout.Dispose();
             _roomInfo.Dispose();
             _adjacencyMatrix.Dispose();
+
             
             //only dispose of the entities if not exiting (exit == OnDestroy is called)
-            //The world will dispose of everything on exiting, and trying to call it during OnDestroy can cause errors
+            //trying to call it during OnDestroy can cause errors since the world also gets disposed
             if ( !isExit )
             {
                 ClearLevelEntities();
             }
+            
+            foreach ( var col in _collidersMade )
+            {
+                col.Dispose();
+            }
+            _collidersMade.Clear();
             //removes the materials that were made for the level
             Resources.UnloadUnusedAssets();
                 
