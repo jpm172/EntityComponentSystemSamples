@@ -78,7 +78,7 @@ public readonly partial struct ThirdPersonCharacterAspect : IAspect, IKinematicC
             // Move on ground
             float3 targetVelocity = characterControl.MoveVector * characterComponent.GroundMaxSpeed;
             CharacterControlUtilities.StandardGroundMove_Interpolated(ref characterBody.RelativeVelocity, targetVelocity, characterComponent.GroundedMovementSharpness, deltaTime, characterBody.GroundingUp, characterBody.GroundHit.Normal);
-
+        
             // Jump
             if (characterControl.Jump)
             {

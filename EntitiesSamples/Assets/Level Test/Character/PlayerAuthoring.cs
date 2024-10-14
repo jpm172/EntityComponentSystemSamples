@@ -1,10 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class PlayerAuthoring : MonoBehaviour
 {
+
+    public float MoveSpeed;
+    public float3 forward, up;
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
@@ -17,6 +21,10 @@ public class PlayerAuthoring : MonoBehaviour
                 ControlledCamera = GetEntity(authoring.ControlledCamera, TransformUsageFlags.Dynamic),
             });
             */
+            AddComponent(entity, new MyCharacterComponent
+            {
+                MovementSpeed = authoring.MoveSpeed
+            });
             AddComponent<PlayerInputs>(entity);
         }
     }

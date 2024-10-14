@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -9,10 +10,14 @@ using UnityEngine.InputSystem;
 public partial class GetPlayerInputSystem : SystemBase
 {
     private DemoInputActions _inputActions;
+    private Camera _camera;
+    private static float3 xy = new float3(1,1,0);
+
 
     protected override void OnCreate()
     {
         _inputActions = new DemoInputActions();
+        _camera = Camera.main;
     }
 
     protected override void OnStartRunning()
@@ -24,12 +29,16 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnUpdate()
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
+        float3 mousePosition = _camera.ScreenToWorldPoint( Input.mousePosition ) * xy;
         
         foreach (var playerInputs in SystemAPI.Query<RefRW<PlayerInputs>>())
         {
             playerInputs.ValueRW.MoveInput = moveInput;
-            Debug.Log( playerInputs.ValueRO.MoveInput );
+            playerInputs.ValueRW.AimPosition = mousePosition;
+            playerInputs.ValueRW.Forward = DebugClass.instance.Forward;
+            playerInputs.ValueRW.Up = DebugClass.instance.Up;
         }
+        //Debug.Log( mousePosition );
 
     }
 
