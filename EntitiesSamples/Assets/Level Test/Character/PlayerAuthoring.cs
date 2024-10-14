@@ -25,6 +25,7 @@ public class PlayerAuthoring : MonoBehaviour
             {
                 MovementSpeed = authoring.MoveSpeed
             });
+            //Camera.main.GetComponent<CameraFollow>().ballEntity = entity;
             AddComponent<PlayerInputs>(entity);
         }
     }

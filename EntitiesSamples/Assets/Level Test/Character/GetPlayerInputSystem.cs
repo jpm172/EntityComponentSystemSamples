@@ -35,8 +35,7 @@ public partial class GetPlayerInputSystem : SystemBase
         {
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
-            playerInputs.ValueRW.Forward = DebugClass.instance.Forward;
-            playerInputs.ValueRW.Up = DebugClass.instance.Up;
+            playerInputs.ValueRW.Debug = DebugClass.instance.Forward.x;
         }
         //Debug.Log( mousePosition );
 

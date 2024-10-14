@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
+using Unity.CharacterController;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -29,36 +30,25 @@ public partial struct PlayerMoveSystem : ISystem
     }
 }
 
-//[BurstCompile]
+[BurstCompile]
 public partial struct PlayerMoveJob : IJobEntity
 {
     public float DeltaTime;
+    private static readonly float AngleAdjust = math.radians( 90 );
 
     private void Execute(ref LocalTransform transform, in PlayerInputs input, MyCharacterComponent attributes)
     {
         
         transform.Position.xy += input.MoveInput * attributes.MovementSpeed * DeltaTime;
+        //float2 targetPosition = transform.Position.xy + input.MoveInput * attributes.MovementSpeed;
+        //velocity = math.lerp(velocity, targetVelocity, MathUtilities.GetSharpnessInterpolant(interpolationSharpness, deltaTime));
         
+        //rotate the character to look at the mouse
         float3 forward = input.AimPosition - transform.Position;
-
-
-
-        //quaternion rotation = TransformHelpers.LookAtRotation( transform.Position, transform.Position + input.Forward, input.Up );
-        //quaternion rotation = quaternion.LookRotationSafe(forward, input.Up );
+        quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward );
         
-        
-        //quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward ); //works!
-        quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward ); 
-        
-        //quaternion rotation = quaternion.LookRotationSafe(input.Forward, input.Up );
-        
-
         transform.Rotation = rotation;
-        transform = transform.RotateZ( math.radians(90 ) );
-
-
-
-        //transform = transform.RotateZ( 1*DeltaTime );
+        transform = transform.RotateZ( AngleAdjust );
 
     }
     
