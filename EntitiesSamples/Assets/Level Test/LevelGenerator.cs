@@ -66,6 +66,7 @@ public partial class LevelGenerator : MonoBehaviour
     
 
     //gizmos variables
+    public bool UseGizmos;
     public bool UseMeshes;
     public bool ShowFloorMesh;
     public bool ShowWallMesh;
@@ -75,7 +76,7 @@ public partial class LevelGenerator : MonoBehaviour
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        if ( !_levelLayout.IsCreated )
+        if ( !_levelLayout.IsCreated || !UseGizmos )
             return;
 
         if ( UseMeshes || UseWireMeshes )
