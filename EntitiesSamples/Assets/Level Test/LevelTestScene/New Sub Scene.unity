@@ -266,12 +266,12 @@ PrefabInstance:
     - target: {fileID: 4233288669312607841, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4233288669312607841, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4233288669312607841, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
@@ -370,9 +370,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb54ea4f67dc17342bcd49954c53502d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DrawColliders: 1
-  DrawColliderEdges: 0
-  DrawColliderAabbs: 0
+  DrawColliders: 0
+  DrawColliderEdges: 1
+  DrawColliderAabbs: 1
   DrawMassProperties: 0
   DrawBroadphase: 0
   DrawContacts: 0

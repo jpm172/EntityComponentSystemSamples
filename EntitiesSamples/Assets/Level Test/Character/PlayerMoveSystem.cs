@@ -7,6 +7,8 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
+using BoxCollider = Unity.Physics.BoxCollider;
+using RaycastHit = Unity.Physics.RaycastHit;
 
 [UpdateBefore(typeof(TransformSystemGroup))]
 public partial struct PlayerMoveSystem : ISystem
@@ -23,6 +25,7 @@ public partial struct PlayerMoveSystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
+        
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         var deltaTime = SystemAPI.Time.DeltaTime;
         new PlayerMoveJob
@@ -30,6 +33,7 @@ public partial struct PlayerMoveSystem : ISystem
             DeltaTime = deltaTime,
             PhysicsWorld = physicsWorld
         }.Schedule();
+        
         
     }
 }
@@ -58,32 +62,93 @@ public partial struct PlayerMoveJob : IJobEntity
         transform = transform.RotateZ( AngleAdjust );
             
         float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
-        if ( PhysicsCheck( transform, col, targetMove, out ColliderCastHit hit  ) )
+        if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit  ) )
         {
-            //Debug.Log( hit.Fraction );
-            targetMove *= hit.Fraction;
-            //return;
+            //Debug.Log( transform.Position.xy + ", " + hit.Position.xy );
+            float2 relativeHit = transform.Position.xy - hit.Position.xy;
+            
+            Aabb bb = col.Value.Value.CalculateAabb();
+
+            if ( GetClosestPoint( transform, col, hit, out RaycastHit rayHit ) )
+            {
+                Debug.Log( hit.Position - rayHit.Position );
+                transform.Position.xy -= (hit.Position - rayHit.Position).xy;
+            }
+            /*
+            if ( hit.Fraction > math.EPSILON )
+            {
+                targetMove *= hit.Fraction - math.EPSILON;
+            }
+            else
+                return;    
+                */
+            
+            //Debug.DrawLine( transform.Position, hit.Position, Color.red, .1f );
+            //transform.Position.xy += relativeHit;
+            return;
+
         }
 
         transform.Position.xy += targetMove;
         //float2 targetPosition = transform.Position.xy + input.MoveInput * attributes.MovementSpeed;
         //velocity = math.lerp(velocity, targetVelocity, MathUtilities.GetSharpnessInterpolant(interpolationSharpness, deltaTime));
-        
-        
-        
-        
-
     }
 
-    private bool PhysicsCheck(LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit)
+    private float2 GetMinAxis( float2 axis )
     {
+        return math.@select( new float2( axis.x, 0 ), new float2( 0, axis.y ), axis.x > axis.y );
+    }
+
+    private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit)
+    {
+
+        /*
+        float3 offset = new float3(input.x, input.y, 0)/GameSettings.PixelsPerUnit;
+        ColliderCastInput cast = new ColliderCastInput(col.Value, transform.Position + offset, transform.Position + new float3(end.x, end.y, 0),
+            transform.Rotation);
+            */
+        
         ColliderCastInput cast = new ColliderCastInput(col.Value, transform.Position, transform.Position + new float3(end.x, end.y, 0),
             transform.Rotation);
         
-
         
         bool result = PhysicsWorld.CastCollider( cast, out hit );
+        
         return result;
     }
-    
+
+    private bool GetClosestPoint( LocalTransform transform, PhysicsCollider col, ColliderCastHit hit, out RaycastHit rayHit)
+    {
+
+        //filter.BelongsTo = ( 1 << 6 );
+        uint mask = 1 << 6;
+        mask = ~mask;
+        //filter.CollidesWith  = mask;
+        //filter.BelongsTo  = mask;
+        
+        CollisionFilter filter = new CollisionFilter
+        {
+            CollidesWith = mask,
+            BelongsTo = mask
+        };
+        
+        //Debug.DrawLine( transform.Position, hit.Position + (hit.Position - transform.Position), Color.red, .1f );
+        
+        RaycastInput rayInput = new RaycastInput
+        {
+            Start = transform.Position,
+            End = hit.Position + (hit.Position - transform.Position),
+            Filter = filter
+        };
+
+        bool result = PhysicsWorld.CastRay( rayInput, out rayHit );
+        if ( result )
+        {
+            Debug.DrawLine( rayInput.Start, rayHit.Position, Color.blue, .1f );
+            //Debug.Log( rayHit.Fraction + ", " + transform.Position );
+        }
+
+        return result;
+
+    }
 }
