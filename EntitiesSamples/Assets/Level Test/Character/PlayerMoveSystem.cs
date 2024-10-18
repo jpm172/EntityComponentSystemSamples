@@ -69,10 +69,20 @@ public partial struct PlayerMoveJob : IJobEntity
             
             Aabb bb = col.Value.Value.CalculateAabb();
 
-            if ( GetClosestPoint( transform, col, hit, out RaycastHit rayHit ) )
+
+            if ( hit.Fraction > math.EPSILON )
             {
-                Debug.Log( hit.Position - rayHit.Position );
-                transform.Position.xy -= (hit.Position - rayHit.Position).xy;
+                targetMove *= hit.Fraction;
+            }
+            else if ( GetClosestPoint( transform, col, hit, out RaycastHit rayHit ) )
+            {
+                //Debug.Log( hit.Position - rayHit.Position );
+                transform.Position.xy -=  ( hit.Position - rayHit.Position ).xy;
+                return;
+            }
+            else
+            {
+                return;
             }
             /*
             if ( hit.Fraction > math.EPSILON )
@@ -85,7 +95,7 @@ public partial struct PlayerMoveJob : IJobEntity
             
             //Debug.DrawLine( transform.Position, hit.Position, Color.red, .1f );
             //transform.Position.xy += relativeHit;
-            return;
+            
 
         }
 
@@ -96,7 +106,7 @@ public partial struct PlayerMoveJob : IJobEntity
 
     private float2 GetMinAxis( float2 axis )
     {
-        return math.@select( new float2( axis.x, 0 ), new float2( 0, axis.y ), axis.x > axis.y );
+        return math.@select( new float2( axis.x, 0 ), new float2( 0, axis.y ), math.abs(axis.x) > math.abs(axis.y) );
     }
 
     private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit)
@@ -119,20 +129,15 @@ public partial struct PlayerMoveJob : IJobEntity
 
     private bool GetClosestPoint( LocalTransform transform, PhysicsCollider col, ColliderCastHit hit, out RaycastHit rayHit)
     {
-
-        //filter.BelongsTo = ( 1 << 6 );
         uint mask = 1 << 6;
         mask = ~mask;
-        //filter.CollidesWith  = mask;
-        //filter.BelongsTo  = mask;
-        
+
         CollisionFilter filter = new CollisionFilter
         {
             CollidesWith = mask,
             BelongsTo = mask
         };
         
-        //Debug.DrawLine( transform.Position, hit.Position + (hit.Position - transform.Position), Color.red, .1f );
         
         RaycastInput rayInput = new RaycastInput
         {
@@ -140,11 +145,17 @@ public partial struct PlayerMoveJob : IJobEntity
             End = hit.Position + (hit.Position - transform.Position),
             Filter = filter
         };
+        
 
+        bool result2 = PhysicsWorld.SphereCast( transform.Position, 1 / GameSettings.PixelsPerUnit,
+            ( hit.Position - transform.Position ), math.distance( rayInput.Start, rayInput.End ), out ColliderCastHit sHit,
+            filter );
+        
+        
         bool result = PhysicsWorld.CastRay( rayInput, out rayHit );
         if ( result )
         {
-            Debug.DrawLine( rayInput.Start, rayHit.Position, Color.blue, .1f );
+            //Debug.DrawLine( rayInput.Start, rayHit.Position, Color.blue, .1f );
             //Debug.Log( rayHit.Fraction + ", " + transform.Position );
         }
 
