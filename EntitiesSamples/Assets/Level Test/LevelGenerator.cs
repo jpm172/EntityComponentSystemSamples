@@ -5,6 +5,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.VisualScripting;
 using Collider = Unity.Physics.Collider;
 using Material = UnityEngine.Material;
@@ -797,7 +798,8 @@ public partial class LevelGenerator : MonoBehaviour
                     Material = mat,
                     Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
                     PointField = pointField.ToArray(),
-                    Position = Vector2.zero
+                    Position = Vector2.zero,
+                    Geo = meshConstructor.CollisionQuads
                 };
                 pointField.Dispose();
                 _walls.Add( newWall );
@@ -937,4 +939,5 @@ public struct LevelWall
     public Material Material;
     public Vector2 Position;
     public int[] PointField;
+    public List<BoxGeometry> Geo;
 }

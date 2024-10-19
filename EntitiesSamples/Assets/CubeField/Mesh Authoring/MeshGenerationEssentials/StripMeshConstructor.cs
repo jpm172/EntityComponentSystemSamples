@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using Unity.Physics;
 using UnityEngine;
 
 public class StripMeshConstructor 
@@ -13,7 +14,10 @@ public class StripMeshConstructor
     
     private List<Vector2> _uvs;
     private List<Vector3> _normals;
+    private List<BoxGeometry> _collisionQuads;
 
+
+    public List<BoxGeometry> CollisionQuads => _collisionQuads;
 
     public StripMeshConstructor()
     {
@@ -22,6 +26,7 @@ public class StripMeshConstructor
         _vertices = new List<Vector3>();
         _uvs = new List<Vector2>();
         _normals = new List<Vector3>();
+        _collisionQuads = new List<BoxGeometry>();
     }
     
     public Mesh ConstructMesh( NativeArray<int> levelLayout, int2 dimensions, LevelRoom room, int targetId )
@@ -128,6 +133,8 @@ public class StripMeshConstructor
                     new float2(bottomLeft.x-.5f, topRight.y+.5f), //top left
                 };
     
+                AddNewBoxCollider( bottomLeft, topRight );
+                
                 VertexData[] vertices = 
                 {
                     CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y), 
@@ -143,6 +150,25 @@ public class StripMeshConstructor
         keys.Dispose();
 
 
+    }
+
+    private void AddNewBoxCollider( int2 bottomLeft, int2 topRight )
+    {
+        float thickness = 1 * GameSettings.PixelsPerUnit;
+        
+        float3 boxCenter = new float3(bottomLeft + topRight,0 );
+        boxCenter /= (2*GameSettings.PixelsPerUnit);
+
+        float3 size = new float3(topRight-bottomLeft + new int2(1,1), thickness)/ (GameSettings.PixelsPerUnit);
+        
+        BoxGeometry newBox = new BoxGeometry
+        {
+            Center = boxCenter,
+            Size = size,
+            Orientation = quaternion.identity
+        };
+        
+        _collisionQuads.Add( newBox );
     }
     
     

@@ -66,9 +66,6 @@ public partial struct PlayerMoveJob : IJobEntity
         {
             //Debug.Log( transform.Position.xy + ", " + hit.Position.xy );
             float2 relativeHit = transform.Position.xy - hit.Position.xy;
-            
-            Aabb bb = col.Value.Value.CalculateAabb();
-
 
             if ( hit.Fraction > math.EPSILON )
             {
@@ -145,13 +142,8 @@ public partial struct PlayerMoveJob : IJobEntity
             End = hit.Position + (hit.Position - transform.Position),
             Filter = filter
         };
-        
 
-        bool result2 = PhysicsWorld.SphereCast( transform.Position, 1 / GameSettings.PixelsPerUnit,
-            ( hit.Position - transform.Position ), math.distance( rayInput.Start, rayInput.End ), out ColliderCastHit sHit,
-            filter );
-        
-        
+
         bool result = PhysicsWorld.CastRay( rayInput, out rayHit );
         if ( result )
         {

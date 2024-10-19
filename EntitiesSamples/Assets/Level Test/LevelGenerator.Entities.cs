@@ -209,15 +209,48 @@ public partial class LevelGenerator
             } );
             entityManager.GetComponentData<BufferData>(prototype).SetBuffer();
             renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
+            
+            
+            //
+            NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
 
+            for(int w = 0; w < wall.Geo.Count; w++)
+            {
+                BoxGeometry geo = wall.Geo[w];
+                CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+                {
+                    Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, Unity.Physics.Material.Default ),
+                    Entity = prototype,
+                    CompoundFromChild = new RigidTransform
+                    {
+                        rot = quaternion.identity,
+                        pos = float3.zero
+                    }
+                };
+                childCols[w] = newChild;
+                _collidersMade.Add( newChild.Collider );
+            }
+
+            BlobAssetReference<Unity.Physics.Collider> compCol = Unity.Physics.CompoundCollider.Create( childCols );
+            
+
+            entityManager.AddComponentData(prototype, new PhysicsCollider()
+            {
+                Value = compCol
+            });
+            childCols.Dispose();
+            
+            //
+            /*
             BlobAssetReference<Unity.Physics.Collider> col = Unity.Physics.MeshCollider.Create( wall.Mesh, CollisionFilter.Default, Unity.Physics.Material.Default );
             entityManager.AddComponentData(prototype, new PhysicsCollider()
             {
                 Value = col
             });
+            */
             entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
-            _collidersMade.Add( col );
-
+            
+            _collidersMade.Add( compCol );
         }
     }
 
