@@ -45,6 +45,10 @@ public partial class LevelGenerator : MonoBehaviour
     private List<LevelMaterial> _matertialsUsed;
     
     private Dictionary<int2, List< LevelConnectionManager>> _roomConnections;
+
+
+    [SerializeField] private Texture2D FoWTexture;
+    
     //seeding variables
     public bool useSeed;
     [SerializeField]
@@ -237,6 +241,7 @@ public partial class LevelGenerator : MonoBehaviour
         //MakeRoomMeshes();
         MakeFloors();
         MakeWalls();
+        MakeFogOfWar();
         MakeEntities();
     }
 
@@ -711,7 +716,35 @@ public partial class LevelGenerator : MonoBehaviour
                 return LevelMaterial.Drywall;
         }
     }
-    
+
+
+    private void MakeFogOfWar()
+    {
+        /*
+        RenderTexture texture = new RenderTexture( 256, 256, 16, RenderTextureFormat.ARGB32 );
+        
+        texture.Create();
+        texture.Release();
+        */
+        
+        FoWTexture = new Texture2D( dimensions.x, dimensions.y );
+        FoWTexture.filterMode = FilterMode.Point;
+        FoWTexture.anisoLevel = 0;
+        
+        
+        for ( int x = 0; x < dimensions.x; x++ )
+        {
+            for ( int y = 0; y < dimensions.y; y++ )
+            {
+                int index = x + y * dimensions.x;
+                
+                if(_levelLayout[index] > 0)
+                    FoWTexture.SetPixel( x,y, Color.black );
+            }
+        }
+        
+        FoWTexture.Apply();
+    }
     
     private void MakeWalls()
     {

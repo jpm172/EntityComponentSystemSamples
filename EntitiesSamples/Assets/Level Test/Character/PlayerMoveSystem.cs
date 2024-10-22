@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Burst;
 using Unity.CharacterController;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -62,11 +63,23 @@ public partial struct PlayerMoveJob : IJobEntity
         transform = transform.RotateZ( AngleAdjust );
             
         float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
-        if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit  ) )
+        if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits ) )
         {
             //Debug.Log( transform.Position.xy + ", " + hit.Position.xy );
             float2 relativeHit = transform.Position.xy - hit.Position.xy;
 
+            
+            if ( GetClosestPoint( transform, col, hit, castHits, out RaycastHit rayHit, out float2 adjust ) )
+            {
+                //Debug.Log( hit.Position - rayHit.Position );
+                //transform.Position.xy -=  ( hit.Position - rayHit.Position ).xy;
+                transform.Position.xy -=  adjust;
+                
+            }
+
+            castHits.Dispose();
+            return;
+            /*
             if ( hit.Fraction > math.EPSILON )
             {
                 targetMove *= hit.Fraction;
@@ -81,15 +94,8 @@ public partial struct PlayerMoveJob : IJobEntity
             {
                 return;
             }
-            /*
-            if ( hit.Fraction > math.EPSILON )
-            {
-                targetMove *= hit.Fraction - math.EPSILON;
-            }
-            else
-                return;    
-                */
-            
+            */
+
             //Debug.DrawLine( transform.Position, hit.Position, Color.red, .1f );
             //transform.Position.xy += relativeHit;
             
@@ -101,12 +107,7 @@ public partial struct PlayerMoveJob : IJobEntity
         //velocity = math.lerp(velocity, targetVelocity, MathUtilities.GetSharpnessInterpolant(interpolationSharpness, deltaTime));
     }
 
-    private float2 GetMinAxis( float2 axis )
-    {
-        return math.@select( new float2( axis.x, 0 ), new float2( 0, axis.y ), math.abs(axis.x) > math.abs(axis.y) );
-    }
-
-    private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit)
+    private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits)
     {
 
         /*
@@ -118,16 +119,20 @@ public partial struct PlayerMoveJob : IJobEntity
         ColliderCastInput cast = new ColliderCastInput(col.Value, transform.Position, transform.Position + new float3(end.x, end.y, 0),
             transform.Rotation);
         
-        
-        bool result = PhysicsWorld.CastCollider( cast, out hit );
+        castHits = new NativeList<ColliderCastHit>(Allocator.Temp);
+        bool result = PhysicsWorld.CastCollider( cast, ref castHits );
+
+        PhysicsWorld.CastCollider( cast, out hit );
         
         return result;
     }
 
-    private bool GetClosestPoint( LocalTransform transform, PhysicsCollider col, ColliderCastHit hit, out RaycastHit rayHit)
+    private bool GetClosestPoint( LocalTransform transform, PhysicsCollider col, ColliderCastHit hit, NativeList<ColliderCastHit> castHits, out RaycastHit rayHit, out float2 adjust )
     {
         uint mask = 1 << 6;
         mask = ~mask;
+        adjust = new float2();
+        bool result = false;
 
         CollisionFilter filter = new CollisionFilter
         {
@@ -135,16 +140,36 @@ public partial struct PlayerMoveJob : IJobEntity
             BelongsTo = mask
         };
         
-        
-        RaycastInput rayInput = new RaycastInput
+        Debug.Log( castHits.Length );
+        foreach ( ColliderCastHit cHit in castHits )
         {
-            Start = transform.Position,
-            End = hit.Position + (hit.Position - transform.Position),
-            Filter = filter
-        };
+            RaycastInput rayInput = new RaycastInput
+            {
+                Start = transform.Position,
+                End = cHit.Position + (cHit.Position - transform.Position),
+                Filter = filter
+            };
 
+            if ( PhysicsWorld.CastRay( rayInput, out rayHit ) )
+            {
+                result = true;
+                adjust += ( cHit.Position - rayHit.Position ).xy;
+            } 
+        }
+        
 
-        bool result = PhysicsWorld.CastRay( rayInput, out rayHit );
+        rayHit = new RaycastHit(); //temp debug
+        
+        /*
+        NativeList<RaycastHit> hits = new NativeList<RaycastHit>(Allocator.Temp);
+        PhysicsWorld.CastRay( rayInput, ref hits );
+        foreach ( RaycastHit rHit in hits )
+        {
+            adjust += ( hit.Position - rHit.Position ).xy;
+        }
+        
+        hits.Dispose();
+        */
         if ( result )
         {
             //Debug.DrawLine( rayInput.Start, rayHit.Position, Color.blue, .1f );
