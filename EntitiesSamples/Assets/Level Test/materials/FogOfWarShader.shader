@@ -3,6 +3,7 @@ Shader "Unlit/FogOfWarShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "black" {}
+        _ExampleName ("Integer display name", Int) = 1
     }
     SubShader
     {
@@ -34,6 +35,8 @@ Shader "Unlit/FogOfWarShader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            uniform float4 _MainTex_TexelSize;
+            int _ExampleName;
 
             v2f vert (appdata v)
             {
@@ -48,6 +51,9 @@ Shader "Unlit/FogOfWarShader"
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
+                
+                
+                
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
