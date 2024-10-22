@@ -22,6 +22,8 @@ public partial class LevelGenerator : MonoBehaviour
     [SerializeField]
     private int2 layoutDimensions;//dimensions of level in room nodes
 
+    [SerializeField] private MeshFilter fogOfWarMesh;
+    
     [SerializeField]
     private Material[] floorMaterials;
     
@@ -718,32 +720,25 @@ public partial class LevelGenerator : MonoBehaviour
     }
 
 
+    //stretches the FoW's mesh to cover the entire level
     private void MakeFogOfWar()
     {
-        /*
-        RenderTexture texture = new RenderTexture( 256, 256, 16, RenderTextureFormat.ARGB32 );
+        Mesh mesh = fogOfWarMesh.mesh;
+        Vector3[] verts = mesh.vertices;
+
+        int buffer = 32;
+        Vector3 halfPixel = new Vector3(1,1)/ (2* GameSettings.PixelsPerUnit);
         
-        texture.Create();
-        texture.Release();
-        */
-        
-        FoWTexture = new Texture2D( dimensions.x, dimensions.y );
-        FoWTexture.filterMode = FilterMode.Point;
-        FoWTexture.anisoLevel = 0;
+        verts[0] = new Vector3(-buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom left
+        verts[1] = new Vector3(dimensions.x + buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom right
+        verts[2] = new Vector3(-buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top left
+        verts[3] = new Vector3(dimensions.x + buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top right
         
         
-        for ( int x = 0; x < dimensions.x; x++ )
-        {
-            for ( int y = 0; y < dimensions.y; y++ )
-            {
-                int index = x + y * dimensions.x;
-                
-                if(_levelLayout[index] > 0)
-                    FoWTexture.SetPixel( x,y, Color.black );
-            }
-        }
+        mesh.SetVertices( verts );
+        mesh.RecalculateBounds( );
         
-        FoWTexture.Apply();
+        fogOfWarMesh.mesh = mesh;
     }
     
     private void MakeWalls()
