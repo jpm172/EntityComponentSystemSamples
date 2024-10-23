@@ -792,6 +792,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Fog of War Plane
       objectReference: {fileID: 0}
+    - target: {fileID: 6524047105446746992, guid: 555afbadeab26734aaebb05d56f10612,
+        type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 19553e498704e1e40bd5ecea3be554eb, type: 2}
     - target: {fileID: 7755373157741029758, guid: 555afbadeab26734aaebb05d56f10612,
         type: 3}
       propertyPath: m_LocalPosition.x

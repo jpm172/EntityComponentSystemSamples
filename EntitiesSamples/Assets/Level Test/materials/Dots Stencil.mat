@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: DotsStencilMaterial
-  m_Shader: {fileID: 4800000, guid: 4a6600b5ca8bb3e4da1760ea53fcb811, type: 3}
+  m_Name: Dots Stencil
+  m_Shader: {fileID: 4800000, guid: 9aa958540741a714e8a38445b43b0d1b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

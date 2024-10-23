@@ -20,9 +20,18 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             
             Stencil
             {
+            
                 Ref [_StencilID]
                 Comp Always
                 Pass Replace
+                
+                
+                /*
+                Ref [_StencilID]
+                Comp NotEqual
+                Pass IncrSat
+                */
+                
             }
 
             Cull Back

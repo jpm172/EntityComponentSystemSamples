@@ -45,11 +45,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6b3d386ba5cd94485973aee1479b272e, type: 3}
-  m_Name: RenderObjects
+  m_Name: Fog Stencil
   m_EditorClassIdentifier: 
   m_Active: 1
   settings:
-    passTag: RenderObjects
+    passTag: Fog Stencil
     Event: 300
     filterSettings:
       RenderQueueType: 0
@@ -74,7 +74,7 @@ MonoBehaviour:
       zFailOperation: 0
     cameraSettings:
       overrideCamera: 0
-      restoreCamera: 1
+      restoreCamera: 0
       offset: {x: 0, y: 0, z: 0, w: 0}
       cameraFieldOfView: 60
 --- !u!114 &11400000
