@@ -5,7 +5,11 @@ using UnityEngine;
 
 public class EyeAuthoring : MonoBehaviour
 {
-    public GameObject owner; 
+    public GameObject owner;
+    public float Resolution;
+    public float FOV;
+    public float ViewDistance;
+    
     public class EyeBaker : Baker<EyeAuthoring>
     {
         public override void Bake(EyeAuthoring authoring)
@@ -18,7 +22,20 @@ public class EyeAuthoring : MonoBehaviour
                 ControlledCamera = GetEntity(authoring.ControlledCamera, TransformUsageFlags.Dynamic),
             });
             */
-            AddComponent( entity, new ClearFogComponent() );
+            AddComponent( entity, new EyeComponent
+            {
+                Resolution = authoring.Resolution,
+                FOV = authoring.FOV,
+                ViewDistance = authoring.ViewDistance
+            } );
         }
     }
+}
+
+public struct EyeComponent : IComponentData
+{
+    public float Resolution;
+    public float FOV;
+    public float ViewDistance;
+    
 }
