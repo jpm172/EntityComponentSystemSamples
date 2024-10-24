@@ -34,7 +34,6 @@ public class EntityMeshCreator : MonoBehaviour
         public void Execute(int index)
         {
             var e = Ecb.Instantiate(index, Prototype);
-            
             // Prototype has all correct components up front, can use SetComponent
             Ecb.SetComponent(index, e, new LocalToWorld {Value = ComputeTransform(index)});
             Ecb.SetComponent(index, e, new MaterialColor() {Value = ComputeColor(index)});
