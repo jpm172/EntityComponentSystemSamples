@@ -140,7 +140,7 @@ public partial struct PlayerMoveJob : IJobEntity
             BelongsTo = mask
         };
         
-        Debug.Log( castHits.Length );
+        //Debug.Log( castHits.Length );
         foreach ( ColliderCastHit cHit in castHits )
         {
             RaycastInput rayInput = new RaycastInput

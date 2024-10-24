@@ -132,16 +132,9 @@ public partial class LevelGenerator
             FilterSettings = filterSettings,
             LightProbeUsage = LightProbeUsage.Off,
         };
-        
+
         Entity floorEntity = CreateBaseFloorEntity( entityManager, renderMeshArray, renderMeshDescription );
-        /*
-        BlobAssetReference<Unity.Physics.Collider> blob = Unity.Physics.BoxCollider.Create( new BoxGeometry { BevelRadius = .1f,
-            Center = new float3(0),
-            Orientation = new quaternion(1,1,1,1),
-            Size = new float3(1)} );
-        entityManager.AddComponentData( floorEntity, new PhysicsCollider{Value = blob} );
-        */
-        
+       
         CreateWallEntities( entityRenderMap, entityManager, renderMeshArray, renderMeshDescription );
         
 
