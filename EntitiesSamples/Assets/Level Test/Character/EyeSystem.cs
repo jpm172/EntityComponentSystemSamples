@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
@@ -14,7 +15,7 @@ using Material = UnityEngine.Material;
 using RaycastHit = Unity.Physics.RaycastHit;
 
 
-[UpdateBefore(typeof(TransformSystemGroup))]
+[UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct EyeSystem : ISystem
 {
     public void OnCreate( ref SystemState state )
@@ -26,7 +27,7 @@ public partial struct EyeSystem : ISystem
     {
         
     }
-
+    
     public void OnUpdate( ref SystemState state )
     {
         
@@ -70,11 +71,33 @@ public partial struct EyeSystem : ISystem
 
             //cast rays
             List<float3> viewPoints = new List<float3>();
+            ViewCastInfo oldViewCast = new ViewCastInfo();
             for ( int i = 0; i <= stepCount; i++ )
             {
-                float angle = -( eye.FOV / 2 ) + degreesPerStep * i;
+                float angle = -( eye.FOV / 2 ) + (degreesPerStep * i);
                 ViewCastInfo viewCast = CastRay( t, angle, eye, physicsWorld );
+
+                if ( i > 0 )
+                {
+                    bool threshold = math.abs( oldViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
+                    if ( oldViewCast.Hit != viewCast.Hit || (oldViewCast.Hit && viewCast.Hit && threshold) )
+                    //if ( oldViewCast.Hit != viewCast.Hit  )
+                    {
+                        EdgeInfo edge = FindEdge( oldViewCast, viewCast, t, eye, physicsWorld );
+                        if ( edge.PointA != Vector3.zero )
+                        {
+                            viewPoints.Add( edge.PointA );
+                        }
+                        if ( edge.PointB != Vector3.zero )
+                        {
+                            viewPoints.Add( edge.PointB );
+                        }
+                    }
+                }
+                
+                
                 viewPoints.Add( viewCast.Position );
+                oldViewCast = viewCast;
             }
             
             //put ray results into mesh
@@ -87,7 +110,7 @@ public partial struct EyeSystem : ISystem
             {
                 vertices[i + 1] = t.InverseTransformPoint(viewPoints[i]);
 
-                Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
+                //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
                 
                 if ( i < vertexCount - 2 )
                 {
@@ -97,82 +120,22 @@ public partial struct EyeSystem : ISystem
                 }
             }
             
-            //RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             //
             
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
             
             
-
-            /*
-            float width = 5;
-            float height = 5;
-            
-            Vector3[] testVerts = new Vector3[4]
-            {
-                new Vector3(-width, -height, 0),
-                new Vector3(width, -height, 0),
-                new Vector3(-width, height, 0),
-                new Vector3(width, height, 0)
-            };
-            
-            
-
-            curMesh.SetVertices( testVerts );
-            curMesh.RecalculateBounds();
-            */
-            
             
             curMesh.Clear();
             curMesh.vertices = vertices;
             curMesh.triangles = triangles;
             curMesh.RecalculateNormals();
-            curMesh.RecalculateBounds();
-
-            /*
-            state.EntityManager.SetComponentData( entity, new RenderBounds
-            {
-                Value = curMesh.bounds.ToAABB()
-            });
-            */
+            //curMesh.RecalculateBounds();
 
         }
     }
-
-    private BatchMeshID InitializeEye(ref SystemState state, Entity entity, MaterialMeshInfo info)
-    { 
-        Mesh emptyMesh = new Mesh();
-        emptyMesh.name = "fuck";
-        
-        EntitiesGraphicsSystem graphicsSystem = state.World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
-        BatchMeshID id = graphicsSystem.RegisterMesh( emptyMesh );
-
-        state.EntityManager.SetComponentData( entity, new MaterialMeshInfo
-        {
-            MeshID = id
-        } );
-        
-        return id;
-        Mesh[] meshArr = new[] {emptyMesh};
-        Material[] matArr = new Material[] {new Material(Shader.Find( "Universal Render Pipeline/Lit" ))};
-        
-        var renderMeshArray = new RenderMeshArray(matArr, meshArr);
-        var renderMeshDescription = new RenderMeshDescription
-        {
-            FilterSettings = RenderFilterSettings.Default,
-            LightProbeUsage = LightProbeUsage.Off,
-        };
-        
-        RenderMeshUtility.AddComponents(
-            entity,
-            state.EntityManager,
-            renderMeshDescription,
-            renderMeshArray,
-            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-        
-
-    }
+    
     private ViewCastInfo CastRay(LocalTransform transform, float angle, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
@@ -205,7 +168,37 @@ public partial struct EyeSystem : ISystem
         
         return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
     }
-    
+
+    private EdgeInfo FindEdge(ViewCastInfo minViewCast, ViewCastInfo maxViewCast, LocalTransform t, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
+    {
+        float minAngle = minViewCast.Angle;
+        float maxAngle = maxViewCast.Angle;
+        Vector3 minPoint = Vector3.zero;
+        Vector3 maxPoint = Vector3.zero;
+
+        for ( int i = 0; i < eye.ResolveIterations; i++ )
+        {
+            float angle = ( minAngle + maxAngle ) / 2;
+            
+            ViewCastInfo viewCast = CastRay( t, angle, eye, physicsWorld );
+
+            bool threshold = math.abs( minViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
+            if ( viewCast.Hit == minViewCast.Hit && !threshold )
+            //if ( viewCast.Hit == minViewCast.Hit  )
+            {
+                minPoint = viewCast.Position;
+                minAngle = angle;
+            }
+            else
+            {
+                maxPoint = viewCast.Position;
+                maxAngle = angle;
+            }
+            
+        }
+        
+        return new EdgeInfo(minPoint, maxPoint);
+    } 
     
 }
 
@@ -301,5 +294,17 @@ public struct ViewCastInfo
         Position = position;
         Distance = distance;
         Angle = angle;
+    }
+}
+
+public struct EdgeInfo
+{
+    public Vector3 PointA;
+    public Vector3 PointB;
+
+    public EdgeInfo( Vector3 pointA, Vector3 pointB )
+    {
+        PointA = pointA;
+        PointB = pointB;
     }
 }

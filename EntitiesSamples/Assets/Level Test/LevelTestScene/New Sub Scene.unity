@@ -486,21 +486,16 @@ PrefabInstance:
       propertyPath: ViewDistance
       value: 10
       objectReference: {fileID: 0}
-    - target: {fileID: 1584123873783787533, guid: 03b08bb2d50478544844234824bc4b52,
+    - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
-      propertyPath: m_Mesh
-      value: 
-      objectReference: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+      propertyPath: ResolveIterations
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 3602466598905529579, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
       propertyPath: m_Name
       value: EyePrefab
       objectReference: {fileID: 0}
-    - target: {fileID: 7778312488269005410, guid: 03b08bb2d50478544844234824bc4b52,
-        type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: c219b24cd72eed2469cdc545e573f666, type: 2}
     - target: {fileID: 9090377106722037461, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
       propertyPath: m_LocalPosition.x

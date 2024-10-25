@@ -10,6 +10,8 @@ public class EyeAuthoring : MonoBehaviour
     public float Resolution;
     public float FOV;
     public float ViewDistance;
+    public float EdgeDistanceThreshold;
+    public int ResolveIterations;
     
     public class EyeBaker : Baker<EyeAuthoring>
     {
@@ -23,8 +25,12 @@ public class EyeAuthoring : MonoBehaviour
                 Resolution = authoring.Resolution,
                 FOV = authoring.FOV,
                 ViewDistance = authoring.ViewDistance,
-                Initialized = false
+                EdgeDistanceThreshold = authoring.EdgeDistanceThreshold,
+                ResolveIterations = authoring.ResolveIterations
             } );
+            
+            AddComponent(entity, new InitializeTag());
+            //SetComponentEnabled<InitializeTag>( entity, false ); doesnt have the functionality i want for RequireForUpdate
         }
     }
 }
@@ -39,6 +45,7 @@ public struct EyeComponent : IComponentData
     public float Resolution;
     public float FOV;
     public float ViewDistance;
-    public bool Initialized;
+    public float EdgeDistanceThreshold;
+    public int ResolveIterations;
 
 }
