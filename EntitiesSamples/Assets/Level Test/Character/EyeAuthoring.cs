@@ -11,6 +11,7 @@ public class EyeAuthoring : MonoBehaviour
     public float FOV;
     public float ViewDistance;
     public float EdgeDistanceThreshold;
+    public float CutAway;
     public int ResolveIterations;
     
     public class EyeBaker : Baker<EyeAuthoring>
@@ -26,7 +27,8 @@ public class EyeAuthoring : MonoBehaviour
                 FOV = authoring.FOV,
                 ViewDistance = authoring.ViewDistance,
                 EdgeDistanceThreshold = authoring.EdgeDistanceThreshold,
-                ResolveIterations = authoring.ResolveIterations
+                ResolveIterations = authoring.ResolveIterations,
+                CutAway = authoring.CutAway
             } );
             
             AddComponent(entity, new InitializeTag());
@@ -47,5 +49,6 @@ public struct EyeComponent : IComponentData
     public float ViewDistance;
     public float EdgeDistanceThreshold;
     public int ResolveIterations;
+    public float CutAway;
 
 }

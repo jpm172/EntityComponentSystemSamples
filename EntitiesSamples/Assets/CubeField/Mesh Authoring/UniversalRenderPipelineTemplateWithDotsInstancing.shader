@@ -20,6 +20,8 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
         Zwrite off //set off for transparent shader
         Blend SrcAlpha OneMinusSrcAlpha
 
+
+
         Pass
         {
             Name "Forward"
@@ -27,6 +29,17 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             {
                 "LightMode"="UniversalForward"
             }
+            
+            /*
+            Stencil
+            {
+            
+                //Ref [_StencilID]
+                Ref 1
+                Comp Always
+                Pass Replace
+            }
+            */
 
             Cull Back
 

@@ -15,6 +15,7 @@ Shader "Universal Render Pipeline/Custom/DotsStencil"
 
         Pass
         {
+            ColorMask 0
             Blend Zero One
             ZWrite Off
             

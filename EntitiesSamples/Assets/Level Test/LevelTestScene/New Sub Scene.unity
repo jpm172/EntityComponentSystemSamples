@@ -478,8 +478,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
+      propertyPath: CutAway
+      value: 0.0625
+      objectReference: {fileID: 0}
+    - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
+        type: 3}
       propertyPath: Resolution
-      value: 0.1
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
@@ -490,6 +495,11 @@ PrefabInstance:
         type: 3}
       propertyPath: ResolveIterations
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
+        type: 3}
+      propertyPath: EdgeDistanceThreshold
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3602466598905529579, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}

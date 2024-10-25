@@ -108,7 +108,7 @@ public partial struct EyeSystem : ISystem
             vertices[0] = Vector3.zero;
             for ( int i = 0; i < vertexCount -1; i++ )
             {
-                vertices[i + 1] = t.InverseTransformPoint(viewPoints[i]);
+                vertices[i + 1] = t.InverseTransformPoint(viewPoints[i]) + new float3(1,0,0) *eye.CutAway;
 
                 //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
                 
