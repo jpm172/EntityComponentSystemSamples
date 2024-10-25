@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Entities.Graphics;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Rendering;
+using Material = UnityEngine.Material;
 using RaycastHit = Unity.Physics.RaycastHit;
+
 
 [UpdateBefore(typeof(TransformSystemGroup))]
 public partial struct EyeSystem : ISystem
@@ -25,6 +29,7 @@ public partial struct EyeSystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
+        
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         /*
         new ClearFogJob()
@@ -36,14 +41,27 @@ public partial struct EyeSystem : ISystem
         
         
         foreach (
-            var (transformComp, ltwComp, eyeComp,  info, entity)
-            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRO<EyeComponent>, RefRO<MaterialMeshInfo>>()
+            var (transformComp, ltwComp, eyeComp, info, entity)
+            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRW<EyeComponent>, RefRO<MaterialMeshInfo>>()
                 .WithEntityAccess()
         )
         {
-            EyeComponent eye = eyeComp.ValueRO;
+
+            EyeComponent eye = eyeComp.ValueRW;
             LocalTransform transform = transformComp.ValueRO;
             LocalToWorld ltw = ltwComp.ValueRO;
+            
+            /*
+            if ( !eye.Initialized )
+            {
+                
+                InitializeEye(ref state, entity, info.ValueRO);
+                //Debug.Log( info.ValueRO.MeshID.value );
+                eyeComp.ValueRW.Initialized = true;
+            }
+            */
+            
+            
             
             int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
             float degreesPerStep = eye.FOV / stepCount;
@@ -67,56 +85,98 @@ public partial struct EyeSystem : ISystem
             vertices[0] = Vector3.zero;
             for ( int i = 0; i < vertexCount -1; i++ )
             {
-                vertices[i + 1] = transform.InverseTransformPoint(viewPoints[i]);
+                vertices[i + 1] = t.InverseTransformPoint(viewPoints[i]);
 
+                Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
+                
                 if ( i < vertexCount - 2 )
                 {
-                    triangles[i * 3] = 0;
+                    triangles[i * 3] = i + 2;
                     triangles[i * 3 + 1] = i + 1;
-                    triangles[i * 3 + 2] = i + 2;
+                    triangles[i * 3 + 2] = 0;
                 }
             }
             
+            //RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             //
+            
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
             
+            
+
             /*
-            Vector3[] vFix = new []
+            float width = 5;
+            float height = 5;
+            
+            Vector3[] testVerts = new Vector3[4]
             {
-                new Vector3(-.5f, -.5f), 
-                new Vector3(.5f, -.5f), 
-                new Vector3(-.5f, .5f), 
-                new Vector3(.5f, .5f), 
-            };
-            int[] tFix = new[]
-            {
-                0, 2, 1, 
-                2, 3, 1
+                new Vector3(-width, -height, 0),
+                new Vector3(width, -height, 0),
+                new Vector3(-width, height, 0),
+                new Vector3(width, height, 0)
             };
             
-    
             
-            
-            curMesh.Clear();
-            curMesh.vertices = vFix;
-            curMesh.triangles = tFix;
-            curMesh.RecalculateNormals();
+
+            curMesh.SetVertices( testVerts );
+            curMesh.RecalculateBounds();
+            */
             
             
             curMesh.Clear();
             curMesh.vertices = vertices;
             curMesh.triangles = triangles;
             curMesh.RecalculateNormals();
+            curMesh.RecalculateBounds();
+
+            /*
+            state.EntityManager.SetComponentData( entity, new RenderBounds
+            {
+                Value = curMesh.bounds.ToAABB()
+            });
             */
 
         }
     }
-    
+
+    private BatchMeshID InitializeEye(ref SystemState state, Entity entity, MaterialMeshInfo info)
+    { 
+        Mesh emptyMesh = new Mesh();
+        emptyMesh.name = "fuck";
+        
+        EntitiesGraphicsSystem graphicsSystem = state.World.GetExistingSystemManaged<EntitiesGraphicsSystem>();
+        BatchMeshID id = graphicsSystem.RegisterMesh( emptyMesh );
+
+        state.EntityManager.SetComponentData( entity, new MaterialMeshInfo
+        {
+            MeshID = id
+        } );
+        
+        return id;
+        Mesh[] meshArr = new[] {emptyMesh};
+        Material[] matArr = new Material[] {new Material(Shader.Find( "Universal Render Pipeline/Lit" ))};
+        
+        var renderMeshArray = new RenderMeshArray(matArr, meshArr);
+        var renderMeshDescription = new RenderMeshDescription
+        {
+            FilterSettings = RenderFilterSettings.Default,
+            LightProbeUsage = LightProbeUsage.Off,
+        };
+        
+        RenderMeshUtility.AddComponents(
+            entity,
+            state.EntityManager,
+            renderMeshDescription,
+            renderMeshArray,
+            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
+        
+
+    }
     private ViewCastInfo CastRay(LocalTransform transform, float angle, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
-        Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
+        //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
         uint mask = 1 << 6;
         mask = ~mask;
         
@@ -135,13 +195,13 @@ public partial struct EyeSystem : ISystem
             Filter = filter
         };
 
-        /*
+        
         if ( physicsWorld.CastRay( rayInput, out RaycastHit rayHit ) )
         {
             //Debug.DrawLine( transform.Position, rayHit.Position, Color.blue, .1f );
             return new ViewCastInfo(true, rayHit.Position, math.distance( rayHit.Position, transform.Position ), angle );
         } 
-        */
+        
         
         return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
     }

@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
+Shader "Universal Render Pipeline/Custom/DotsStencil"
 {
     Properties
     {
@@ -21,7 +21,8 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             Stencil
             {
             
-                Ref [_StencilID]
+                //Ref [_StencilID]
+                Ref 1
                 Comp Always
                 Pass Replace
                 

@@ -22,7 +22,8 @@ public class EyeAuthoring : MonoBehaviour
             {
                 Resolution = authoring.Resolution,
                 FOV = authoring.FOV,
-                ViewDistance = authoring.ViewDistance
+                ViewDistance = authoring.ViewDistance,
+                Initialized = false
             } );
         }
     }
@@ -38,5 +39,6 @@ public struct EyeComponent : IComponentData
     public float Resolution;
     public float FOV;
     public float ViewDistance;
-    
+    public bool Initialized;
+
 }
