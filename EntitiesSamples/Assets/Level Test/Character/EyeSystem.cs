@@ -5,6 +5,8 @@ using Unity.CharacterController;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Graphics;
+using Unity.Entities.UniversalDelegates;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Rendering;
@@ -51,24 +53,34 @@ public partial struct EyeSystem : ISystem
             EyeComponent eye = eyeComp.ValueRW;
             LocalTransform transform = transformComp.ValueRO;
             LocalToWorld ltw = ltwComp.ValueRO;
-            
-            /*
-            if ( !eye.Initialized )
-            {
-                
-                InitializeEye(ref state, entity, info.ValueRO);
-                //Debug.Log( info.ValueRO.MeshID.value );
-                eyeComp.ValueRW.Initialized = true;
-            }
-            */
+
             
             
-            
+
             int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
             float degreesPerStep = eye.FOV / stepCount;
 
             LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );
 
+            
+            
+            int vertexCount = stepCount + 2;
+            NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
+            NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.TempJob);
+            
+            
+            new EyePhyicsQueryJob()
+            {
+                PhysicsWorld = physicsWorld,
+                eye = eye,
+                ltw = ltw,
+                transform = transform,
+                Vertices = vertices,
+                Triangles = triangles
+            }.Run();
+            
+            
+            /*
             //cast rays
             List<float3> viewPoints = new List<float3>();
             ViewCastInfo oldViewCast = new ViewCastInfo();
@@ -121,18 +133,19 @@ public partial struct EyeSystem : ISystem
             }
             
             //
-            
+            */
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
             
             
             
             curMesh.Clear();
-            curMesh.vertices = vertices;
-            curMesh.triangles = triangles;
+            curMesh.vertices = vertices.ToArray();
+            curMesh.triangles = triangles.ToArray();
             curMesh.RecalculateNormals();
             //curMesh.RecalculateBounds();
-
+            vertices.Dispose();
+            triangles.Dispose();
         }
     }
     
@@ -280,6 +293,90 @@ public partial struct ClearFogJob : IJobEntity
 
     
     
+}
+
+[BurstCompile]
+public struct EyePhyicsQueryJob : IJob
+{
+    public EyeComponent eye;
+    public LocalTransform transform;
+    public LocalToWorld ltw;
+    public PhysicsWorldSingleton PhysicsWorld;
+    
+    public NativeArray<Vector3> Vertices;
+    public NativeArray<int> Triangles;
+
+    //private void Execute( ref LocalTransform transform, in EyeComponent eye )
+    public void Execute( )
+    {
+        //TransformHelpers.ComputeWorldTransformMatrix( e, out float4x4 output, transform,   );
+        int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
+        float degreesPerStep = eye.FOV / stepCount;
+
+        LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );//convert child transform to world transform, might need to use TransformHelpers.ComputeWorldTransformMatrix
+        
+        NativeArray<float3> viewPoints = new NativeArray<float3>(stepCount+1, Allocator.Temp);
+        for ( int i = 0; i <= stepCount; i++ )
+        {
+            float angle = -( eye.FOV / 2 ) + degreesPerStep * i;
+            
+            ViewCastInfo viewCast = CastRay( t, angle );
+            viewPoints[i] = viewCast.Position;
+        }
+
+        int vertexCount = viewPoints.Length + 1;
+        //NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.Temp);
+        //NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.Temp);
+
+        Vertices[0] = Vector3.zero;
+        for ( int i = 0; i < vertexCount -1; i++ )
+        {
+            Vertices[i + 1] = t.InverseTransformPoint( viewPoints[i] ); //+ new float3(1,0,0) *eye.CutAway;
+
+            //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
+                
+            if ( i < vertexCount - 2 )
+            {
+                Triangles[i * 3] = i + 2;
+                Triangles[i * 3 + 1] = i + 1;
+                Triangles[i * 3 + 2] = 0;
+            }
+        }
+        
+    }
+
+    private ViewCastInfo CastRay( LocalTransform t, float angle)
+    {
+        float3 rayEnd = t.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
+        //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
+        uint mask = 1 << 6;
+        mask = ~mask;
+        
+        
+
+        CollisionFilter filter = new CollisionFilter
+        {
+            CollidesWith = mask,
+            BelongsTo = mask
+        };
+        
+        RaycastInput rayInput = new RaycastInput
+        {
+            Start = t.Position,
+            End = t.Position + rayEnd,
+            Filter = filter
+        };
+
+        
+        if ( PhysicsWorld.CastRay( rayInput, out RaycastHit rayHit ) )
+        {
+            //Debug.DrawLine( transform.Position, rayHit.Position, Color.blue, .1f );
+            return new ViewCastInfo(true, rayHit.Position, math.distance( rayHit.Position, t.Position ), angle );
+        } 
+        
+        
+        return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
+    }
 }
 public struct ViewCastInfo
 {
