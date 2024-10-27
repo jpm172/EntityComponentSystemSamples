@@ -364,9 +364,6 @@ public struct EyePhyicsQueryJob : IJob
     private ViewCastInfo CastRay( float angle)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
-        //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
-        uint mask = 1 << 6;
-        mask = ~mask;
 
         RaycastInput rayInput = new RaycastInput
         {
@@ -386,36 +383,6 @@ public struct EyePhyicsQueryJob : IJob
         return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
     }
     
-    private EdgeInfo FindEdge(ViewCastInfo minViewCast, ViewCastInfo maxViewCast, LocalTransform t, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
-    {
-        float minAngle = minViewCast.Angle;
-        float maxAngle = maxViewCast.Angle;
-        Vector3 minPoint = Vector3.zero;
-        Vector3 maxPoint = Vector3.zero;
-
-        for ( int i = 0; i < eye.ResolveIterations; i++ )
-        {
-            float angle = ( minAngle + maxAngle ) / 2;
-            
-            ViewCastInfo viewCast = CastRay( angle );
-
-            bool threshold = math.abs( minViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
-            if ( viewCast.Hit == minViewCast.Hit && !threshold )
-                //if ( viewCast.Hit == minViewCast.Hit  )
-            {
-                minPoint = viewCast.Position;
-                minAngle = angle;
-            }
-            else
-            {
-                maxPoint = viewCast.Position;
-                maxAngle = angle;
-            }
-            
-        }
-        
-        return new EdgeInfo(minPoint, maxPoint);
-    } 
 }
 
 [BurstCompile]
