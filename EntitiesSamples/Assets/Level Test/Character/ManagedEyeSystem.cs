@@ -34,7 +34,7 @@ public partial class ManagedEyeSystem : SystemBase
                         var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false);
 
                         // Create a RenderMeshArray with the required mesh and material
-                        var renderMeshArray = new RenderMeshArray(new[] { _stencilMat  }, new[] { highlightMesh });
+                        var renderMeshArray = new RenderMeshArray(new[] { _debugMat  }, new[] { highlightMesh });
 
                         // Create a MaterialMeshInfo instance which maps the first material and mesh from RenderMeshArray
                         var materialMeshInfo = MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0);
