@@ -56,6 +56,8 @@ public partial struct EyeSystem : ISystem
         )
         {
 
+            //float startTime = Time.realtimeSinceStartup;
+            
             EyeComponent eye = eyeComp.ValueRW;
             LocalTransform transform = transformComp.ValueRO;
             LocalToWorld ltw = ltwComp.ValueRO;
@@ -64,17 +66,20 @@ public partial struct EyeSystem : ISystem
             
 
             int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
-
+            float degreesPerStep = eye.FOV / stepCount;
 
             LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );
             
             
             
             int vertexCount = (stepCount + 2)*2;
+            //int vertexCount = stepCount + 2;
             NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
             NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.TempJob);
             NativeReference<int> newLength = new NativeReference<int>(Allocator.TempJob);
             
+            //float startTime = Time.realtimeSinceStartup;
+           
             new EyePhyicsQueryJob()
             {
                 PhysicsWorld = physicsWorld,
@@ -86,7 +91,10 @@ public partial struct EyeSystem : ISystem
                 RayFilter = _rayFilter
             }.Run();
             
+            
+            //Debug.Log( "MeshDone: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
             /*
+            //float startTime = Time.realtimeSinceStartup;
             new EyePhyicsQueryParallelJob()
             {
                 PhysicsWorld = physicsWorld,
@@ -94,10 +102,12 @@ public partial struct EyeSystem : ISystem
                 transform = t,
                 Vertices = vertices,
                 Triangles = triangles,
+                DegreesPerStep = degreesPerStep,
                 RayFilter = _rayFilter
-            }.Schedule( stepCount+1, 8 ).Complete();
+            }.Schedule( vertexCount, 16 ).Complete();
+            //Debug.Log( "MeshDone: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
             */
-
+            
             /*
             float degreesPerStep = eye.FOV / stepCount;
             //cast rays
@@ -153,6 +163,7 @@ public partial struct EyeSystem : ISystem
             
             //
             */
+            
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
             
@@ -162,10 +173,18 @@ public partial struct EyeSystem : ISystem
             curMesh.vertices = vertices.Slice(0, newLength.Value).ToArray();
             curMesh.triangles = triangles.Slice(0, newLength.Value*3).ToArray();
             curMesh.RecalculateNormals();
+            
+            /*
+            curMesh.Clear();
+            curMesh.vertices = vertices.ToArray();
+            curMesh.triangles = triangles.ToArray();
+            curMesh.RecalculateNormals();
+            */
 
             newLength.Dispose();
             vertices.Dispose();
             triangles.Dispose();
+            
         }
     }
     
@@ -173,22 +192,12 @@ public partial struct EyeSystem : ISystem
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
         //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
-        uint mask = 1 << 6;
-        mask = ~mask;
-        
-        
 
-        CollisionFilter filter = new CollisionFilter
-        {
-            CollidesWith = mask,
-            BelongsTo = mask
-        };
-        
         RaycastInput rayInput = new RaycastInput
         {
             Start = transform.Position,
             End = transform.Position + rayEnd,
-            Filter = filter
+            Filter = _rayFilter
         };
 
         
@@ -235,89 +244,10 @@ public partial struct EyeSystem : ISystem
     
 }
 
-//[BurstCompile]
-public partial struct ClearFogJob : IJobEntity
-{
-
-    public PhysicsWorldSingleton PhysicsWorld;
-
-    //private void Execute( ref LocalTransform transform, in EyeComponent eye )
-    private void Execute( ref LocalTransform transform, in Entity entity, ref LocalToWorld ltw, in EyeComponent eye )
-    {
-        //TransformHelpers.ComputeWorldTransformMatrix( e, out float4x4 output, transform,   );
-        
-        int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
-        float degreesPerStep = eye.FOV / stepCount;
-
-        LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );//convert child transform to world transform, might need to use TransformHelpers.ComputeWorldTransformMatrix
-        
-        NativeArray<float3> viewPoints = new NativeArray<float3>(stepCount+1, Allocator.Temp);
-        for ( int i = 0; i <= stepCount; i++ )
-        {
-            float angle = -( eye.FOV / 2 ) + degreesPerStep * i;
-            
-            ViewCastInfo viewCast = CastRay( t, angle, eye );
-            viewPoints[i] = viewCast.Position;
-        }
-/*
-        int vertexCount = viewPoints.Length + 1;
-        NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.Temp);
-        NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.Temp);
-        
-        vertices[0] = Vector3.zero;
-        for ( int i = 0; i < vertexCount -1; i++ )
-        {
-            vertices[i + 1] = viewPoints[i];
-
-            if ( i < vertexCount - 2 )
-            {
-                triangles[i * 3] = 0;
-                triangles[i * 3 + 1] = i + 1;
-                triangles[i * 3 + 2] = i + 2;
-            }
-        }
-        */
-    }
-
-    private ViewCastInfo CastRay(LocalTransform transform, float angle, EyeComponent eye)
-    {
-        float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
-        Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
-        uint mask = 1 << 6;
-        mask = ~mask;
-        
-        
-
-        CollisionFilter filter = new CollisionFilter
-        {
-            CollidesWith = mask,
-            BelongsTo = mask
-        };
-        
-        RaycastInput rayInput = new RaycastInput
-        {
-            Start = transform.Position,
-            End = transform.Position + rayEnd,
-            Filter = filter
-        };
-
-        if ( PhysicsWorld.CastRay( rayInput, out RaycastHit rayHit ) )
-        {
-            //Debug.DrawLine( transform.Position, rayHit.Position, Color.blue, .1f );
-            return new ViewCastInfo(true, rayHit.Position, math.distance( rayHit.Position, transform.Position ), angle );
-        } 
-        
-        return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
-    }
-    
-
-    
-    
-}
-
 [BurstCompile]
 public struct EyePhyicsQueryJob : IJob
 {
+    private static readonly float3 float3Forward = new float3( 1, 0, 0 );
     public EyeComponent eye;
     public LocalTransform transform;
     public PhysicsWorldSingleton PhysicsWorld;
@@ -342,9 +272,9 @@ public struct EyePhyicsQueryJob : IJob
 
             if ( i > 0 )
             {
-                //bool threshold = math.abs( oldViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
-                //if ( oldViewCast.Hit != viewCast.Hit || (oldViewCast.Hit && viewCast.Hit && threshold) ) 
-                if ( oldViewCast.Hit != viewCast.Hit  )
+                bool threshold = math.abs( oldViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
+                if ( oldViewCast.Hit != viewCast.Hit || (oldViewCast.Hit && viewCast.Hit && threshold) )
+                //if ( oldViewCast.Hit != viewCast.Hit  )
                 {
                     EdgeInfo edge = FindEdge( oldViewCast, viewCast );
                     if ( edge.PointA != Vector3.zero )
@@ -368,10 +298,8 @@ public struct EyePhyicsQueryJob : IJob
         Vertices[0] = Vector3.zero;
         for ( int i = 0; i < vertexCount -1; i++ )
         {
-            Vertices[i + 1] = transform.InverseTransformPoint( viewPoints[i] ); //+ new float3(1,0,0) *eye.CutAway;
+            Vertices[i + 1] = transform.InverseTransformPoint( viewPoints[i] )+ float3Forward *eye.CutAway;
 
-            //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
-                
             if ( i < vertexCount - 2 )
             {
                 Triangles[i * 3] = i + 2;
@@ -440,10 +368,12 @@ public struct EyePhyicsQueryJob : IJob
 [BurstCompile]
 public struct EyePhyicsQueryParallelJob : IJobParallelFor
 {
+    //private static readonly float3 float3Forward = new float3( 1, 0, 0 );
     [ReadOnly] public EyeComponent eye;
     [ReadOnly] public LocalTransform transform;
     [ReadOnly] public PhysicsWorldSingleton PhysicsWorld;
     [ReadOnly] public CollisionFilter RayFilter;
+    [ReadOnly] public float DegreesPerStep;
     
     [NativeDisableParallelForRestriction]
     public NativeArray<Vector3> Vertices;
@@ -452,50 +382,32 @@ public struct EyePhyicsQueryParallelJob : IJobParallelFor
 
     public void Execute( int index )
     {
-        int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
-        float degreesPerStep = eye.FOV / stepCount;
+        //int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
+        //float degreesPerStep = eye.FOV / stepCount;
         
-        //LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );//convert child transform to world transform, might need to use TransformHelpers.ComputeWorldTransformMatrix
+
+        float angle = -( eye.FOV / 2 ) + DegreesPerStep * index;
+        ViewCastInfo viewCast = CastRay(  angle );
         
-        //NativeArray<float3> viewPoints = new NativeArray<float3>(stepCount+1, Allocator.Temp);
-        //for ( int i = 0; i <= stepCount; i++ )
-        //{
-            float angle = -( eye.FOV / 2 ) + degreesPerStep * index;
-            
-            ViewCastInfo viewCast = CastRay(  angle );
-            //viewPoints[index] = viewCast.Position;
-        //}
-
-        int vertexCount = stepCount+1 + 1;
-        //NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.Temp);
-        //NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.Temp);
-
         if(index == 0)
             Vertices[0] = Vector3.zero;
 
         int i = index;
-        //for ( int i = 0; i < vertexCount -1; i++ )
-        //{
-            Vertices[i + 1] = transform.InverseTransformPoint( viewCast.Position ); //+ new float3(1,0,0) *eye.CutAway;
-
-            //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
-                
-            if ( i < vertexCount - 2 )
-            {
-                Triangles[i * 3] = i + 2;
-                Triangles[i * 3 + 1] = i + 1;
-                Triangles[i * 3 + 2] = 0;
-            }
-        //}
+        Vertices[i + 1] = transform.InverseTransformPoint( viewCast.Position ); //+ float3Forward *eye.CutAway;
         
+                
+        if ( i < Vertices.Length - 2 )
+        {
+            Triangles[i * 3] = i + 2;
+            Triangles[i * 3 + 1] = i + 1;
+            Triangles[i * 3 + 2] = 0;
+        }
+
     }
 
     private ViewCastInfo CastRay( float angle)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
-        //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
-        uint mask = 1 << 6;
-        mask = ~mask;
 
         RaycastInput rayInput = new RaycastInput
         {
@@ -507,7 +419,6 @@ public struct EyePhyicsQueryParallelJob : IJobParallelFor
         
         if ( PhysicsWorld.CastRay( rayInput, out RaycastHit rayHit ) )
         {
-            
             return new ViewCastInfo(true, rayHit.Position, math.distance( rayHit.Position, transform.Position ), angle );
         } 
         

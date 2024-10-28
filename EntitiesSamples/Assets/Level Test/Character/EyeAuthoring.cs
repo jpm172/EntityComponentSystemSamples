@@ -50,5 +50,4 @@ public struct EyeComponent : IComponentData
     public float EdgeDistanceThreshold;
     public int ResolveIterations;
     public float CutAway;
-
 }
