@@ -166,9 +166,8 @@ public partial struct EyeSystem : ISystem
             
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
-            
-            
-            
+
+
             curMesh.Clear();
             curMesh.vertices = vertices.Slice(0, newLength.Value).ToArray();
             curMesh.triangles = triangles.Slice(0, newLength.Value*3).ToArray();
@@ -184,7 +183,7 @@ public partial struct EyeSystem : ISystem
             newLength.Dispose();
             vertices.Dispose();
             triangles.Dispose();
-            
+
         }
     }
     

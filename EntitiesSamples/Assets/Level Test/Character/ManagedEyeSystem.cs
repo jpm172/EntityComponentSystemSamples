@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Entities.Graphics;
@@ -45,7 +46,6 @@ public partial class ManagedEyeSystem : SystemBase
                         // Add RenderBounds
                         EntityManager.AddComponentData(entity, new RenderBounds() { Value = { Center = highlightMesh.bounds.center, Extents = highlightMesh.bounds.extents } });
                         EntityManager.RemoveComponent<InitializeTag>( entity );
-                    
                 }
             )
             .Run();
