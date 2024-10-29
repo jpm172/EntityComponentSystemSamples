@@ -51,118 +51,34 @@ public partial struct EyeSystem : ISystem
         
         foreach (
             var (transformComp, ltwComp, eyeComp, info, entity)
-            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRW<EyeComponent>, RefRO<MaterialMeshInfo>>()
+            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRO<EyeComponent>, RefRO<MaterialMeshInfo>>()
                 .WithEntityAccess()
         )
         {
-
-            //float startTime = Time.realtimeSinceStartup;
-            
-            EyeComponent eye = eyeComp.ValueRW;
+            EyeComponent eye = eyeComp.ValueRO;
             LocalTransform transform = transformComp.ValueRO;
             LocalToWorld ltw = ltwComp.ValueRO;
 
-            
-            
-
             int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
-            float degreesPerStep = eye.FOV / stepCount;
 
-            LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );
-            
-            
-            
-            int vertexCount = (stepCount + 2)*2;
-            //int vertexCount = stepCount + 2;
-            NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
-            NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.TempJob);
+            //the max amount of vertices is if the raycasting step calls FindEdge() every time, which would double the amount of vertices
+            int maxVertexCount = (stepCount + 2)*2;
+
+            NativeArray<Vector3> vertices = new NativeArray<Vector3>(maxVertexCount, Allocator.TempJob);
+            NativeArray<int> triangles = new NativeArray<int>((maxVertexCount - 2)*3, Allocator.TempJob);
             NativeReference<int> newLength = new NativeReference<int>(Allocator.TempJob);
-            
-            //float startTime = Time.realtimeSinceStartup;
-           
+
             new EyePhyicsQueryJob()
             {
                 PhysicsWorld = physicsWorld,
                 eye = eye,
-                transform = t,
+                transform = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation ),
                 Vertices = vertices,
                 Triangles = triangles,
                 NewLength = newLength,
                 RayFilter = _rayFilter
             }.Run();
             
-            
-            //Debug.Log( "MeshDone: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-            /*
-            //float startTime = Time.realtimeSinceStartup;
-            new EyePhyicsQueryParallelJob()
-            {
-                PhysicsWorld = physicsWorld,
-                eye = eye,
-                transform = t,
-                Vertices = vertices,
-                Triangles = triangles,
-                DegreesPerStep = degreesPerStep,
-                RayFilter = _rayFilter
-            }.Schedule( vertexCount, 16 ).Complete();
-            //Debug.Log( "MeshDone: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-            */
-            
-            /*
-            float degreesPerStep = eye.FOV / stepCount;
-            //cast rays
-            List<float3> viewPoints = new List<float3>();
-            ViewCastInfo oldViewCast = new ViewCastInfo();
-            for ( int i = 0; i <= stepCount; i++ )
-            {
-                float angle = -( eye.FOV / 2 ) + (degreesPerStep * i);
-                ViewCastInfo viewCast = CastRay( t, angle, eye, physicsWorld );
-
-                if ( i > 0 )
-                {
-                    bool threshold = math.abs( oldViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
-                    if ( oldViewCast.Hit != viewCast.Hit || (oldViewCast.Hit && viewCast.Hit && threshold) )
-                    //if ( oldViewCast.Hit != viewCast.Hit  )
-                    {
-                        EdgeInfo edge = FindEdge( oldViewCast, viewCast, t, eye, physicsWorld );
-                        if ( edge.PointA != Vector3.zero )
-                        {
-                            viewPoints.Add( edge.PointA );
-                        }
-                        if ( edge.PointB != Vector3.zero )
-                        {
-                            viewPoints.Add( edge.PointB );
-                        }
-                    }
-                }
-                
-                
-                viewPoints.Add( viewCast.Position );
-                oldViewCast = viewCast;
-            }
-            
-            //put ray results into mesh
-            int vertexCount = viewPoints.Count + 1;
-            Vector3[] vertices = new Vector3[vertexCount];
-            int[] triangles = new int[( vertexCount - 2 ) * 3];
-        
-            vertices[0] = Vector3.zero;
-            for ( int i = 0; i < vertexCount -1; i++ )
-            {
-                vertices[i + 1] = t.InverseTransformPoint(viewPoints[i]) + new float3(1,0,0) *eye.CutAway;
-
-                //Debug.DrawLine( vertices[0], vertices[i+1], Color.red, .1f );
-                
-                if ( i < vertexCount - 2 )
-                {
-                    triangles[i * 3] = i + 2;
-                    triangles[i * 3 + 1] = i + 1;
-                    triangles[i * 3 + 2] = 0;
-                }
-            }
-            
-            //
-            */
             
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
@@ -172,13 +88,6 @@ public partial struct EyeSystem : ISystem
             curMesh.vertices = vertices.Slice(0, newLength.Value).ToArray();
             curMesh.triangles = triangles.Slice(0, newLength.Value*3).ToArray();
             curMesh.RecalculateNormals();
-            
-            /*
-            curMesh.Clear();
-            curMesh.vertices = vertices.ToArray();
-            curMesh.triangles = triangles.ToArray();
-            curMesh.RecalculateNormals();
-            */
 
             newLength.Dispose();
             vertices.Dispose();
@@ -190,8 +99,7 @@ public partial struct EyeSystem : ISystem
     private ViewCastInfo CastRay(LocalTransform transform, float angle, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
-        //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
-
+        
         RaycastInput rayInput = new RaycastInput
         {
             Start = transform.Position,
@@ -202,7 +110,6 @@ public partial struct EyeSystem : ISystem
         
         if ( physicsWorld.CastRay( rayInput, out RaycastHit rayHit ) )
         {
-            //Debug.DrawLine( transform.Position, rayHit.Position, Color.blue, .1f );
             return new ViewCastInfo(true, rayHit.Position, math.distance( rayHit.Position, transform.Position ), angle );
         } 
         
@@ -225,7 +132,6 @@ public partial struct EyeSystem : ISystem
 
             bool threshold = math.abs( minViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
             if ( viewCast.Hit == minViewCast.Hit && !threshold )
-            //if ( viewCast.Hit == minViewCast.Hit  )
             {
                 minPoint = viewCast.Position;
                 minAngle = angle;
@@ -273,7 +179,6 @@ public struct EyePhyicsQueryJob : IJob
             {
                 bool threshold = math.abs( oldViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
                 if ( oldViewCast.Hit != viewCast.Hit || (oldViewCast.Hit && viewCast.Hit && threshold) )
-                //if ( oldViewCast.Hit != viewCast.Hit  )
                 {
                     EdgeInfo edge = FindEdge( oldViewCast, viewCast );
                     if ( edge.PointA != Vector3.zero )
@@ -346,7 +251,6 @@ public struct EyePhyicsQueryJob : IJob
 
             bool threshold = math.abs( minViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
             if ( viewCast.Hit == minViewCast.Hit && !threshold )
-                //if ( viewCast.Hit == minViewCast.Hit  )
             {
                 minPoint = viewCast.Position;
                 minAngle = angle;
@@ -384,7 +288,6 @@ public struct EyePhyicsQueryParallelJob : IJobParallelFor
         //int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
         //float degreesPerStep = eye.FOV / stepCount;
         
-
         float angle = -( eye.FOV / 2 ) + DegreesPerStep * index;
         ViewCastInfo viewCast = CastRay(  angle );
         
