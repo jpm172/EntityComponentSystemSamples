@@ -49,64 +49,80 @@ public partial struct PlayerMoveJob : IJobEntity
     private void Execute( ref LocalTransform transform, in PlayerInputs input, MyCharacterComponent attributes,
         PhysicsCollider col )
     {
-        /*
-        bool result = PhysicsWorld.BoxCast( input.AimPosition, quaternion.identity,
-            new float3( 1, 1, 1 ) / GameSettings.PixelsPerUnit, new float3( 1, 0, 0 ), 1, CollisionFilter.Default,
-            QueryInteraction.Default );
-        Debug.Log( result );
-        */
         //rotate the character to look at the mouse
         float3 forward = input.AimPosition - transform.Position;
         quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward );
         
         transform.Rotation = rotation;
         transform = transform.RotateZ( AngleAdjust );
-            
+
         float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
+
+        float3 result = CollideAndSlide( col, new float3(targetMove, 0), transform.Position, transform, 0 );
+        
+        /*
         if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits ) )
         {
-            //Debug.Log( transform.Position.xy + ", " + hit.Position.xy );
             float2 relativeHit = transform.Position.xy - hit.Position.xy;
 
             
             if ( GetClosestPoint( transform, col, hit, castHits, out RaycastHit rayHit, out float2 adjust ) )
             {
-                //Debug.Log( hit.Position - rayHit.Position );
-                //transform.Position.xy -=  ( hit.Position - rayHit.Position ).xy;
                 transform.Position.xy -=  adjust;
                 
             }
 
             castHits.Dispose();
             return;
-            /*
-            if ( hit.Fraction > math.EPSILON )
-            {
-                targetMove *= hit.Fraction;
-            }
-            else if ( GetClosestPoint( transform, col, hit, out RaycastHit rayHit ) )
-            {
-                //Debug.Log( hit.Position - rayHit.Position );
-                transform.Position.xy -=  ( hit.Position - rayHit.Position ).xy;
-                return;
-            }
-            else
-            {
-                return;
-            }
-            */
-
-            //Debug.DrawLine( transform.Position, hit.Position, Color.red, .1f );
-            //transform.Position.xy += relativeHit;
-            
-
         }
+        */
 
-        transform.Position.xy += targetMove;
-        //float2 targetPosition = transform.Position.xy + input.MoveInput * attributes.MovementSpeed;
-        //velocity = math.lerp(velocity, targetVelocity, MathUtilities.GetSharpnessInterpolant(interpolationSharpness, deltaTime));
+        transform.Position.xy += result.xy;
     }
 
+
+    private float3 CollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth )
+    {
+        int maxDepth = 5;
+        float skinWidth = .7f;
+
+        //Debug.Log( pos );
+        if(depth>= maxDepth)
+            return float3.zero;
+        
+        
+
+        float dist = math.length( vel ) + skinWidth;
+        
+        ColliderCastInput cast = new ColliderCastInput(col.Value, pos, pos + vel,
+            transform.Rotation);
+
+        if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
+        {
+            float3 snapToSurface =
+                math.normalizesafe( vel ) * ( math.distance( pos, hit.Position ) - skinWidth );
+
+            float3 leftOver = vel - snapToSurface;
+
+            if(math.length( snapToSurface ) <= skinWidth)
+                snapToSurface = float3.zero;
+            
+            float mag = math.length( leftOver );
+            //leftOver =  math.normalize(math.project( leftOver, hit.SurfaceNormal ));
+            leftOver =  math.normalizesafe(ProjectOnPlane( leftOver, hit.SurfaceNormal ));
+            leftOver *= mag;
+            return snapToSurface + CollideAndSlide( col, leftOver, pos + snapToSurface, transform, depth + 1 );
+
+        }
+        
+        return vel;
+    }
+    
+    public static float3 ProjectOnPlane(float3 vector, float3 planeNormal)
+    {
+        return vector - math.project(vector, planeNormal);
+    }
+    
     private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits)
     {
 

@@ -618,6 +618,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 0aa26ae6587a2ae4eb3001c81169e13d, type: 3}
   - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
   wallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
+  FoWTexture: {fileID: 0}
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 5
@@ -625,6 +626,7 @@ MonoBehaviour:
   _maxRoomSeedSize: 60
   _seedBuffer: 20
   maxEdgeWeight: 10
+  UseGizmos: 0
   UseMeshes: 0
   ShowFloorMesh: 0
   ShowWallMesh: 0
