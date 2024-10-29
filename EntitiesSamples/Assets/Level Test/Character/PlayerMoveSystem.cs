@@ -107,6 +107,8 @@ public partial struct PlayerMoveJob : IJobEntity
         //velocity = math.lerp(velocity, targetVelocity, MathUtilities.GetSharpnessInterpolant(interpolationSharpness, deltaTime));
     }
 
+    
+    
     private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits)
     {
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.Burst;
 using Unity.CharacterController;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
 using Unity.Entities.Graphics;
 using Unity.Entities.UniversalDelegates;
@@ -51,18 +52,14 @@ public partial struct EyeSystem : ISystem
         
         foreach (
             var (transformComp, ltwComp, eyeComp, info, entity)
-            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRW<EyeComponent>, RefRO<MaterialMeshInfo>>()
+            in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRO<EyeComponent>, RefRO<MaterialMeshInfo>>()
                 .WithEntityAccess()
         )
         {
-
-            //float startTime = Time.realtimeSinceStartup;
             
-            EyeComponent eye = eyeComp.ValueRW;
+            EyeComponent eye = eyeComp.ValueRO;
             LocalTransform transform = transformComp.ValueRO;
             LocalToWorld ltw = ltwComp.ValueRO;
-
-            
             
 
             int stepCount =  (int) math.round(eye.Resolution * eye.FOV);
@@ -77,6 +74,8 @@ public partial struct EyeSystem : ISystem
             NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
             NativeArray<int> triangles = new NativeArray<int>((vertexCount - 2)*3, Allocator.TempJob);
             NativeReference<int> newLength = new NativeReference<int>(Allocator.TempJob);
+            
+            
             
             //float startTime = Time.realtimeSinceStartup;
            
@@ -171,7 +170,7 @@ public partial struct EyeSystem : ISystem
             curMesh.Clear();
             curMesh.vertices = vertices.Slice(0, newLength.Value).ToArray();
             curMesh.triangles = triangles.Slice(0, newLength.Value*3).ToArray();
-            curMesh.RecalculateNormals();
+            //curMesh.RecalculateNormals();
             
             /*
             curMesh.Clear();
@@ -183,11 +182,12 @@ public partial struct EyeSystem : ISystem
             newLength.Dispose();
             vertices.Dispose();
             triangles.Dispose();
+            
 
         }
     }
     
-    private ViewCastInfo CastRay(LocalTransform transform, float angle, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
+    private ViewCastInfo CastRay(LocalTransform transform, float angle, ref EyeComponent eye, PhysicsWorldSingleton physicsWorld)
     {
         float3 rayEnd = transform.RotateZ( angle * math.TORADIANS ).Right() * eye.ViewDistance;
         //Debug.DrawLine( transform.Position, transform.Position + rayEnd, Color.blue, .1f );
@@ -210,7 +210,7 @@ public partial struct EyeSystem : ISystem
         return new ViewCastInfo(false, rayInput.End, eye.ViewDistance, angle );
     }
 
-    private EdgeInfo FindEdge(ViewCastInfo minViewCast, ViewCastInfo maxViewCast, LocalTransform t, EyeComponent eye, PhysicsWorldSingleton physicsWorld)
+    private EdgeInfo FindEdge(ViewCastInfo minViewCast, ViewCastInfo maxViewCast, LocalTransform t, ref EyeComponent eye, PhysicsWorldSingleton physicsWorld)
     {
         float minAngle = minViewCast.Angle;
         float maxAngle = maxViewCast.Angle;
@@ -221,7 +221,7 @@ public partial struct EyeSystem : ISystem
         {
             float angle = ( minAngle + maxAngle ) / 2;
             
-            ViewCastInfo viewCast = CastRay( t, angle, eye, physicsWorld );
+            ViewCastInfo viewCast = CastRay( t, angle, ref eye, physicsWorld );
 
             bool threshold = math.abs( minViewCast.Distance - viewCast.Distance ) > eye.EdgeDistanceThreshold;
             if ( viewCast.Hit == minViewCast.Hit && !threshold )

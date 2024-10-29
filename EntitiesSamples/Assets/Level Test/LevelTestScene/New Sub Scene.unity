@@ -594,7 +594,7 @@ PrefabInstance:
     - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}
       propertyPath: ViewDistance
-      value: 3
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: -7472122416081835556, guid: 03b08bb2d50478544844234824bc4b52,
         type: 3}

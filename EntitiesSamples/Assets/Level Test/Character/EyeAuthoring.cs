@@ -50,4 +50,7 @@ public struct EyeComponent : IComponentData
     public float EdgeDistanceThreshold;
     public int ResolveIterations;
     public float CutAway;
+
+    //public unsafe Vector3* Pointer;
+    //public BlobPtr<Vector3> Pointer;
 }
