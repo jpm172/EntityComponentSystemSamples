@@ -9,11 +9,14 @@ using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 using BoxCollider = Unity.Physics.BoxCollider;
+using CapsuleCollider = Unity.Physics.CapsuleCollider;
 using RaycastHit = Unity.Physics.RaycastHit;
 
 [UpdateBefore(typeof(TransformSystemGroup))]
 public partial struct PlayerMoveSystem : ISystem
 {
+    
+
     public void OnCreate( ref SystemState state )
     {
         
@@ -42,9 +45,15 @@ public partial struct PlayerMoveSystem : ISystem
 //[BurstCompile]
 public partial struct PlayerMoveJob : IJobEntity
 {
+    
     public float DeltaTime;
     public PhysicsWorldSingleton PhysicsWorld;
     private static readonly float AngleAdjust = math.radians( 90 );
+    private static readonly CollisionFilter CastFilter = new CollisionFilter
+    {
+        CollidesWith = ~(uint)( 1 << 6 ),
+        BelongsTo = ~(uint)( 1 << 6 )
+    };
 
     private void Execute( ref LocalTransform transform, in PlayerInputs input, MyCharacterComponent attributes,
         PhysicsCollider col )
@@ -57,8 +66,9 @@ public partial struct PlayerMoveJob : IJobEntity
         transform = transform.RotateZ( AngleAdjust );
 
         float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
+        float3 vel = new float3( targetMove, 0 );
 
-        float3 result = CollideAndSlide( col, new float3(targetMove, 0), transform.Position, transform, 0 );
+        float3 result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel );
         
         /*
         if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits ) )
@@ -81,38 +91,51 @@ public partial struct PlayerMoveJob : IJobEntity
     }
 
 
-    private float3 CollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth )
+    private float3 CollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth, float3 velInit )
     {
         int maxDepth = 5;
-        float skinWidth = .7f;
+        float skinWidth = .0625f;
 
         //Debug.Log( pos );
         if(depth>= maxDepth)
             return float3.zero;
-        
-        
+
 
         float dist = math.length( vel ) + skinWidth;
         
         ColliderCastInput cast = new ColliderCastInput(col.Value, pos, pos + vel,
             transform.Rotation);
+        
+        float radius = col.Value.Value.CalculateAabb().Extents.x / 2;
 
-        if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
+        //if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
+        if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
             float3 snapToSurface =
-                math.normalizesafe( vel ) * ( math.distance( pos, hit.Position ) - skinWidth );
-
+                math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
+            
             float3 leftOver = vel - snapToSurface;
 
             if(math.length( snapToSurface ) <= skinWidth)
                 snapToSurface = float3.zero;
             
             float mag = math.length( leftOver );
-            //leftOver =  math.normalize(math.project( leftOver, hit.SurfaceNormal ));
+            //leftOver =  math.normalizesafe(math.project( leftOver, hit.SurfaceNormal ));
             leftOver =  math.normalizesafe(ProjectOnPlane( leftOver, hit.SurfaceNormal ));
             leftOver *= mag;
-            return snapToSurface + CollideAndSlide( col, leftOver, pos + snapToSurface, transform, depth + 1 );
+            
+            
+            // steep slope/wall
 
+            float scale = 1 - math.dot( math.normalizesafe( hit.SurfaceNormal.xy ),
+                              -math.normalizesafe( velInit.xy ) );
+
+            leftOver *= scale;
+            
+            //
+            
+            
+            return snapToSurface + CollideAndSlide( col, leftOver, pos + snapToSurface, transform, depth + 1, velInit );
         }
         
         return vel;
