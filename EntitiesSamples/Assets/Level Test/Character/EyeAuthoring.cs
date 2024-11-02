@@ -9,6 +9,7 @@ public class EyeAuthoring : MonoBehaviour
 {
     public float Resolution;
     public float FOV;
+    public float RelativeAngle;
     public float ViewDistance;
     public float EdgeDistanceThreshold;
     public float CutAway;
@@ -25,6 +26,7 @@ public class EyeAuthoring : MonoBehaviour
             {
                 Resolution = authoring.Resolution,
                 FOV = authoring.FOV,
+                RelativeAngle = authoring.RelativeAngle,
                 ViewDistance = authoring.ViewDistance,
                 EdgeDistanceThreshold = authoring.EdgeDistanceThreshold,
                 ResolveIterations = authoring.ResolveIterations,
@@ -46,6 +48,7 @@ public struct EyeComponent : IComponentData
 {
     public float Resolution;
     public float FOV;
+    public float RelativeAngle;
     public float ViewDistance;
     public float EdgeDistanceThreshold;
     public int ResolveIterations;

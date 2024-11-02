@@ -66,9 +66,9 @@ public partial struct EyeSystem : ISystem
             float degreesPerStep = eye.FOV / stepCount;
 
             LocalTransform t = transform.WithPosition( ltw.Position ).WithRotation( ltw.Rotation );
-            
-            
-            
+
+
+
             int vertexCount = (stepCount + 2)*2;
             //int vertexCount = stepCount + 2;
             NativeArray<Vector3> vertices = new NativeArray<Vector3>(vertexCount, Allocator.TempJob);
@@ -265,7 +265,7 @@ public struct EyePhyicsQueryJob : IJob
         ViewCastInfo oldViewCast = new ViewCastInfo();
         for ( int i = 0; i <= stepCount; i++ )
         {
-            float angle = -( eye.FOV / 2 ) + degreesPerStep * i;
+            float angle = -( eye.FOV / 2 ) + eye.RelativeAngle +  degreesPerStep * i;
             
             ViewCastInfo viewCast = CastRay(  angle );
 
