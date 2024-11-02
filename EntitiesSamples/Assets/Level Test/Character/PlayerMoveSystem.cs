@@ -91,8 +91,7 @@ public partial struct PlayerMoveJob : IJobEntity
         transform.Position.xy += result.xy;
     }
 
-
-    private float3 CollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth, float3 velInit )
+    private float3 BoxCollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth, float3 velInit )
     {
         int maxDepth = 5;
         float skinWidth = .0625f;
@@ -101,14 +100,17 @@ public partial struct PlayerMoveJob : IJobEntity
             return float3.zero;
 
         float dist = math.length( vel ) + skinWidth;
-        
-        float radius = col.Value.As<CapsuleCollider>().Geometry.Radius;
 
-        if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
+        float3 geometry = col.Value.As<BoxCollider>().Geometry.Size;
+
+        float3 halfExtents = ( geometry - new float3( skinWidth, skinWidth, 0 ) * 2 ) / 2;
+        
+        //if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
+        if ( PhysicsWorld.BoxCast( pos, transform.Rotation, halfExtents, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
 
             
-            float3 snapToSurface = math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
+            float3 snapToSurface = math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - skinWidth );
 
             float3 leftOver = vel - snapToSurface;
 
@@ -135,6 +137,50 @@ public partial struct PlayerMoveJob : IJobEntity
         
         return vel;
     }
+
+    private float3 CollideAndSlide( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform, int depth, float3 velInit )
+         {
+             int maxDepth = 5;
+             float skinWidth = .0625f;
+             
+             if(depth>= maxDepth)
+                 return float3.zero;
+     
+             float dist = math.length( vel ) + skinWidth;
+             
+             float radius = col.Value.As<CapsuleCollider>().Geometry.Radius;
+     
+             if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
+             {
+     
+                 
+                 float3 snapToSurface = math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
+     
+                 float3 leftOver = vel - snapToSurface;
+     
+                 if(math.length( snapToSurface ) <= skinWidth)
+                     snapToSurface = float3.zero;
+                 
+                 float mag = math.length( leftOver );
+                 //leftOver =  math.normalizesafe(math.project( leftOver, hit.SurfaceNormal ));
+                 leftOver =  math.normalizesafe(ProjectOnPlane( leftOver, hit.SurfaceNormal ));
+                 leftOver *= mag;
+                 
+                 
+                 // scale with direction when hitting a steep slope/wall
+                 float scale = 1 - math.dot( math.normalizesafe( hit.SurfaceNormal.xy ),
+                                   -math.normalizesafe( velInit.xy ) );
+     
+                 leftOver *= scale;
+                 
+                 //
+                 
+                 
+                 return snapToSurface + CollideAndSlide( col, leftOver, pos + snapToSurface, transform, depth + 1, velInit );
+             }
+             
+             return vel;
+         }
     
     public static float3 ProjectOnPlane(float3 vector, float3 planeNormal)
     {
