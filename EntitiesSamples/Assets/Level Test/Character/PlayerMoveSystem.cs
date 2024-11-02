@@ -6,9 +6,9 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Transforms;
 using UnityEngine;
-using BoxCollider = Unity.Physics.BoxCollider;
 using CapsuleCollider = Unity.Physics.CapsuleCollider;
 using RaycastHit = Unity.Physics.RaycastHit;
 
@@ -100,13 +100,13 @@ public partial struct PlayerMoveJob : IJobEntity
         if(depth>= maxDepth)
             return float3.zero;
 
+        
+        
 
         float dist = math.length( vel ) + skinWidth;
-        
-        ColliderCastInput cast = new ColliderCastInput(col.Value, pos, pos + vel,
-            transform.Rotation);
-        
-        float radius = col.Value.Value.CalculateAabb().Extents.x / 2;
+
+        //float radius = col.Value.Value.CalculateAabb().Extents.x / 2;
+        float radius = col.Value.As<CapsuleCollider>().Radius;;
 
         //if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
         if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
