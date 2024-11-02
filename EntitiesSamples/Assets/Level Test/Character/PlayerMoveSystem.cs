@@ -6,6 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Transforms;
 using UnityEngine;
 using BoxCollider = Unity.Physics.BoxCollider;
@@ -95,25 +96,20 @@ public partial struct PlayerMoveJob : IJobEntity
     {
         int maxDepth = 5;
         float skinWidth = .0625f;
-
-        //Debug.Log( pos );
+        
         if(depth>= maxDepth)
             return float3.zero;
 
-
         float dist = math.length( vel ) + skinWidth;
         
-        ColliderCastInput cast = new ColliderCastInput(col.Value, pos, pos + vel,
-            transform.Rotation);
-        
-        float radius = col.Value.Value.CalculateAabb().Extents.x / 2;
+        float radius = col.Value.As<CapsuleCollider>().Geometry.Radius;
 
-        //if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
         if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
-            float3 snapToSurface =
-                math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
+
             
+            float3 snapToSurface = math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
+
             float3 leftOver = vel - snapToSurface;
 
             if(math.length( snapToSurface ) <= skinWidth)
@@ -125,8 +121,7 @@ public partial struct PlayerMoveJob : IJobEntity
             leftOver *= mag;
             
             
-            // steep slope/wall
-
+            // scale with direction when hitting a steep slope/wall
             float scale = 1 - math.dot( math.normalizesafe( hit.SurfaceNormal.xy ),
                               -math.normalizesafe( velInit.xy ) );
 
