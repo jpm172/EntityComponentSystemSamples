@@ -420,8 +420,8 @@ Camera:
   m_GameObject: {fileID: 1023235550}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.2830189, g: 0.2830189, b: 0.2830189, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -446,7 +446,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 4.2
+  orthographic size: 7
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -609,8 +609,8 @@ MonoBehaviour:
     x: 0
     y: 0
   layoutDimensions:
-    x: 2
-    y: 2
+    x: 4
+    y: 3
   fogOfWarMesh: {fileID: 1195844247}
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
@@ -626,6 +626,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
   wallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
   FoWTexture: {fileID: 0}
+  StencilShader: {fileID: 4800000, guid: 9aa958540741a714e8a38445b43b0d1b, type: 3}
   useSeed: 1
   _minWallThickness: 1
   _maxWallThickness: 5
@@ -639,6 +640,7 @@ MonoBehaviour:
   ShowWallMesh: 0
   UseWireMeshes: 0
   UseConnections: 0
+  CreateOnStart: 1
   StepWiseGrow: 0
   GrowSteps: 1
 --- !u!4 &1289639036
@@ -731,7 +733,7 @@ MonoBehaviour:
   m_Follow: {fileID: 1458517020}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 4.2
+    OrthographicSize: 7
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0

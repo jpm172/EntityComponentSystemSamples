@@ -50,6 +50,7 @@ public partial class LevelGenerator : MonoBehaviour
 
 
     [SerializeField] private Texture2D FoWTexture;
+    public Shader StencilShader;
     
     //seeding variables
     public bool useSeed;
@@ -79,6 +80,7 @@ public partial class LevelGenerator : MonoBehaviour
     public bool ShowWallMesh;
     public bool UseWireMeshes;
     public bool UseConnections;
+    public bool CreateOnStart;
     
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
@@ -227,6 +229,12 @@ public partial class LevelGenerator : MonoBehaviour
         if ( y == 0 || y == dimensions.y - 1 )
             return true;
         return false;
+    }
+
+    private void Start()
+    {
+        if(CreateOnStart)
+            GenerateLevel();
     }
 
     public void GenerateLevel()

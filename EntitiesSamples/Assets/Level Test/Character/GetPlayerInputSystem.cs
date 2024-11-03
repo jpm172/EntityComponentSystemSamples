@@ -17,11 +17,11 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnCreate()
     {
         _inputActions = new DemoInputActions();
-        _camera = Camera.main;
     }
 
     protected override void OnStartRunning()
     {
+        _camera = Camera.main;
         _inputActions.Enable();
         _inputActions.DemoMap.Interact.performed += OnPlayerInteract;
     }
@@ -37,6 +37,7 @@ public partial class GetPlayerInputSystem : SystemBase
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Debug = DebugClass.instance.Forward.x;
         }
+        
         //Debug.Log( mousePosition );
 
     }
