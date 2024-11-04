@@ -16,10 +16,10 @@ public partial class ManagedEyeSystem : SystemBase
     private Material _debugMat;
     private List<BlobAssetReference<EyeComponent>> blobs;
     protected override void OnCreate()
-    {
+    {//
         blobs = new List<BlobAssetReference<EyeComponent>>();
         _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
-        //_debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Lit" ) );
+        _debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
         RequireForUpdate<InitializeTag>();
         
     }
@@ -35,10 +35,10 @@ public partial class ManagedEyeSystem : SystemBase
                         highlightMesh.name = "Eye Stencil Mesh";
 
                         // Create a RenderMeshDescription with basic values
-                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false);
+                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
 
                         // Create a RenderMeshArray with the required mesh and material
-                        var renderMeshArray = new RenderMeshArray(new[] { _stencilMat  }, new[] { highlightMesh });
+                        var renderMeshArray = new RenderMeshArray(new[] { _debugMat  }, new[] { highlightMesh });
 
                         // Create a MaterialMeshInfo instance which maps the first material and mesh from RenderMeshArray
                         var materialMeshInfo = MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0);

@@ -236,6 +236,11 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1443705506694902011, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
+        type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 1653140421502468464, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: m_FlipX
@@ -294,7 +299,7 @@ PrefabInstance:
     - target: {fileID: 4447914357650562508, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: FOV
-      value: 360
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 4447914357650562508, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}

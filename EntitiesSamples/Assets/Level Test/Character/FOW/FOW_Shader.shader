@@ -3,6 +3,8 @@ Shader "Unlit/FOW_Shader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Smoothness ("Feather", Range(0,0.1)) = 0.005
+        _Noise ("Nosie", Range(0,1)) = 0.1
     }
     SubShader
     {
@@ -38,6 +40,13 @@ Shader "Unlit/FOW_Shader"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            float _Smoothness;
+            float _Noise;
+            
+            float random (float2 uv)
+            {
+                return frac(sin(dot(uv,float2(12.9898,78.233)))*43758.5453123);
+            }
 
             v2f vert (appdata v)
             {
@@ -53,14 +62,35 @@ Shader "Unlit/FOW_Shader"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
+                 half4 gaussianH   = tex2D (_MainTex, i.uv + float2(-_Smoothness,0))*0.25;
+                gaussianH  += tex2D (_MainTex,  i.uv                          )*0.5  ;
+                gaussianH  += tex2D (_MainTex,  i.uv + float2( _Smoothness,0))*0.25;
+    
+                half4 gaussianV   = tex2D (_MainTex,  i.uv + float2(0,-_Smoothness))*0.25;
+                gaussianV  += tex2D (_MainTex,  i.uv                        ) *0.5  ;
+                gaussianV  += tex2D (_MainTex,  i.uv + float2(0, _Smoothness))*0.25;
+    
+                half4 blurred    = (gaussianH+ gaussianV)*0.5;
+                
+                
                 //clip(1 - col.r);
-                col.a = abs(1 - col.r);
-
-
+                //col.a = abs(1 - col.r);
+                //clip(col.a - 1);
+                float rand = random(i.uv) * _Noise;
+                col *= blurred.r - rand ;
+                
+                
+                col.a = abs(1 - col.r );
+                //clip(col.a - 1);
                 
                 return col;
             }
+            
+            
+            
             ENDCG
+            
         }
+        
     }
 }
