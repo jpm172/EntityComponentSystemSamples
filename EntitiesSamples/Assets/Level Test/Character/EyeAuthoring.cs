@@ -13,6 +13,8 @@ public class EyeAuthoring : MonoBehaviour
     public float ViewDistance;
     public float EdgeDistanceThreshold;
     public float CutAway;
+    public float Hardness;
+    public float Strength;
     public int ResolveIterations;
     
     public class EyeBaker : Baker<EyeAuthoring>
@@ -26,6 +28,8 @@ public class EyeAuthoring : MonoBehaviour
             {
                 Resolution = authoring.Resolution,
                 FOV = authoring.FOV,
+                Hardness = authoring.Hardness,
+                Strength = authoring.Strength,
                 RelativeAngle = authoring.RelativeAngle,
                 ViewDistance = authoring.ViewDistance,
                 EdgeDistanceThreshold = authoring.EdgeDistanceThreshold,
@@ -53,6 +57,9 @@ public struct EyeComponent : IComponentData
     public float EdgeDistanceThreshold;
     public int ResolveIterations;
     public float CutAway;
+
+    public float Hardness;
+    public float Strength;
 
     //public unsafe Vector3* Pointer;
     //public BlobPtr<Vector3> Pointer;

@@ -18,7 +18,9 @@ public partial class ManagedEyeSystem : SystemBase
     protected override void OnCreate()
     {//
         blobs = new List<BlobAssetReference<EyeComponent>>();
-        _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
+        //_stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
+        _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsCutOutFade" ) );
+        _stencilMat.SetFloat("_Hardness", .5f);
         _debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
         RequireForUpdate<InitializeTag>();
         
@@ -34,12 +36,21 @@ public partial class ManagedEyeSystem : SystemBase
                         highlightMesh.MarkDynamic();
                         highlightMesh.name = "Eye Stencil Mesh";
 
+                        
                         // Create a RenderMeshDescription with basic values
-                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
+                        //var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
+                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false );
 
+                        
+                        //set up shader
+                        _stencilMat.SetFloat("_Radius", eye.ViewDistance);
+                        _stencilMat.SetFloat("_Hardness", eye.Hardness);
+                        _stencilMat.SetFloat("_Strength", eye.Strength);
+                        _stencilMat.SetVector("_Center", new Vector4(ltw.Position.x,ltw.Position.y ));
+                        
                         // Create a RenderMeshArray with the required mesh and material
-                        var renderMeshArray = new RenderMeshArray(new[] { _debugMat  }, new[] { highlightMesh });
-
+                        var renderMeshArray = new RenderMeshArray(new[] { _stencilMat  }, new[] { highlightMesh });
+                        
                         // Create a MaterialMeshInfo instance which maps the first material and mesh from RenderMeshArray
                         var materialMeshInfo = MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0);
 
