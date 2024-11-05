@@ -14,14 +14,16 @@ using Random = UnityEngine.Random;
 public partial class LevelGenerator : MonoBehaviour
 {
 
+    
     [SerializeField] private int seed;
     
     [SerializeField]
-    private int2 dimensions;//dimensions of level in pixels
+    private int2 dimensions;//dimensions of level in terms of pixels
     
     [SerializeField]
-    private int2 layoutDimensions;//dimensions of level in room nodes
+    private int2 layoutDimensions;//dimensions of level in terms of rooms
 
+    [SerializeField] private Camera fogOfWarCamera;
     [SerializeField] private MeshFilter fogOfWarMesh;
     
     [SerializeField]
@@ -734,19 +736,31 @@ public partial class LevelGenerator : MonoBehaviour
         Mesh mesh = fogOfWarMesh.mesh;
         Vector3[] verts = mesh.vertices;
 
-        int buffer = 32;
+        int buffer = 0;
         Vector3 halfPixel = new Vector3(1,1)/ (2* GameSettings.PixelsPerUnit);
+
+        float largestDimension = math.max( dimensions.x, dimensions.y );
         
+        verts[0] = new Vector3(-buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom left
+        verts[1] = new Vector3(largestDimension + buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom right
+        verts[2] = new Vector3(-buffer, largestDimension + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top left
+        verts[3] = new Vector3(largestDimension + buffer, largestDimension + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top right
+        
+        /*
         verts[0] = new Vector3(-buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom left
         verts[1] = new Vector3(dimensions.x + buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom right
         verts[2] = new Vector3(-buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top left
         verts[3] = new Vector3(dimensions.x + buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top right
-        
+        */
         
         mesh.SetVertices( verts );
         mesh.RecalculateBounds( );
         
         fogOfWarMesh.mesh = mesh;
+
+        float cameraPos = largestDimension / (2*GameSettings.PixelsPerUnit);
+        fogOfWarCamera.transform.position = new Vector3(cameraPos, cameraPos, -10 );
+        fogOfWarCamera.orthographicSize = cameraPos;
     }
     
     private void MakeWalls()
