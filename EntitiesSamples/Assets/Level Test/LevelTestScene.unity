@@ -641,7 +641,7 @@ MonoBehaviour:
   ShowWallMesh: 0
   UseWireMeshes: 0
   UseConnections: 0
-  CreateOnStart: 0
+  CreateOnStart: 1
   StepWiseGrow: 0
   GrowSteps: 1
 --- !u!4 &1289639036
@@ -1140,12 +1140,12 @@ PrefabInstance:
     - target: {fileID: 7755373157741029758, guid: 555afbadeab26734aaebb05d56f10612,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 0.01
       objectReference: {fileID: 0}
     - target: {fileID: 7755373157741029758, guid: 555afbadeab26734aaebb05d56f10612,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.03
       objectReference: {fileID: 0}
     - target: {fileID: 7755373157741029758, guid: 555afbadeab26734aaebb05d56f10612,
         type: 3}

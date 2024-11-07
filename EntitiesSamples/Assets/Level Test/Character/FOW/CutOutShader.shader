@@ -37,7 +37,6 @@ Shader "Unlit/CutOutShader"
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
                 float3 worldPos : POSITION_WS;
-
             };
 
             sampler2D _MainTex;
@@ -54,6 +53,7 @@ Shader "Unlit/CutOutShader"
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+                
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }

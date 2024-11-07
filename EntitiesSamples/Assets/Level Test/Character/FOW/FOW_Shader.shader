@@ -37,6 +37,7 @@ Shader "Unlit/FOW_Shader"
                 float2 uv : TEXCOORD0;
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
+                float4 screenPos : POSITION_SS;
             };
 
             sampler2D _MainTex;
@@ -46,7 +47,7 @@ Shader "Unlit/FOW_Shader"
             
             float random (float2 uv)
             {
-                return frac(sin(dot(uv,float2(12.9898 +  _Time.x,78.233)))*43758.5453123);
+                return frac(sin(dot(uv,float2(12.9898 + _Time.x,78.233)))*43758.5453123);
             }
 
             v2f vert (appdata v)
@@ -54,6 +55,7 @@ Shader "Unlit/FOW_Shader"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.screenPos =  ComputeScreenPos(o.vertex);
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
@@ -81,13 +83,13 @@ Shader "Unlit/FOW_Shader"
                 
                 float rand = random(i.uv) - ( (1 - _Noise)-0.5);
                 rand = floor(rand + 0.5);
-                //col.r = rand;
-                
+
+                float xRand = random(float2(i.screenPos.x, 0)) * _Noise;
+                xRand = floor(xRand + 0.5);
              
-                
                 //col.a = abs(1 - col.r );
                 //clip(col.a - 1);
-                return lerp(float4(0,0,0,1), float4(0,0,0,0), col.r * blurred.r);
+                return lerp(float4(0,0,0,1), float4(0,0,0,0), col.r * blurred.r - xRand);
                 //return col;
             }
             
