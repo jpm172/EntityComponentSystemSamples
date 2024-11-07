@@ -26,7 +26,12 @@ public partial struct EyeSystem : ISystem
         CollidesWith = ~(uint)( 1 << 6 ),
         BelongsTo = ~(uint)( 1 << 6 )
     };
-    
+
+    private static readonly int Center = Shader.PropertyToID( "_Center" );
+    private static readonly int Hardness = Shader.PropertyToID( "_Hardness" );
+    private static readonly int Strength = Shader.PropertyToID( "_Strength" );
+    private static readonly int Radius = Shader.PropertyToID( "_Radius" );
+
     public void OnCreate( ref SystemState state )
     {
         
@@ -165,11 +170,12 @@ public partial struct EyeSystem : ISystem
             
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
             Mesh curMesh = arr.GetMesh( info.ValueRO );
+            
             Material eyeMat = arr.GetMaterial( info.ValueRO );
-            eyeMat.SetVector( "_Center", new Vector4(ltw.Position.x, ltw.Position.y) );
-            eyeMat.SetFloat( "_Hardness", eye.Hardness );
-            eyeMat.SetFloat( "_Strength", eye.Strength );
-            eyeMat.SetFloat( "_Radius", eye.ViewDistance );
+            eyeMat.SetVector( Center, new float4(ltw.Position.x, ltw.Position.y,0,0) );
+            eyeMat.SetFloat( Hardness, eye.Hardness );
+            eyeMat.SetFloat( Strength, eye.Strength );
+            eyeMat.SetFloat( Radius, eye.ViewDistance );
 
             curMesh.Clear();
             curMesh.vertices = vertices.Slice(0, newLength.Value).ToArray();

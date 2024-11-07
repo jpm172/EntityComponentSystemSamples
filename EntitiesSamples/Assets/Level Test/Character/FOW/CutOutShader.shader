@@ -64,14 +64,16 @@ Shader "Unlit/CutOutShader"
                 float m = pow( distance(center, position),_Power);
                 return 1 -  smoothstep(radius*hardness, radius, m);
             }
+            
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // sample the texture
+                // sample the texture 
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
                 float m = mask(i.worldPos, _Center, _Radius, _Hardness);
                 float edge = m *_Strength;
+               
                 
                 return lerp(float4(0,0,0,0), float4(1,0,0,1), edge);
             }

@@ -92,8 +92,14 @@ Shader "Universal Render Pipeline/Custom/DotsCutOutFade"
                 return output;
             }
 
+            float random (float2 uv)
+            {
+                return frac(sin(dot(uv,float2(12.9898 +  _Time.x,78.233)))*43758.5453123);
+            }
+
             float mask(float3 position, float3 center, float radius, float hardness)
             {
+                //float m = distance(center, position) + random(position.xy) - 0.5;
                 float m = distance(center, position);
                 return 1 - smoothstep(radius*hardness, radius, m);
             }

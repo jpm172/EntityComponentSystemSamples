@@ -1,10 +1,9 @@
-Shader "Unlit/FOW_Shader"
+Shader "Unlit/TransparentTest"
 {
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
         _Smoothness ("Feather", Range(0,0.1)) = 0.005
-        _Noise ("Nosie", Range(0,1)) = 0.1
     }
     SubShader
     {
@@ -35,14 +34,12 @@ Shader "Unlit/FOW_Shader"
             struct v2f
             {
                 float2 uv : TEXCOORD0;
-                UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
             };
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
             float _Smoothness;
-            float _Noise;
             
             float random (float2 uv)
             {
@@ -54,7 +51,6 @@ Shader "Unlit/FOW_Shader"
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
@@ -63,32 +59,9 @@ Shader "Unlit/FOW_Shader"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
-                 half4 gaussianH   = tex2D (_MainTex, i.uv + float2(-_Smoothness,0))*0.25;
-                gaussianH  += tex2D (_MainTex,  i.uv                          )*0.5  ;
-                gaussianH  += tex2D (_MainTex,  i.uv + float2( _Smoothness,0))*0.25;
-    
-                half4 gaussianV   = tex2D (_MainTex,  i.uv + float2(0,-_Smoothness))*0.25;
-                gaussianV  += tex2D (_MainTex,  i.uv                        ) *0.5  ;
-                gaussianV  += tex2D (_MainTex,  i.uv + float2(0, _Smoothness))*0.25;
-    
-                half4 blurred = (gaussianH+ gaussianV)*0.5;
-                
-                
-                //clip(1 - col.r);
-                //col.a = abs(1 - col.r);
-                //clip(col.a - 1);
-                
-                
-                float rand = random(i.uv) - ( (1 - _Noise)-0.5);
-                rand = floor(rand + 0.5);
-                //col.r = rand;
-                
-             
-                
-                //col.a = abs(1 - col.r );
-                //clip(col.a - 1);
-                return lerp(float4(0,0,0,1), float4(0,0,0,0), col.r * blurred.r);
-                //return col;
+                col.a = 0.5;
+               
+                return col;
             }
             
             

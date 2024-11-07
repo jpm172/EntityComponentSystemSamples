@@ -52,7 +52,7 @@ public partial class LevelGenerator : MonoBehaviour
 
 
     [SerializeField] private Texture2D FoWTexture;
-    public Shader StencilShader;
+    public Shader StencilShader;//TODO: put the materials you dont want stripped into the resources folder
     
     //seeding variables
     public bool useSeed;

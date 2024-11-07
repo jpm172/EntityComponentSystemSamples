@@ -20,7 +20,6 @@ public partial class ManagedEyeSystem : SystemBase
         blobs = new List<BlobAssetReference<EyeComponent>>();
         //_stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
         _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsCutOutFade" ) );
-        _stencilMat.SetFloat("_Hardness", .5f);
         _debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
         RequireForUpdate<InitializeTag>();
         
@@ -38,8 +37,8 @@ public partial class ManagedEyeSystem : SystemBase
 
                         
                         // Create a RenderMeshDescription with basic values
-                        //var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
-                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false );
+                        var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
+                        //var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false );
 
                         
                         //set up shader
@@ -50,6 +49,17 @@ public partial class ManagedEyeSystem : SystemBase
                         
                         // Create a RenderMeshArray with the required mesh and material
                         var renderMeshArray = new RenderMeshArray(new[] { _stencilMat  }, new[] { highlightMesh });
+
+                        
+                        /*
+                        unsafe
+                        {
+                            var handle = GCHandle.Alloc(renderMeshArray.Materials[0], GCHandleType.Pinned);
+                            var handle2 = GCHandle.Alloc(renderMeshArray.Materials[0], GCHandleType.Pinned);
+                            Vector3* ptr = (Vector3*) handle.AddrOfPinnedObject().ToPointer();
+                        }
+                        */
+                        
                         
                         // Create a MaterialMeshInfo instance which maps the first material and mesh from RenderMeshArray
                         var materialMeshInfo = MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0);
@@ -84,6 +94,7 @@ public partial class ManagedEyeSystem : SystemBase
             )
             .Run();
     }
+    
 
     /*
     private void GetPointer(ref EyeComponent eye)
