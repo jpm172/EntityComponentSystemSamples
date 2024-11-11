@@ -14,7 +14,8 @@ Shader "Universal Render Pipeline/Custom/DotsCutOutFade"
     {
     
         Tags { "RenderType"="Opaque" }
-       
+        Blend SrcColor DstColor
+        BlendOp Max
 
         Pass
         {
