@@ -29,11 +29,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _DstFactor: 2
     - _Hardness: 0
     - _Noise: 1
+    - _Opp: 4
     - _Power: 2.5
-    - _Radius: 3
+    - _Radius: 3.19
+    - _SrcFactor: 3
     - _Strength: 1
     m_Colors:
-    - _Center: {r: 4, g: 2, b: 0, a: 0}
+    - _Center: {r: 13, g: 5.5, b: 0, a: 0}
   m_BuildTextureStacks: []

@@ -754,10 +754,11 @@ public partial class LevelGenerator : MonoBehaviour
         
         fogOfWarMesh.mesh = mesh;
         
+        /*
         StripMeshConstructor fogWallConstructor = new StripMeshConstructor();
         fowWallMesh = fogWallConstructor.ConstructMesh( _levelLayout, dimensions, _roomInfo );
-
         GameObject.Find( "wallMesh" ).GetComponent<MeshFilter>().mesh = fowWallMesh;
+        */
         
         // Set the 2D texture array parameters
         int slices = 1;

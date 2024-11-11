@@ -5,14 +5,25 @@ Shader "Unlit/FOW_Shader"
         _MainTex ("Texture", 2D) = "white" {}
         _Smoothness ("Feather", Range(0,0.1)) = 0.005
         _Noise ("Nosie", Range(0,1)) = 0.1
+        
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _SrcFactor("Src Factor", Float) = 5
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _DstFactor("Dst Factor", Float) = 10
+        [Enum(UnityEngine.Rendering.BlendOp)]
+        _Opp("Operation", Float) = 0
     }
     SubShader
     {
         Tags {"Queue" = "Transparent" "RenderType"="Transparent"  }
+        //Tags {"RenderType"="Opaque"  }
         LOD 100
 
         //Zwrite off //set off for transparent shader
         Blend SrcAlpha OneMinusSrcAlpha
+        //Blend [_SrcFactor] [_DstFactor]
+        //BlendOp [_Opp]
+        
         Lighting off
 
         Pass
@@ -90,7 +101,8 @@ Shader "Unlit/FOW_Shader"
                 //col.a = abs(1 - col.r );
                 //clip(col.a - 1);
                 return lerp(float4(0,0,0,1), float4(0,0,0,0), col.r * blurred.r - xRand);
-                //return col;
+                
+                return col;
             }
             
             

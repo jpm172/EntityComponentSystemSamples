@@ -8,11 +8,22 @@ Shader "Unlit/CutOutShader"
         _Hardness ("Hardness", float) = .1
         _Power("Power", float) = 1
         _Strength ("Strength", float) = 1
+        
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _SrcFactor("Src Factor", Float) = 5
+        [Enum(UnityEngine.Rendering.BlendMode)]
+        _DstFactor("Dst Factor", Float) = 10
+        [Enum(UnityEngine.Rendering.BlendOp)]
+        _Opp("Operation", Float) = 0
+        
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
         LOD 100
+        
+        Blend [_SrcFactor] [_DstFactor]
+        BlendOp [_Opp]
 
         Pass
         {
