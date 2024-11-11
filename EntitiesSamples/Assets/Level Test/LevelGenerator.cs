@@ -13,7 +13,8 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator : MonoBehaviour
 {
-
+    public Mesh fowWallMesh;
+    public Texture2DArray texArr;
     
     [SerializeField] private int seed;
     
@@ -739,6 +740,7 @@ public partial class LevelGenerator : MonoBehaviour
         int buffer = 0;
         Vector3 halfPixel = new Vector3(1,1)/ (2* GameSettings.PixelsPerUnit);
 
+        //make the fog of war a square that covers the entire map, keeping the fog of war a square makes the rendertexture align properly
         float largestDimension = math.max( dimensions.x, dimensions.y );
         
         verts[0] = new Vector3(-buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom left
@@ -746,17 +748,56 @@ public partial class LevelGenerator : MonoBehaviour
         verts[2] = new Vector3(-buffer, largestDimension + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top left
         verts[3] = new Vector3(largestDimension + buffer, largestDimension + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top right
         
-        /*
-        verts[0] = new Vector3(-buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom left
-        verts[1] = new Vector3(dimensions.x + buffer, -buffer)/GameSettings.PixelsPerUnit - halfPixel;//bottom right
-        verts[2] = new Vector3(-buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top left
-        verts[3] = new Vector3(dimensions.x + buffer, dimensions.y + buffer)/GameSettings.PixelsPerUnit - halfPixel;//top right
-        */
         
         mesh.SetVertices( verts );
         mesh.RecalculateBounds( );
         
         fogOfWarMesh.mesh = mesh;
+        
+        StripMeshConstructor fogWallConstructor = new StripMeshConstructor();
+        fowWallMesh = fogWallConstructor.ConstructMesh( _levelLayout, dimensions, _roomInfo );
+
+        GameObject.Find( "wallMesh" ).GetComponent<MeshFilter>().mesh = fowWallMesh;
+        
+        // Set the 2D texture array parameters
+        int slices = 1;
+        TextureFormat format = TextureFormat.RGBA32;
+        bool mipChain = false;
+
+// Create a 2D texture array with a width and height of 32 pixels, and 8 slices
+        texArr = new Texture2DArray(dimensions.x, dimensions.y, slices, format, mipChain);
+        
+        
+        Color[] colors = new Color[dimensions.x * dimensions.y];
+
+        // Loop through each slice
+        for (int slice = 0; slice < slices; slice++)
+        {
+            // Generate a random color
+            Color randomColor = new Color(Random.value, Random.value, Random.value, 1f);
+
+            // Set all the pixels in the color array to the random color
+            for (int color = 0; color < colors.Length; color++)
+            {
+                int x = color % dimensions.x;
+                int y = color / dimensions.x;
+                int index = x + y * dimensions.x;
+                Color col = new Color(0,0,0,1);
+                if ( _levelLayout[index] > _roomInfo.Length )
+                {
+                    col.r = 1;
+                }
+
+                colors[color] = col;
+                //colors[color] = new Color(Random.value, Random.value, Random.value, 1f);
+            }
+
+            // Set the pixels of the slice to the color array
+            texArr.SetPixels(colors, slice);
+        }
+
+        // Apply the changes to the texture array by uploading the updated pixels to the GPU
+        texArr.Apply();
 
         float cameraPos = largestDimension / (2*GameSettings.PixelsPerUnit);
         fogOfWarCamera.transform.position = new Vector3(cameraPos, cameraPos, -10 );

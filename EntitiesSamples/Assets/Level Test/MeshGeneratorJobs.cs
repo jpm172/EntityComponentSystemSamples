@@ -86,6 +86,64 @@ public struct MakeMeshStripsJob : IJobParallelFor
 }
 
 [BurstCompile]
+public struct MakeAllMeshStripsJob : IJobParallelFor
+{
+    [ReadOnly] public NativeArray<int> LevelLayout;
+    [ReadOnly] public int2 LevelDimensions;
+    [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
+
+    public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter Strips;
+    public void Execute( int index )
+    {
+        //int levelIndex = ((RoomOrigin.x + index) + ( RoomOrigin.y * LevelDimensions.x ));
+        int levelIndex = index;
+
+        //makes vertical strips
+        bool hasStrip = false;
+        int2 stripStart = new int2(0,0);
+        for ( int y = 0; y < LevelDimensions.y; y++ )
+        {
+            if ( IsWallCell( levelIndex ) && !hasStrip )
+            {
+                stripStart = new int2(index, y);
+                hasStrip = true;
+            }
+
+            if ( !IsWallCell( levelIndex ) && hasStrip )
+            {
+                MeshStrip newStrip = new MeshStrip
+                {
+                    Start = stripStart,
+                    End = new int2( stripStart.x, y - 1 )
+                };
+                Strips.Add( index, newStrip );
+                hasStrip = false;
+            }
+            
+            levelIndex += LevelDimensions.x;
+        }
+
+        if ( hasStrip )
+        {
+            MeshStrip newStrip = new MeshStrip
+            {
+                Start = stripStart,
+                End = new int2( stripStart.x, LevelDimensions.y-1 )
+            };
+            Strips.Add( index, newStrip );
+        }
+        
+    }
+
+    private bool IsWallCell( int index )
+    {
+        return LevelLayout[index] > RoomInfo.Length;
+    }
+    
+    
+}
+
+[BurstCompile]
 public struct MergeMeshStripsJob : IJobParallelFor
 {
     [ReadOnly] public NativeParallelMultiHashMap<int, MeshStrip> Strips;

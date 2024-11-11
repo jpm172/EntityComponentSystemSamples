@@ -28,6 +28,41 @@ public class StripMeshConstructor
         _normals = new List<Vector3>();
         _collisionQuads = new List<BoxGeometry>();
     }
+
+    public Mesh ConstructMesh(NativeArray<int> levelLayout, int2 dimensions, NativeArray<RoomInfo> roomInfo)
+    {
+        NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(levelLayout.Length, Allocator.TempJob);
+
+        MakeAllMeshStripsJob stripJob = new MakeAllMeshStripsJob
+        {
+            LevelLayout = levelLayout,
+            LevelDimensions = dimensions,
+            RoomInfo = roomInfo,
+            Strips = stripMap.AsParallelWriter()
+        };
+            
+        JobHandle applyHandle = stripJob.Schedule(dimensions.x, 128);
+        applyHandle.Complete();
+        
+        NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(levelLayout.Length, Allocator.TempJob);
+            
+        MergeMeshStripsJob mergeJob = new MergeMeshStripsJob
+        {
+            Strips = stripMap,
+            MergedStrips = mergedStrips.AsParallelWriter()
+        };
+        
+        JobHandle mergeHandle = mergeJob.Schedule( dimensions.x, 8 );
+        mergeHandle.Complete();
+        
+        StripsToMesh( mergedStrips, new int2(0,0) );
+        
+        
+        stripMap.Dispose();
+        mergedStrips.Dispose();
+        
+        return FinishMesh();
+    }
     
     public Mesh ConstructMesh( NativeArray<int> levelLayout, int2 dimensions, LevelRoom room, int targetId )
     {
