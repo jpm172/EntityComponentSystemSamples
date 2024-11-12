@@ -40,14 +40,9 @@ public partial class ManagedEyeSystem : SystemBase
                         var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false, MotionVectorGenerationMode.Camera, 7);
                         //var renderMeshDescription = new RenderMeshDescription(ShadowCastingMode.Off, false );
 
-                        Material newMat = new Material( _stencilMat );
+                        
                         //set up shader
-                        /*
-                        _stencilMat.SetFloat("_Radius", eye.ViewDistance);
-                        _stencilMat.SetFloat("_Hardness", eye.Hardness);
-                        _stencilMat.SetFloat("_Strength", eye.Strength);
-                        _stencilMat.SetVector("_Center", new Vector4(ltw.Position.x,ltw.Position.y ));
-                        */
+                        Material newMat = new Material( _stencilMat );
                         newMat.SetFloat("_Radius", eye.ViewDistance);
                         newMat.SetFloat("_Hardness", eye.Hardness);
                         newMat.SetFloat("_Strength", eye.Strength);

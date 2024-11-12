@@ -3,7 +3,6 @@ Shader "Universal Render Pipeline/Custom/DotsCutOutFade"
     Properties
     {
         _BaseMap ("Base Texture", 2D) = "white" {}
-        _BaseColor ("Base Colour", Color) = (1, 0, 0, 1)
         _Center ("Center", Vector) = (0,0,0) 
         _Radius ("Radius", float) = 2
         _Hardness ("Hardness", float) = .1
