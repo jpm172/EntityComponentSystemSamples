@@ -7,11 +7,15 @@ Shader "Unlit/TransparentTest"
     }
     SubShader
     {
-        Tags {"Queue" = "Transparent" "RenderType"="Transparent"  }
+        Tags {"RenderType"="Transparent"  }
+        //Tags { "RenderType"="Opaque" }
         LOD 100
 
         //Zwrite off //set off for transparent shader
-        Blend SrcAlpha OneMinusSrcAlpha
+        Blend SrcAlpha DstAlpha
+        //Blend SrcAlpha DstAlpha
+        BlendOp Add
+        
         Lighting off
 
         Pass
@@ -60,7 +64,7 @@ Shader "Unlit/TransparentTest"
                 fixed4 col = tex2D(_MainTex, i.uv);
                 
                 col.a = 0.5;
-               
+                return float4(1,0,0,.5);
                 return col;
             }
             
