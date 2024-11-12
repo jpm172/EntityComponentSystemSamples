@@ -8,14 +8,17 @@ public class GraphicsBlitTest : MonoBehaviour
 {
     [SerializeField]
     private Texture sourceTexture;
+
+    public bool clear;
     
     [SerializeField]
     private Texture sourceTexture2DArray;
 
-    [SerializeField] private RenderTexture destRenderTexture;
-
+    [SerializeField] private CustomRenderTexture destRenderTexture;
     [SerializeField] private Material mat;
 
+    [SerializeField] private ComputeShader compute;
+    
     private void Awake()
     {
         Graphics.Blit( sourceTexture, destRenderTexture );
@@ -23,7 +26,15 @@ public class GraphicsBlitTest : MonoBehaviour
 
     private void Update()
     {
-        Graphics.Blit( sourceTexture, destRenderTexture );
+        
+        Graphics.Blit( sourceTexture, destRenderTexture, mat );
+        
+        if ( clear )
+        {
+            GL.Clear( true, true, Color.black );
+            //destRenderTexture.DiscardContents();
+            clear = false;
+        }
     }
 
 /*

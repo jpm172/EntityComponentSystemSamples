@@ -12,7 +12,7 @@ Shader "Universal Render Pipeline/Custom/DotsCutOutFade"
     SubShader
     {
     
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
         Blend SrcColor DstColor
         BlendOp Max
 

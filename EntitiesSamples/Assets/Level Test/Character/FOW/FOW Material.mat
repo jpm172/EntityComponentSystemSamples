@@ -31,7 +31,7 @@ Material:
     m_Floats:
     - _DstFactor: 2
     - _Noise: 0
-    - _Opp: 2
+    - _Opp: 0
     - _Smoothness: 0
     - _SrcFactor: 3
     m_Colors:
