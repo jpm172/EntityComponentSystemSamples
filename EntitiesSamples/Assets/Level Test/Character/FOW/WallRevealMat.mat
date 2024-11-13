@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: CRT_mat
-  m_Shader: {fileID: 4800000, guid: 5359f28637106ee45931f22970f2141f, type: 3}
+  m_Name: WallRevealMat
+  m_Shader: {fileID: 4800000, guid: d7f7dfd9d6c4eed4092dd0f29edaeb7b, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,13 +24,16 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 2b77b56e89a74c64b825d67e79a50583, type: 2}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MapTex:
+        m_Texture: {fileID: 8600000, guid: 88c9196c7a952e14383d4d8fe89edaf5, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _DstFactor: 2
-    - _Opp: 0
-    - _SrcFactor: 3
-    m_Colors: []
+    - _ShowAll: 0
+    m_Colors:
+    - _Scale: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

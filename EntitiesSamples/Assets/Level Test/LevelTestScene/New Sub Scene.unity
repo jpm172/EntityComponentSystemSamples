@@ -299,7 +299,7 @@ PrefabInstance:
     - target: {fileID: 4447914357650562508, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: FOV
-      value: 90
+      value: 360
       objectReference: {fileID: 0}
     - target: {fileID: 4447914357650562508, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}

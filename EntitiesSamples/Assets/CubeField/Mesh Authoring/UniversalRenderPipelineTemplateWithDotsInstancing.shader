@@ -21,7 +21,6 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
         Blend SrcAlpha OneMinusSrcAlpha
 
 
-
         Pass
         {
             Name "Forward"

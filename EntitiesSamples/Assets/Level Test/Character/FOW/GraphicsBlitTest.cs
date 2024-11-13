@@ -32,7 +32,6 @@ public class GraphicsBlitTest : MonoBehaviour
         if ( clear )
         {
             GL.Clear( true, true, Color.black );
-            //destRenderTexture.DiscardContents();
             clear = false;
         }
     }

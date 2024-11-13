@@ -7,6 +7,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.VisualScripting;
+using UnityEditor;
 using Collider = Unity.Physics.Collider;
 using Material = UnityEngine.Material;
 using Random = UnityEngine.Random;
@@ -760,50 +761,62 @@ public partial class LevelGenerator : MonoBehaviour
         GameObject.Find( "wallMesh" ).GetComponent<MeshFilter>().mesh = fowWallMesh;
         */
         
-        // Set the 2D texture array parameters
-        int slices = 1;
-        TextureFormat format = TextureFormat.RGBA32;
-        bool mipChain = false;
-
-// Create a 2D texture array with a width and height of 32 pixels, and 8 slices
-        texArr = new Texture2DArray(dimensions.x, dimensions.y, slices, format, mipChain);
-        
-        
-        Color[] colors = new Color[dimensions.x * dimensions.y];
-
-        // Loop through each slice
-        for (int slice = 0; slice < slices; slice++)
-        {
-            // Generate a random color
-            Color randomColor = new Color(Random.value, Random.value, Random.value, 1f);
-
-            // Set all the pixels in the color array to the random color
-            for (int color = 0; color < colors.Length; color++)
-            {
-                int x = color % dimensions.x;
-                int y = color / dimensions.x;
-                int index = x + y * dimensions.x;
-                Color col = new Color(0,0,0,1);
-                if ( _levelLayout[index] > _roomInfo.Length )
-                {
-                    col.r = 1;
-                }
-
-                colors[color] = col;
-                //colors[color] = new Color(Random.value, Random.value, Random.value, 1f);
-            }
-
-            // Set the pixels of the slice to the color array
-            texArr.SetPixels(colors, slice);
-        }
-
-        // Apply the changes to the texture array by uploading the updated pixels to the GPU
-        texArr.Apply();
+        MakeFOWTexture();
 
         float cameraPos = largestDimension / (2*GameSettings.PixelsPerUnit);
         fogOfWarCamera.transform.position = new Vector3(cameraPos, cameraPos, -10 );
         fogOfWarCamera.orthographicSize = cameraPos;
     }
+
+    private void MakeFOWTexture()
+    {
+
+        int textureSize = math.max( dimensions.x, dimensions.y );
+// Create a 2D texture array with a width and height of 32 pixels, and 8 slices
+
+        FoWTexture = new Texture2D( textureSize, textureSize ) {name = "FOWTex", filterMode = FilterMode.Point};
+
+
+        Color[] colors = new Color[textureSize*textureSize];
+
+
+        
+
+        // Set all the pixels in the color array to the random color
+        for (int color = 0; color < colors.Length; color++)
+        {
+            int x = color % textureSize;
+            int y = color / textureSize;
+            int index = x + y * dimensions.x;
+            Color col = new Color(0,0,0,1);
+            if (IsInBounds(x,y) && _levelLayout[index] > _roomInfo.Length )
+            {
+                col.r = 1;
+            }
+
+            colors[color] = col;
+        }
+
+        // Set the pixels of the slice to the color array
+        FoWTexture.SetPixels(colors);
+
+        // Apply the changes to the texture array by uploading the updated pixels to the GPU
+        FoWTexture.Apply();
+        AssetDatabase.CreateAsset(FoWTexture, "Assets/Level Test/fowTexAsset.asset");
+    }
+    
+    private bool IsInBounds( int x, int y )
+    {
+        if ( x < 0 || x >= dimensions.x )
+            return false;
+            
+            
+        if ( y < 0 || y >= dimensions.y )
+            return false;
+        
+        return true;
+    }
+    
     
     private void MakeWalls()
     {
@@ -906,37 +919,6 @@ public partial class LevelGenerator : MonoBehaviour
 
         wallArr.Dispose();
         wallCells.Dispose();
-
-        /*
-        int blockSize = 4;
-        for ( int x = 0; x < dimensions.x; x++ )
-        {
-            for ( int y = 0; y < dimensions.y; y++ )
-            {
-                int[] solidPointField = new int[blockSize*blockSize];
-        
-                for ( int n = 0; n < solidPointField.Length/2; n++ )
-                {
-                    solidPointField[n] = 1;
-                }
-                MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
-                
-                Vector2Int floorDimensions = new Vector2Int(3,3);
-                Vector2Int position = new Vector2Int(x,y);
-                Mesh mesh = meshConstructor.ConstructMesh( floorDimensions, position, blockSize, solidPointField );
-                
-                LevelWall newWall = new LevelWall
-                {
-                   Mesh = mesh,
-                   Material = wallMaterial,
-                   PointField = solidPointField,
-                   Position = position
-                };
-                
-                _walls.Add( newWall  );
-            }
-        }
-        */
     }
     
     private void MakeFloors()
@@ -954,33 +936,6 @@ public partial class LevelGenerator : MonoBehaviour
 
             _floors.Add( newFloor  );
         }
-        /*
-        for ( int n = 0; n < solidPointField.Length; n++ )
-        {
-            solidPointField[n] = 1;
-        }
-        
-        for ( int x = 0; x < dimensions.x; x++ )
-        {
-            for ( int y = 0; y < dimensions.y; y++ )
-            {
-                MinimalMeshConstructor meshConstructor = new MinimalMeshConstructor();
-                Vector2Int floorDimensions = new Vector2Int(Random.Range( 1, 10 ), Random.Range( 1,10 ));
-                Vector2Int position = new Vector2Int(x,y);
-                Mesh floorMesh = meshConstructor.ConstructMesh( floorDimensions, position, blockSize, solidPointField );
-                
-                
-                LevelFloor newFloor = new LevelFloor
-                {
-                    FloorMesh = floorMesh, 
-                    FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
-                    Position = position
-                };
-                
-                _floors.Add( newFloor  );
-            }
-        }
-        */
     }
 
     
