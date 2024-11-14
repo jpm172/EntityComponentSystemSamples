@@ -16,10 +16,11 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             "RenderPipeline"="UniversalPipeline" "Queue"="Geometry"
         }
         */
-        Tags {"Queue" = "Transparent" "RenderType"="TransparentCutout" }
+        //Tags {"Queue" = "Transparent" "RenderType"="TransparentCutout" }
+        Tags {"RenderType"="Opaque"  }
         Zwrite off //set off for transparent shader
-        Blend SrcAlpha OneMinusSrcAlpha
-
+        //Blend SrcAlpha OneMinusSrcAlpha
+        
 
         Pass
         {

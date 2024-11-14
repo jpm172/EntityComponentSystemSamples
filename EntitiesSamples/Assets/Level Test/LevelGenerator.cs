@@ -14,9 +14,7 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator : MonoBehaviour
 {
-    public Mesh fowWallMesh;
-    public Texture2DArray texArr;
-    
+
     [SerializeField] private int seed;
     
     [SerializeField]
@@ -26,7 +24,7 @@ public partial class LevelGenerator : MonoBehaviour
     private int2 layoutDimensions;//dimensions of level in terms of rooms
 
     [SerializeField] private Camera fogOfWarCamera;
-    [SerializeField] private MeshFilter fogOfWarMesh;
+    [SerializeField] private GameObject fogOfWarObj;
     
     [SerializeField]
     private Material[] floorMaterials;
@@ -735,7 +733,8 @@ public partial class LevelGenerator : MonoBehaviour
     //stretches the FoW's mesh to cover the entire level
     private void MakeFogOfWar()
     {
-        Mesh mesh = fogOfWarMesh.mesh;
+        MeshFilter fowMeshFilter = fogOfWarObj.GetComponent<MeshFilter>();
+        Mesh mesh = fowMeshFilter.mesh;
         Vector3[] verts = mesh.vertices;
 
         int buffer = 0;
@@ -753,7 +752,7 @@ public partial class LevelGenerator : MonoBehaviour
         mesh.SetVertices( verts );
         mesh.RecalculateBounds( );
         
-        fogOfWarMesh.mesh = mesh;
+        fowMeshFilter.mesh = mesh;
         
         /*
         StripMeshConstructor fogWallConstructor = new StripMeshConstructor();
@@ -802,7 +801,10 @@ public partial class LevelGenerator : MonoBehaviour
 
         // Apply the changes to the texture array by uploading the updated pixels to the GPU
         FoWTexture.Apply();
-        AssetDatabase.CreateAsset(FoWTexture, "Assets/Level Test/fowTexAsset.asset");
+        Material fowMat = fogOfWarObj.GetComponent<MeshRenderer>().material;
+        fowMat.SetTexture( "_MapTex", FoWTexture );
+        fowMat.SetInt( "_SeenDist", _maxWallThickness + _minWallThickness );
+
     }
     
     private bool IsInBounds( int x, int y )

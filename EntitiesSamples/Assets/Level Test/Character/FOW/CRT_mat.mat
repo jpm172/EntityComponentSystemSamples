@@ -30,7 +30,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _DstFactor: 2
-    - _Opp: 0
+    - _Opp: 4
     - _SrcFactor: 3
     m_Colors: []
   m_BuildTextureStacks: []

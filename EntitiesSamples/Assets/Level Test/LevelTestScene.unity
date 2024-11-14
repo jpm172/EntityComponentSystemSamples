@@ -824,7 +824,7 @@ MonoBehaviour:
     x: 0
     y: 0
   layoutDimensions:
-    x: 2
+    x: 4
     y: 3
   fogOfWarCamera: {fileID: 2115140062}
   fogOfWarMesh: {fileID: 1195844247}
@@ -1015,7 +1015,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!64 &1555247510
 MeshCollider:
   m_ObjectHideFlags: 0

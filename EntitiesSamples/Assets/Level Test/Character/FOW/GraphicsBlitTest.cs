@@ -11,13 +11,10 @@ public class GraphicsBlitTest : MonoBehaviour
 
     public bool clear;
     
-    [SerializeField]
-    private Texture sourceTexture2DArray;
 
     [SerializeField] private CustomRenderTexture destRenderTexture;
     [SerializeField] private Material mat;
-
-    [SerializeField] private ComputeShader compute;
+    
     
     private void Awake()
     {
