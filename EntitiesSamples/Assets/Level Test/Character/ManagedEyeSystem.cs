@@ -20,7 +20,7 @@ public partial class ManagedEyeSystem : SystemBase
         blobs = new List<BlobAssetReference<EyeComponent>>();
         //_stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
         _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsCutOutFade" ) );
-        _debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
+        //_debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
         RequireForUpdate<InitializeTag>();
         
     }

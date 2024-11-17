@@ -129,112 +129,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 6527373074116470432}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &323725808
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 323725812}
-  - component: {fileID: 323725811}
-  - component: {fileID: 323725810}
-  - component: {fileID: 323725809}
-  m_Layer: 7
-  m_Name: wallMesh
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!64 &323725809
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 323725808}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &323725810
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 323725808}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: eae82a41edea646419bb229ebb232813, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &323725811
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 323725808}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!4 &323725812
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 323725808}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.26, y: 2.66, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &557282772
 GameObject:
   m_ObjectHideFlags: 0
@@ -558,7 +452,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 6
+  orthographic size: 10
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -697,7 +591,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1195336979
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -763,12 +657,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &1195844247 stripped
-MeshFilter:
-  m_CorrespondingSourceObject: {fileID: 7074517141989600450, guid: 555afbadeab26734aaebb05d56f10612,
-    type: 3}
-  m_PrefabInstance: {fileID: 6527373074116470432}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1195844250
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -783,10 +671,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sourceTexture: {fileID: 8600000, guid: 53181e65df3c6c34ba6ae28489a3a4f0, type: 2}
   clear: 0
-  sourceTexture2DArray: {fileID: 0}
   destRenderTexture: {fileID: 8600000, guid: 88c9196c7a952e14383d4d8fe89edaf5, type: 2}
   mat: {fileID: 2100000, guid: c16c681369372f64280b38176615c3a6, type: 2}
-  compute: {fileID: 0}
 --- !u!1 &1289639034
 GameObject:
   m_ObjectHideFlags: 0
@@ -817,8 +703,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2d2b27e012ffb4699bb5d2b121571b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fowWallMesh: {fileID: 0}
-  texArr: {fileID: 0}
   seed: 10
   dimensions:
     x: 0
@@ -827,7 +711,7 @@ MonoBehaviour:
     x: 4
     y: 3
   fogOfWarCamera: {fileID: 2115140062}
-  fogOfWarMesh: {fileID: 1195844247}
+  fogOfWarObj: {fileID: 202867446}
   floorMaterials:
   - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
@@ -844,8 +728,8 @@ MonoBehaviour:
   FoWTexture: {fileID: 0}
   StencilShader: {fileID: 4800000, guid: 9aa958540741a714e8a38445b43b0d1b, type: 3}
   useSeed: 1
-  _minWallThickness: 1
-  _maxWallThickness: 5
+  _minWallThickness: 3
+  _maxWallThickness: 3
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
   _seedBuffer: 20
@@ -949,7 +833,7 @@ MonoBehaviour:
   m_Follow: {fileID: 1458517020}
   m_Lens:
     FieldOfView: 60
-    OrthographicSize: 6
+    OrthographicSize: 10
     NearClipPlane: 0.3
     FarClipPlane: 1000
     Dutch: 0
@@ -1120,7 +1004,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1691336472
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1424,5 +1308,4 @@ SceneRoots:
   - {fileID: 1289639036}
   - {fileID: 6527373074116470432}
   - {fileID: 2115140063}
-  - {fileID: 323725812}
   - {fileID: 1555247513}

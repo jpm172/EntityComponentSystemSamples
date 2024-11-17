@@ -99,7 +99,7 @@ Shader "Universal Render Pipeline/Custom/DotsCutOutFade"
 
             float mask(float3 position, float3 center, float radius, float hardness)
             {
-                //float m = distance(center, position) + random(position.xy) - 0.5;
+                //float m = distance(center, position) + (random(position.xy)* 0.35 - 0.5);
                 float m = distance(center, position);
                 return 1 - smoothstep(radius*hardness, radius, m);
             }

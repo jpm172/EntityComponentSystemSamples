@@ -6,6 +6,7 @@ Shader "Unlit/FOW_Shader"
         _SeenTex ("Seen Texture", 2D) = "white" {}
         _MapTex ("Map Texture", 2D) = "white" {}
         _SeenColor ("Seen Color", Color) = (1,1,1,1) 
+        _FloorColor ("Floor Color", Color) = (1,1,1,1) 
         _SeenDist ("Seen Distance", Int) = 4
         
         _Smoothness ("Feather", Range(0,0.1)) = 0.005
@@ -61,9 +62,12 @@ Shader "Unlit/FOW_Shader"
             sampler2D _MapTex;
             
             float4 _SeenColor;
+            float4 _FloorColor;
             
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
+            float4 _MapTex_TexelSize;
+            
             float _Smoothness;
             float _Noise;
             int _SeenDist;
@@ -88,6 +92,7 @@ Shader "Unlit/FOW_Shader"
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
                 fixed4 mapCol = tex2D(_MapTex, i.uv);
+                fixed4 floorCol = tex2D(_SeenTex, i.uv);
                 
                 float rand = random(i.uv) - ( (1 - _Noise)-0.5);
                 rand = floor(rand + 0.5);
@@ -100,11 +105,15 @@ Shader "Unlit/FOW_Shader"
                 //float4 result = lerp(float4(0,0,0,1), float4(0,0,0,0), col.r * blurred.r - xRand);
                 float seen = 0;
                 float visible = 0;
+                
+                float4 startCol = _SeenColor;
+                
+                float xOffset = _MainTex_TexelSize.x/2;
+                float yOffset = _MainTex_TexelSize.y/2;
+                
                 if(mapCol.r > 0)
                 {
-                
-                
-                    fixed4 visibleCol = tex2D(_MainTex, i.uv + float2(0, _MainTex_TexelSize.y*_SeenDist));
+                    fixed4 visibleCol = tex2D(_MainTex, i.uv + float2(0, _MainTex_TexelSize.y*_SeenDist ));
                     visible = visibleCol.r;
                     visibleCol = tex2D(_MainTex, i.uv - float2(0, _MainTex_TexelSize.y*_SeenDist));
                     visible = max(visible,visibleCol.r);
@@ -116,7 +125,7 @@ Shader "Unlit/FOW_Shader"
                         
                     if(visible < .1)
                     {
-                        fixed4 seenCol = tex2D(_SeenTex, i.uv + float2(0, _MainTex_TexelSize.y*_SeenDist));
+                        fixed4 seenCol = tex2D(_SeenTex, i.uv + float2(0, _MainTex_TexelSize.y*_SeenDist ));
                         seen = seenCol.r;
                         seenCol = tex2D(_SeenTex, i.uv - float2(0, _MainTex_TexelSize.y*_SeenDist));
                         seen = max(seen, seenCol.r);
@@ -124,13 +133,23 @@ Shader "Unlit/FOW_Shader"
                         seen = max(seen, seenCol.r);
                         seenCol = tex2D(_SeenTex, i.uv - float2(_MainTex_TexelSize.x*_SeenDist, 0));
                         seen = max(seen, seenCol.r);
-                    
+                        
+                        if(seen < 0.05)//prevent the walls from being marked as "seen" if seen is close to 0
+                            seen = 0;
                     }
                 }
+                else if(floorCol.r > 0.1)
+                {
+                    startCol = _FloorColor;
+                    seen = 1;
+                }
+                
+                
                 
                 //float4 result = lerp(float4(0,0,0,1), float4(0,0,0,0), col.r);
                 //float4 result = lerp(float4(0,0,0,1), float4(0,0,0,0), max(col.r, visible));
-                float4 result = lerp(_SeenColor*float4(seen, seen,seen, 1), float4(0,0,0,0), max(col.r, visible));
+                //float4 result = lerp(_SeenColor*float4(seen, seen,seen, 1), float4(0,0,0,0), max(col.r, visible));
+                float4 result = lerp(startCol*float4(seen, seen,seen, 1), float4(0,0,0,0), max(col.r, visible));
 
                 //float4 seenCol = _SeenColor * seen;
                 //seenCol.a = result.a;
