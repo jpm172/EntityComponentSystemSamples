@@ -66,7 +66,7 @@ Shader "Unlit/FOW_Shader"
             
             float4 _MainTex_ST;
             float4 _MainTex_TexelSize;
-            float4 _MapTex_TexelSize;
+            float4 _SeenTex_TexelSize;
             
             float _Smoothness;
             float _Noise;
@@ -112,7 +112,7 @@ Shader "Unlit/FOW_Shader"
                 float yOffset = _MainTex_TexelSize.y/2;
                 
                 if(mapCol.r > 0)
-                {
+                {                    
                     fixed4 visibleCol = tex2D(_MainTex, i.uv + float2(0, _MainTex_TexelSize.y*_SeenDist ));
                     visible = visibleCol.r;
                     visibleCol = tex2D(_MainTex, i.uv - float2(0, _MainTex_TexelSize.y*_SeenDist));

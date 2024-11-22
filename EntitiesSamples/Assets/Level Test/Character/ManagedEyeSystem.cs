@@ -9,6 +9,9 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+//Registers the meshes and materials needed for the EyeSystem when a new eye is added
+//Since registering meshes/materials is a structural change, we only want to do this once per eye
+[UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class ManagedEyeSystem : SystemBase
 {
 
