@@ -29,6 +29,10 @@ public class LevelGeneratorEditor : Editor
         {
             level.ClearLeverButton();
         }
+        if (GUILayout.Button("Compound Collider Test")) 
+        {
+            level.MakeTestCollider();
+        }
         
 
 

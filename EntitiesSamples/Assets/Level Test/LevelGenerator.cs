@@ -6,6 +6,7 @@ using Unity.Jobs;
 using UnityEngine;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Transforms;
 using Unity.VisualScripting;
 using UnityEditor;
 using Collider = Unity.Physics.Collider;
@@ -943,7 +944,71 @@ public partial class LevelGenerator : MonoBehaviour
         }
     }
 
-    
+    public void MakeTestCollider()
+    {
+        World world = World.DefaultGameObjectInjectionWorld;
+        EntityManager entityManager = world.EntityManager;
+        
+        int gridSize = 32;
+        float thickness = 1 * GameSettings.PixelsPerUnit;
+        
+        NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(gridSize*gridSize, Allocator.Temp);
+        
+        
+        
+        float3 boxCenter = new float3(0,0,0);
+        float3 size = new float3( new int2(1,1), thickness)/ (GameSettings.PixelsPerUnit);
+        
+        BoxGeometry newBox = new BoxGeometry
+        {
+            Center = boxCenter,
+            Size = size,
+            Orientation = quaternion.identity
+        };
+        BlobAssetReference<Collider> col =
+            Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+        
+        Entity prototype = entityManager.CreateEntity();
+        
+        entityManager.AddComponentData( prototype, new LocalToWorld {Value = float4x4.TRS(
+            new float3(new float3(0,0,0)),
+            quaternion.identity,
+            new float3(1))});
+
+        for ( int x = 0; x < gridSize; x++ )
+        {
+            for ( int y = 0; y < gridSize; y++ )
+            {
+                float3 pos = new float3(x, y, 0)/GameSettings.PixelsPerUnit;
+                CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+                {
+                    Collider = col,
+                    Entity = prototype,
+                    CompoundFromChild = new RigidTransform
+                    {
+                        rot = quaternion.identity,
+                        pos = pos
+                    }
+                };
+                childCols[x + y*gridSize] = newChild;
+                //_collidersMade.Add( newChild.Collider );
+            }
+        }
+
+
+        BlobAssetReference<Collider> compCol = CompoundCollider.Create( childCols );
+            
+        
+        entityManager.AddComponentData(prototype, new PhysicsCollider()
+        {
+            Value = compCol
+        });
+        entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
+        
+        entityManager.SetName( prototype, "Compound Test" );
+        childCols.Dispose();
+        
+    }
     
     private void OnDestroy()
     {
