@@ -17,8 +17,7 @@ public class MeshContructionHelper
     
     private List<Vector2> _uvs;
     private List<Vector3> _normals;
-
-    private int removed = 0;
+    
     private Mesh currentMesh;
     
 
@@ -35,7 +34,6 @@ public class MeshContructionHelper
     
     public MeshContructionHelper()
     {
-        removed = 0;
         _triangles = new List<int>();
         _vertices = new List<Vector3>();
         _uvs = new List<Vector2>();

@@ -17,11 +17,13 @@ public partial class ManagedEyeSystem : SystemBase
 
     private Material _stencilMat;
     private Material _debugMat;
-    private List<BlobAssetReference<EyeComponent>> blobs;
+    private static readonly int Radius = Shader.PropertyToID( "_Radius" );
+    private static readonly int Hardness = Shader.PropertyToID( "_Hardness" );
+    private static readonly int Strength = Shader.PropertyToID( "_Strength" );
+    private static readonly int Center = Shader.PropertyToID( "_Center" );
+
     protected override void OnCreate()
     {//
-        blobs = new List<BlobAssetReference<EyeComponent>>();
-        //_stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsStencil" ) );
         _stencilMat = new Material( Shader.Find( "Universal Render Pipeline/Custom/DotsCutOutFade" ) );
         //_debugMat = new Material(  Shader.Find( "Universal Render Pipeline/Unlit" ) );
         RequireForUpdate<InitializeTag>();
@@ -46,10 +48,10 @@ public partial class ManagedEyeSystem : SystemBase
                         
                         //set up shader
                         Material newMat = new Material( _stencilMat );
-                        newMat.SetFloat("_Radius", eye.ViewDistance);
-                        newMat.SetFloat("_Hardness", eye.Hardness);
-                        newMat.SetFloat("_Strength", eye.Strength);
-                        newMat.SetVector("_Center", new Vector4(ltw.Position.x,ltw.Position.y ));
+                        newMat.SetFloat(Radius, eye.ViewDistance);
+                        newMat.SetFloat(Hardness, eye.Hardness);
+                        newMat.SetFloat(Strength, eye.Strength);
+                        newMat.SetVector(Center, new Vector4(ltw.Position.x,ltw.Position.y ));
                         
                         // Create a RenderMeshArray with the required mesh and material
                         var renderMeshArray = new RenderMeshArray(new[] { newMat  }, new[] { highlightMesh });
@@ -97,38 +99,5 @@ public partial class ManagedEyeSystem : SystemBase
                 }
             )
             .Run();
-    }
-    
-
-    /*
-    private void GetPointer(ref EyeComponent eye)
-    {
-        Vector3[] arr = new Vector3[1];
-        // Create a new builder that will use temporary memory to construct the blob asset
-        BlobBuilder builder = new BlobBuilder(Allocator.Temp);
-
-        // Construct the root object for the blob asset. Notice the use of `ref`.
-        ref EyeComponent marketData = ref builder.ConstructRoot<EyeComponent>();
-
-        // Now fill the constructed root with the data:
-        // Apples compare to Oranges in the universally accepted ratio of 2 : 1 .
-        builder.SetPointer(ref eye.Pointer, ref arr[0]);
-
-        // Now copy the data from the builder into its final place, which will
-        // use the persistent allocator
-        var result = builder.CreateBlobAssetReference<EyeComponent>(Allocator.Persistent);
-
-        blobs.Add( result );
-        // Make sure to dispose the builder itself so all internal memory is disposed.
-        builder.Dispose();
-    }
-    */
-    
-    protected override void OnDestroy()
-    {
-        foreach ( BlobAssetReference<EyeComponent> b in blobs )
-        {
-            b.Dispose();
-        }
     }
 }

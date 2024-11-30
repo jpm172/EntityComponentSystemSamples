@@ -1,12 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Burst;
-using Unity.CharacterController;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Entities;
-using Unity.Entities.Graphics;
-using Unity.Entities.UniversalDelegates;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -46,15 +40,8 @@ public partial struct EyeSystem : ISystem
     {
         
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
-        /*
-        new ClearFogJob()
-        {
-            PhysicsWorld = physicsWorld,
-            e = state.EntityManager
-        }.Schedule();
-        */
-        
-        
+
+
         foreach (
             var (transformComp, ltwComp, eyeComp, info, entity)
             in SystemAPI.Query<RefRO<LocalTransform>, RefRO<LocalToWorld>, RefRO<EyeComponent>, RefRO<MaterialMeshInfo>>()

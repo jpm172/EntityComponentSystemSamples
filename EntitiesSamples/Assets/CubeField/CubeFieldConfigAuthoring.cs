@@ -33,7 +33,7 @@ public class CubeFieldConfigAuthoring : MonoBehaviour
 
     private int2 CalcuateDimensions()
     {
-        Random.seed = 1; 
+        Random.InitState( 1); 
         return new int2(Random.Range( 1,4 ),Random.Range( 1,4 ));
     }
 }

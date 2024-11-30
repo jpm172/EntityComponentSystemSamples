@@ -18,7 +18,7 @@ public class GraphicsBlitTest : MonoBehaviour
     
     private void Awake()
     {
-        Graphics.Blit( sourceTexture, destRenderTexture );
+        ClearTexture();
     }
 
     private void Update()
@@ -28,25 +28,18 @@ public class GraphicsBlitTest : MonoBehaviour
         
         if ( clear )
         {
-            GL.Clear( true, true, Color.black );
+            ClearTexture();
             clear = false;
         }
     }
 
-/*
-    private void OnEnable()
+    private void ClearTexture()
     {
-        RenderPipelineManager.endFrameRendering += Screen_EndFrameRendering;
-    }
+        RenderTexture rt = RenderTexture.active;
+        RenderTexture.active = destRenderTexture;
+        GL.Clear(false, true, Color.black);
+        RenderTexture.active = rt;
 
-    private void OnDisable()
-    {
-        RenderPipelineManager.endFrameRendering -= Screen_EndFrameRendering;
-    }
 
-    private void Screen_EndFrameRendering( ScriptableRenderContext context, Camera[] cams )
-    {
-        Graphics.Blit( sourceTexture, mat, 0 );
     }
-    */
 }

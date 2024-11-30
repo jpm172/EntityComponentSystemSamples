@@ -44,6 +44,15 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Shoot"",
+                    ""type"": ""Button"",
+                    ""id"": ""163d381d-58f2-4662-be83-c66bf4819470"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -112,6 +121,17 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Interact"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""448a0f13-3496-494e-a01b-2ef3eab14686"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Shoot"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -122,6 +142,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         m_DemoMap = asset.FindActionMap("DemoMap", throwIfNotFound: true);
         m_DemoMap_PlayerMovement = m_DemoMap.FindAction("PlayerMovement", throwIfNotFound: true);
         m_DemoMap_Interact = m_DemoMap.FindAction("Interact", throwIfNotFound: true);
+        m_DemoMap_Shoot = m_DemoMap.FindAction("Shoot", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -185,12 +206,14 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
     private List<IDemoMapActions> m_DemoMapActionsCallbackInterfaces = new List<IDemoMapActions>();
     private readonly InputAction m_DemoMap_PlayerMovement;
     private readonly InputAction m_DemoMap_Interact;
+    private readonly InputAction m_DemoMap_Shoot;
     public struct DemoMapActions
     {
         private @DemoInputActions m_Wrapper;
         public DemoMapActions(@DemoInputActions wrapper) { m_Wrapper = wrapper; }
         public InputAction @PlayerMovement => m_Wrapper.m_DemoMap_PlayerMovement;
         public InputAction @Interact => m_Wrapper.m_DemoMap_Interact;
+        public InputAction @Shoot => m_Wrapper.m_DemoMap_Shoot;
         public InputActionMap Get() { return m_Wrapper.m_DemoMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -206,6 +229,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
+            @Shoot.started += instance.OnShoot;
+            @Shoot.performed += instance.OnShoot;
+            @Shoot.canceled += instance.OnShoot;
         }
 
         private void UnregisterCallbacks(IDemoMapActions instance)
@@ -216,6 +242,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
+            @Shoot.started -= instance.OnShoot;
+            @Shoot.performed -= instance.OnShoot;
+            @Shoot.canceled -= instance.OnShoot;
         }
 
         public void RemoveCallbacks(IDemoMapActions instance)
@@ -237,5 +266,6 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
     {
         void OnPlayerMovement(InputAction.CallbackContext context);
         void OnInteract(InputAction.CallbackContext context);
+        void OnShoot(InputAction.CallbackContext context);
     }
 }

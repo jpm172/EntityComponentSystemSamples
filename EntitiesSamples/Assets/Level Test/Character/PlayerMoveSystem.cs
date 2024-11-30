@@ -42,7 +42,7 @@ public partial struct PlayerMoveSystem : ISystem
     }
 }
 
-//[BurstCompile]
+[BurstCompile]
 public partial struct PlayerMoveJob : IJobEntity
 {
     

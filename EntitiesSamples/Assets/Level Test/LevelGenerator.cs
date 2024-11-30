@@ -242,7 +242,11 @@ public partial class LevelGenerator : MonoBehaviour
     {
         _counter = 0;
         if ( useSeed )
-            Random.seed = seed;
+        {
+            Random.InitState( seed );
+            //Random.seed = seed;
+        }
+            
 
         CreateTextureDictionary();
         InitializeLevel();

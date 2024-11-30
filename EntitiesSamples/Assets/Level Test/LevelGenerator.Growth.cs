@@ -8,7 +8,6 @@ using Random = UnityEngine.Random;
 
 public partial class LevelGenerator
 {
-    private int _cornerLimit = 6;
     private int _counter = 0;
     private int _totalSteps = 0;
     private int _uniqueConnections = 0;
