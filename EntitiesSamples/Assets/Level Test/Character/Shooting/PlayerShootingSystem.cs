@@ -1,18 +1,25 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
 using Unity.Transforms;
 using UnityEngine;
+using BoxCollider = Unity.Physics.BoxCollider;
 using Collider = UnityEngine.Collider;
+using Random = Unity.Mathematics.Random;
 using RaycastHit = Unity.Physics.RaycastHit;
 
 
-[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
-[UpdateAfter(typeof(PhysicsSystemGroup))]
+//[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))] works for schedule, not run
+//[UpdateAfter(typeof(PhysicsSystemGroup))]
+
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderLast =  true)]
 public partial struct PlayerShootingSystem : ISystem
 {
 
@@ -30,16 +37,281 @@ public partial struct PlayerShootingSystem : ISystem
     {
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
        // EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
-        
-        new PlayerShootJob
+       NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
+
+       EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>()
+           .CreateCommandBuffer();
+       
+       new PlayerShootJob
+       {
+           PhysicsWorld = physicsWorld,
+           Hits = hitEntities.AsParallelWriter(),
+           ECB = ecb
+       }.Run();
+
+       
+       if ( hitEntities.Length > 0 )
         {
-            PhysicsWorld = physicsWorld,
-            ECB = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer()
-        }.Schedule();
+            foreach ( RaycastHit hit in hitEntities )
+            {
+                Entity e = hit.Entity;
+                DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( e );
+                LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( e );
+                
+                new DestroyStructureJob
+                {
+                    Data = data,
+                    EntityPosition = ltw,
+                    Hit = hit,
+                    ECB = ecb
+                }.Run();
 
+                int dim = 32;
+                NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
+                new MakeColliderStripsJob
+                {
+                    Data = data,
+                    Dimensions = new int2(dim, dim),
+                    Strips = colStrips.AsParallelWriter()
+                }.Run( dim );
 
+                
+                NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(data.Length, Allocator.TempJob);
+                
+                new MergeColliderStripsJob
+                {
+                    MergedStrips = mergedStrips.AsParallelWriter(),
+                    Strips = colStrips
+                }.Run( dim );
+
+                
+                
+                
+                NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
+
+                int count = geometry.Length;
+
+                NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
+                    = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
+                NativeList<BlobAssetReference<Unity.Physics.Collider>> colsMade = new NativeList<BlobAssetReference<Unity.Physics.Collider>>(count, Allocator.Temp);
+                int counter = 0;
+                foreach ( MeshStrip strip in geometry )
+                {
+                    
+                    int2 bottomLeft =  strip.Start;
+                    int2 topRight = strip.End;
+
+                    float3 center = new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit);
+                    float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
+                    BoxGeometry newBox = new BoxGeometry
+                    {
+                        Center = center,
+                        Size = size,
+                        Orientation = quaternion.identity
+                    };
+                    
+                    
+                    BlobAssetReference<Unity.Physics.Collider> col =
+                        Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+                    colsMade.Add( col );
+    
+                    CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+                    {
+                        Collider = col,
+                        Entity = e,
+                        CompoundFromChild = new RigidTransform
+                        {
+                            rot = quaternion.identity,
+                            pos = float3.zero
+                        }
+                    };
+                    //
+                    childCols[counter] = newChild;
+
+                    counter++;
+                }
+
+                ecb.SetComponent( e, new PhysicsCollider
+                {
+                    Value = CompoundCollider.Create( childCols )
+                } );
+
+                foreach ( var VARIABLE in colsMade )
+                {
+                    VARIABLE.Dispose();//
+                }
+
+                mergedStrips.Dispose();
+                colStrips.Dispose();
+            }
+        }
+        
+        
+        
+        hitEntities.Dispose();
         //ecb.Playback( state.EntityManager );
         //ecb.Dispose();
+    }
+    
+    
+    
+}
+
+[BurstCompile]
+public struct MakeColliderStripsJob : IJobParallelFor
+{
+    [ReadOnly] public DynamicBuffer<DestructibleData> Data;
+    [ReadOnly] public int2 Dimensions;
+    
+
+    public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter Strips;
+    public void Execute( int index )
+    {
+        int levelIndex =index;
+
+        //makes vertical strips
+        bool hasStrip = false;
+        int2 stripStart = new int2(0,0);
+        for ( int y = 0; y < Dimensions.y; y++ )
+        {
+            if ( IsSolid( levelIndex ) && !hasStrip )
+            {
+                stripStart = new int2(index, y);
+                hasStrip = true;
+            }
+
+            if ( !IsSolid( levelIndex ) && hasStrip )
+            {
+                MeshStrip newStrip = new MeshStrip
+                {
+                    Start = stripStart,
+                    End = new int2( stripStart.x, y - 1 )
+                };
+                Strips.Add( index, newStrip );
+                hasStrip = false;
+            }
+            
+            levelIndex += Dimensions.x;
+        }
+
+        if ( hasStrip )
+        {
+            MeshStrip newStrip = new MeshStrip
+            {
+                Start = stripStart,
+                End = new int2( stripStart.x, Dimensions.y-1 )
+            };
+            //Strips.Enqueue(  );
+            Strips.Add( index, newStrip );
+        }
+        
+    }
+
+    private bool IsSolid( int index )
+    {
+        return Data[index].Value > 0;
+    }
+
+}
+
+[BurstCompile]
+public struct MergeColliderStripsJob : IJobParallelFor
+{
+    [ReadOnly] public NativeParallelMultiHashMap<int, MeshStrip> Strips;
+    
+    public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter MergedStrips;
+    public void Execute( int index )
+    {
+        if(!Strips.ContainsKey( index ))
+            return;
+
+        NativeParallelMultiHashMap<int, MeshStrip>.Enumerator values = Strips.GetValuesForKey( index );
+        while ( values.MoveNext() )
+        {
+            TryMergeStrip( values.Current, index );
+        }
+    }
+
+    private void TryMergeStrip(  MeshStrip strip, int index )
+    {
+        //if we can merge with the strip behind this one, then return and dont do anything with this strip
+        if ( Strips.ContainsKey( index - 1 ) )
+        {
+            if ( TryMerge( strip, Strips.GetValuesForKey( index - 1 ) ) )
+            {
+                return;
+            }
+        }
+        
+        int checkIndex = index + 1;
+        while ( Strips.ContainsKey( checkIndex ) )
+        {
+            if ( TryMerge( strip, Strips.GetValuesForKey( checkIndex) ) )
+            {
+                strip.End.x++;
+                checkIndex++;
+            }
+            else
+            {
+                MergedStrips.Add( index, strip );
+                return;
+            }
+        }
+        MergedStrips.Add( index, strip );
+    }
+    
+    
+    private bool TryMerge( MeshStrip strip, NativeParallelMultiHashMap<int, MeshStrip>.Enumerator neighborValues )
+    {
+
+        while ( neighborValues.MoveNext() )
+        {
+            if ( CanMerge( strip, neighborValues.Current ) )
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private bool CanMerge( MeshStrip strip1, MeshStrip strip2 )
+    {
+        return ( strip1.Start.y == strip2.Start.y ) && ( strip1.End.y == strip2.End.y );
+    }
+}
+
+
+public struct DestroyStructureJob : IJob
+{
+    public DynamicBuffer<DestructibleData> Data;
+    public LocalToWorld EntityPosition;
+    public RaycastHit Hit;
+    public EntityCommandBuffer ECB;
+    public void Execute( )
+    {
+        for ( int i = 0; i < Data.Length; i++ )
+        {
+            float3 relativeHit = Hit.Position - EntityPosition.Position;
+            float width = 2; //32 / 16;
+            width -= (relativeHit.x);
+            width *= 32;
+            Debug.Log( $"hit {width}" );
+            Debug.DrawLine( EntityPosition.Position, EntityPosition.Position + new float3(0,10,0), Color.cyan, 1 );
+            DestructibleData d = Data[i];
+            
+            Data[i] = d;
+        }
+        /*
+        Random rand = Random.CreateFromIndex( 2 );
+        for ( int i = 0; i < Data.Length; i++ )
+        {
+            DestructibleData d = Data[i];
+            if(!rand.NextBool())
+                d.Value = 0;
+            Data[i] = d;
+        }
+        */
     }
 }
 
@@ -48,6 +320,7 @@ public partial struct PlayerShootJob : IJobEntity
     private static readonly float Range = 30;
     public PhysicsWorldSingleton PhysicsWorld;
     public EntityCommandBuffer ECB;
+    public NativeList<RaycastHit>.ParallelWriter Hits;
     
     private static readonly CollisionFilter CastFilter = new CollisionFilter
     {
@@ -62,9 +335,24 @@ public partial struct PlayerShootJob : IJobEntity
         
         if(CastRay( transform, out RaycastHit hit ))
         {
+
             //Debug.Log( hit.RigidBodyIndex + ", " + hit.ColliderKey.Value );
             BlobAssetReference<Unity.Physics.Collider> col = PhysicsWorld.Bodies[hit.RigidBodyIndex].Collider;
-            ECB.DestroyEntity( hit.Entity );
+            //bool value = col.Value.GetLeaf( hit.ColliderKey.Value, out ChildCollider child );
+            
+            Hits.AddNoResize( hit );
+
+            /*
+            ECB.SetComponent( hit.Entity, new PhysicsCollider
+            {
+                Value = child.Collider->Clone()
+            } );
+            */
+            //ECB.SetBuffer<>(  )
+
+            //col.As<CompoundCollider>()
+            //ECB.SetComponent( hit.Entity, new PhysicsCollider() );
+            
         }
 
     }

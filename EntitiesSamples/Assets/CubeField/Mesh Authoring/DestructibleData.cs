@@ -6,7 +6,7 @@ using Unity.Rendering;
 using UnityEngine;
 
 
-[InternalBufferCapacity(16*16)]
+[InternalBufferCapacity(32*32)]
 public struct DestructibleData : IBufferElementData
 {
     public int Value;

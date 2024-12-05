@@ -149,41 +149,34 @@ public class StripMeshConstructor
     
     private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, int2 origin)
     {
-        NativeArray<int> keys = mergedStrips.GetKeyArray( Allocator.TempJob );
+        NativeArray<MeshStrip> strips = mergedStrips.GetValueArray( Allocator.Temp );
 
-
-        foreach ( int key in keys )
+        foreach ( MeshStrip strip in strips )
         {
-            NativeParallelMultiHashMap<int, MeshStrip>.Enumerator values = mergedStrips.GetValuesForKey( key );
-            while ( values.MoveNext() )
+
+            int2 bottomLeft = origin + strip.Start;
+            int2 topRight = origin + strip.End;
+            float2[] floorPoints =
             {
-                MeshStrip strip = values.Current;
-                int2 bottomLeft = origin + strip.Start;
-                int2 topRight = origin + strip.End;
-                float2[] floorPoints =
-                {
-                    new float2(bottomLeft.x-.5f, bottomLeft.y-.5f), //bottom left
-                    new float2(topRight.x+.5f, bottomLeft.y-.5f), //bottom right
-                    new float2(topRight.x+.5f, topRight.y+.5f), //top right
-                    new float2(bottomLeft.x-.5f, topRight.y+.5f), //top left
-                };
-    
-                AddNewBoxCollider( bottomLeft, topRight );
-                
-                VertexData[] vertices = 
-                {
-                    CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y), 
-                    CoordinatesToVertex(floorPoints[1].x, floorPoints[1].y), 
-                    CoordinatesToVertex(floorPoints[2].x, floorPoints[2].y),
-                    CoordinatesToVertex(floorPoints[3].x, floorPoints[3].y), 
-                };
-                AddMeshSection(vertices[0],  vertices[2], vertices[1]);
-                AddMeshSection(vertices[0], vertices[3], vertices[2]);
-            }
+                new float2(bottomLeft.x-.5f, bottomLeft.y-.5f), //bottom left
+                new float2(topRight.x+.5f, bottomLeft.y-.5f), //bottom right
+                new float2(topRight.x+.5f, topRight.y+.5f), //top right
+                new float2(bottomLeft.x-.5f, topRight.y+.5f), //top left
+            };
+
+            AddNewBoxCollider( bottomLeft, topRight );
+            
+            VertexData[] vertices = 
+            {
+                CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y), 
+                CoordinatesToVertex(floorPoints[1].x, floorPoints[1].y), 
+                CoordinatesToVertex(floorPoints[2].x, floorPoints[2].y),
+                CoordinatesToVertex(floorPoints[3].x, floorPoints[3].y), 
+            };
+            AddMeshSection(vertices[0],  vertices[2], vertices[1]);
+            AddMeshSection(vertices[0], vertices[3], vertices[2]);
+            
         }
-
-        keys.Dispose();
-
 
     }
 

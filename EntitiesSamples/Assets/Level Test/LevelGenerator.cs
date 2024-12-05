@@ -237,6 +237,8 @@ public partial class LevelGenerator : MonoBehaviour
     {
         if(CreateOnStart)
             GenerateLevel();
+        
+        MakeTestCollider();
     }
 
     public void GenerateLevel()
@@ -946,15 +948,18 @@ public partial class LevelGenerator : MonoBehaviour
 
     public void MakeTestCollider()
     {
+        if(_collidersMade == null)
+            _collidersMade = new List<BlobAssetReference<Collider>>();
         World world = World.DefaultGameObjectInjectionWorld;
         EntityManager entityManager = world.EntityManager;
         
         int gridSize = 32;
         float thickness = 1 * GameSettings.PixelsPerUnit;
         
+        Entity prototype = entityManager.CreateEntity();
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(gridSize*gridSize, Allocator.Temp);
-        
-        
+        entityManager.AddBuffer<DestructibleData>( prototype );
+
         
         float3 boxCenter = new float3(0,0,0);
         float3 size = new float3( new int2(1,1), thickness)/ (GameSettings.PixelsPerUnit);
@@ -967,8 +972,9 @@ public partial class LevelGenerator : MonoBehaviour
         };
         BlobAssetReference<Collider> col =
             Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+
         
-        Entity prototype = entityManager.CreateEntity();
+        
         
         entityManager.AddComponentData( prototype, new LocalToWorld {Value = float4x4.TRS(
             new float3(new float3(0,0,0)),
@@ -979,6 +985,8 @@ public partial class LevelGenerator : MonoBehaviour
         {
             for ( int y = 0; y < gridSize; y++ )
             {
+                
+                
                 float3 pos = new float3(x, y, 0)/GameSettings.PixelsPerUnit;
                 CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
                 {
@@ -991,20 +999,24 @@ public partial class LevelGenerator : MonoBehaviour
                     }
                 };
                 childCols[x + y*gridSize] = newChild;
+                entityManager.GetBuffer<DestructibleData>( prototype ).Add( new DestructibleData{Value = 1} );
                 //_collidersMade.Add( newChild.Collider );
             }
         }
 
 
+
+        
+
         BlobAssetReference<Collider> compCol = CompoundCollider.Create( childCols );
-            
+        _collidersMade.Add( compCol );
         
         entityManager.AddComponentData(prototype, new PhysicsCollider()
         {
             Value = compCol
         });
         entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
-        
+
         entityManager.SetName( prototype, "Compound Test" );
         childCols.Dispose();
         
