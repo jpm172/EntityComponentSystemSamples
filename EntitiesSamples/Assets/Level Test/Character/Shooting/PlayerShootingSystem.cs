@@ -125,24 +125,35 @@ public partial struct PlayerShootingSystem : ISystem
                             pos = float3.zero
                         }
                     };
-                    //
+                    
                     childCols[counter] = newChild;
 
                     counter++;
-                }
+                }//
 
+                PhysicsCollider physicsCollider = new PhysicsCollider
+                {
+                    Value = CompoundCollider.Create( childCols )
+                };
+                //physicsCollider.MakeUnique( e, state.EntityManager );
+                
+                ecb.SetComponent( e, physicsCollider );
+                /*//
                 ecb.SetComponent( e, new PhysicsCollider
                 {
                     Value = CompoundCollider.Create( childCols )
                 } );
+                */
+                
 
-                foreach ( var VARIABLE in colsMade )
+                foreach ( BlobAssetReference<Unity.Physics.Collider> col in colsMade )
                 {
-                    VARIABLE.Dispose();//
+                    col.Dispose();
                 }
 
                 mergedStrips.Dispose();
                 colStrips.Dispose();
+                colsMade.Dispose();
             }
         }
         
@@ -281,7 +292,7 @@ public struct MergeColliderStripsJob : IJobParallelFor
     }
 }
 
-
+[BurstCompile]
 public struct DestroyStructureJob : IJob
 {
     public DynamicBuffer<DestructibleData> Data;
@@ -290,17 +301,23 @@ public struct DestroyStructureJob : IJob
     public EntityCommandBuffer ECB;
     public void Execute( )
     {
+        float3 relativeHit = Hit.Position - EntityPosition.Position;
+        float width = 2; //32/16
+        int hitX = (int)((relativeHit.x / width)*32);
+        int hitY = (int)((relativeHit.y / width)*32);
+
         for ( int i = 0; i < Data.Length; i++ )
         {
-            float3 relativeHit = Hit.Position - EntityPosition.Position;
-            float width = 2; //32 / 16;
-            width -= (relativeHit.x);
-            width *= 32;
-            Debug.Log( $"hit {width}" );
-            Debug.DrawLine( EntityPosition.Position, EntityPosition.Position + new float3(0,10,0), Color.cyan, 1 );
-            DestructibleData d = Data[i];
+            int x = i % 32;
+            int y = i / 32;
+
+            if ( math.distance( new float2( x, y ), new float2( hitX, hitY ) ) < 2 )
+            {
+                DestructibleData d = Data[i];
+                d.Value = 0;
+                Data[i] = d;
+            }
             
-            Data[i] = d;
         }
         /*
         Random rand = Random.CreateFromIndex( 2 );
@@ -335,11 +352,9 @@ public partial struct PlayerShootJob : IJobEntity
         
         if(CastRay( transform, out RaycastHit hit ))
         {
-
-            //Debug.Log( hit.RigidBodyIndex + ", " + hit.ColliderKey.Value );
-            BlobAssetReference<Unity.Physics.Collider> col = PhysicsWorld.Bodies[hit.RigidBodyIndex].Collider;
-            //bool value = col.Value.GetLeaf( hit.ColliderKey.Value, out ChildCollider child );
             
+            BlobAssetReference<Unity.Physics.Collider> col = PhysicsWorld.Bodies[hit.RigidBodyIndex].Collider;
+
             Hits.AddNoResize( hit );
 
             /*

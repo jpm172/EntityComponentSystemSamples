@@ -1019,6 +1019,7 @@ public partial class LevelGenerator : MonoBehaviour
 
         entityManager.SetName( prototype, "Compound Test" );
         childCols.Dispose();
+        col.Dispose();
         
     }
     
@@ -1042,16 +1043,16 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 ClearLevelEntities();
             }
-            
-            foreach ( var col in _collidersMade )
-            {
-                col.Dispose();
-            }
-            _collidersMade.Clear();
-            //removes the materials that were made for the level
-            Resources.UnloadUnusedAssets();
-                
         }
+        
+        foreach ( var col in _collidersMade )
+        {
+            col.Dispose();
+        }
+        _collidersMade.Clear();
+        //removes the materials that were made for the level
+        Resources.UnloadUnusedAssets();
+        
     }
 }
 
