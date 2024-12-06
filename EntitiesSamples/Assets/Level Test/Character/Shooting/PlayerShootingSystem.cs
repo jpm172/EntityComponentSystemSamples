@@ -129,22 +129,26 @@ public partial struct PlayerShootingSystem : ISystem
                     childCols[counter] = newChild;
 
                     counter++;
-                }//
+                }
 
+                /*
+                DynamicBuffer<ColliderBufferElement> colData = state.EntityManager.GetBuffer<ColliderBufferElement>( e );
+
+                foreach ( var VARIABLE in colData )
+                {
+                    VARIABLE.Value.Dispose();
+                }
+                colData.Clear();//
+                */
+                
                 PhysicsCollider physicsCollider = new PhysicsCollider
                 {
                     Value = CompoundCollider.Create( childCols )
                 };
                 //physicsCollider.MakeUnique( e, state.EntityManager );
-                
+
                 ecb.SetComponent( e, physicsCollider );
-                /*//
-                ecb.SetComponent( e, new PhysicsCollider
-                {
-                    Value = CompoundCollider.Create( childCols )
-                } );
-                */
-                
+                ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsCollider.Value} );
 
                 foreach ( BlobAssetReference<Unity.Physics.Collider> col in colsMade )
                 {
@@ -158,7 +162,7 @@ public partial struct PlayerShootingSystem : ISystem
         }
         
         
-        
+        //
         hitEntities.Dispose();
         //ecb.Playback( state.EntityManager );
         //ecb.Dispose();
@@ -354,9 +358,9 @@ public partial struct PlayerShootJob : IJobEntity
         {
             
             BlobAssetReference<Unity.Physics.Collider> col = PhysicsWorld.Bodies[hit.RigidBodyIndex].Collider;
-
+            
             Hits.AddNoResize( hit );
-
+            
             /*
             ECB.SetComponent( hit.Entity, new PhysicsCollider
             {

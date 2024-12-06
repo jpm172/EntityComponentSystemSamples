@@ -17,6 +17,8 @@ public partial class LevelGenerator : MonoBehaviour
 {
 
     [SerializeField] private int seed;
+
+    public Entity e;
     
     [SerializeField]
     private int2 dimensions;//dimensions of level in terms of pixels
@@ -959,7 +961,7 @@ public partial class LevelGenerator : MonoBehaviour
         Entity prototype = entityManager.CreateEntity();
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(gridSize*gridSize, Allocator.Temp);
         entityManager.AddBuffer<DestructibleData>( prototype );
-
+        entityManager.AddBuffer<ColliderBufferElement>( prototype );
         
         float3 boxCenter = new float3(0,0,0);
         float3 size = new float3( new int2(1,1), thickness)/ (GameSettings.PixelsPerUnit);
@@ -1017,6 +1019,8 @@ public partial class LevelGenerator : MonoBehaviour
         });
         entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
 
+        e = prototype;
+        
         entityManager.SetName( prototype, "Compound Test" );
         childCols.Dispose();
         col.Dispose();
@@ -1044,6 +1048,14 @@ public partial class LevelGenerator : MonoBehaviour
                 ClearLevelEntities();
             }
         }
+
+        DynamicBuffer<ColliderBufferElement> buffer =World.DefaultGameObjectInjectionWorld.EntityManager.GetBuffer<ColliderBufferElement>( e );
+
+        foreach ( var VARIABLE in buffer )
+        {
+            VARIABLE.Value.Dispose();
+        }
+        
         
         foreach ( var col in _collidersMade )
         {
@@ -1052,7 +1064,6 @@ public partial class LevelGenerator : MonoBehaviour
         _collidersMade.Clear();
         //removes the materials that were made for the level
         Resources.UnloadUnusedAssets();
-        
     }
 }
 
