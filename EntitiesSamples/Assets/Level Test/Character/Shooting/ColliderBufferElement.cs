@@ -8,3 +8,8 @@ public struct ColliderBufferElement : IBufferElementData
 {
     public BlobAssetReference<Collider> Value;
 }
+
+public struct OldCollider : IComponentData, IEnableableComponent
+{
+    public BlobAssetReference<Collider> Value;
+}

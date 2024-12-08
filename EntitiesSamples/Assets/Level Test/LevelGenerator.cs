@@ -961,7 +961,8 @@ public partial class LevelGenerator : MonoBehaviour
         Entity prototype = entityManager.CreateEntity();
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(gridSize*gridSize, Allocator.Temp);
         entityManager.AddBuffer<DestructibleData>( prototype );
-        entityManager.AddBuffer<ColliderBufferElement>( prototype );
+        //entityManager.AddBuffer<ColliderBufferElement>( prototype );
+        entityManager.AddComponentData( prototype, new OldCollider() );
         
         float3 boxCenter = new float3(0,0,0);
         float3 size = new float3( new int2(1,1), thickness)/ (GameSettings.PixelsPerUnit);
@@ -982,6 +983,8 @@ public partial class LevelGenerator : MonoBehaviour
             new float3(new float3(0,0,0)),
             quaternion.identity,
             new float3(1))});
+        entityManager.AddComponentData( prototype, new DestructibleTag() );
+        
 
         for ( int x = 0; x < gridSize; x++ )
         {
@@ -1012,13 +1015,16 @@ public partial class LevelGenerator : MonoBehaviour
 
         BlobAssetReference<Collider> compCol = CompoundCollider.Create( childCols );
         _collidersMade.Add( compCol );
-        
-        entityManager.AddComponentData(prototype, new PhysicsCollider()
+
+        PhysicsCollider physicsCollider = new PhysicsCollider()
         {
             Value = compCol
-        });
+        };
+        entityManager.AddComponentData(prototype, physicsCollider);
         entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
 
+        entityManager.AddComponentData( prototype, new DestructibleCleanUp() );
+        
         e = prototype;
         
         entityManager.SetName( prototype, "Compound Test" );
@@ -1047,21 +1053,16 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 ClearLevelEntities();
             }
+            
+            foreach ( var col in _collidersMade )
+            {
+                col.Dispose();
+            }
+            _collidersMade.Clear();//
         }
 
-        DynamicBuffer<ColliderBufferElement> buffer =World.DefaultGameObjectInjectionWorld.EntityManager.GetBuffer<ColliderBufferElement>( e );
 
-        foreach ( var VARIABLE in buffer )
-        {
-            VARIABLE.Value.Dispose();
-        }
-        
-        
-        foreach ( var col in _collidersMade )
-        {
-            col.Dispose();
-        }
-        _collidersMade.Clear();
+
         //removes the materials that were made for the level
         Resources.UnloadUnusedAssets();
     }

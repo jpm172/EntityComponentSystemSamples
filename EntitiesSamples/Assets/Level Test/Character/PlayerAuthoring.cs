@@ -8,25 +8,26 @@ public class PlayerAuthoring : MonoBehaviour
 {
 
     public float MoveSpeed;
-    public float3 forward, up;
+    public float DestroyRadius = 2;
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            /*
-            AddComponent(entity, new ThirdPersonPlayer
-            {
-                ControlledCharacter = GetEntity(authoring.ControlledCharacter, TransformUsageFlags.Dynamic),
-                ControlledCamera = GetEntity(authoring.ControlledCamera, TransformUsageFlags.Dynamic),
-            });
-            */
+            
             AddComponent(entity, new MyCharacterComponent
             {
                 MovementSpeed = authoring.MoveSpeed
             });
-            //Camera.main.GetComponent<CameraFollow>().ballEntity = entity;
+            
+            AddComponent(entity, new WeaponInfo
+            {
+                DestroyRadius = authoring.DestroyRadius,
+                FireRate = 1
+            });
+            
             AddComponent<PlayerInputs>(entity);
+            
         }
     }
 }

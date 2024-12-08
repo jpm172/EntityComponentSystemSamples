@@ -36,17 +36,18 @@ public partial struct PlayerShootingSystem : ISystem
     public void OnUpdate( ref SystemState state )
     {
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
-       // EntityCommandBuffer ecb = new EntityCommandBuffer(Allocator.TempJob);
+
        NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
 
        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>()
            .CreateCommandBuffer();
        
+       NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
        new PlayerShootJob
        {
            PhysicsWorld = physicsWorld,
            Hits = hitEntities.AsParallelWriter(),
-           ECB = ecb
+           FiredWeapon = firedWeapon
        }.Run();
 
        
@@ -63,7 +64,7 @@ public partial struct PlayerShootingSystem : ISystem
                     Data = data,
                     EntityPosition = ltw,
                     Hit = hit,
-                    ECB = ecb
+                    FiredWeapon = firedWeapon
                 }.Run();
 
                 int dim = 32;
@@ -88,6 +89,16 @@ public partial struct PlayerShootingSystem : ISystem
                 
                 
                 NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
+
+                if ( geometry.Length == 0 )
+                {
+                    ecb.DestroyEntity( e );
+                    colStrips.Dispose();
+                    mergedStrips.Dispose();
+                    hitEntities.Dispose();
+                    firedWeapon.Dispose();
+                    return;
+                }
 
                 int count = geometry.Length;
 
@@ -131,24 +142,16 @@ public partial struct PlayerShootingSystem : ISystem
                     counter++;
                 }
 
-                /*
-                DynamicBuffer<ColliderBufferElement> colData = state.EntityManager.GetBuffer<ColliderBufferElement>( e );
-
-                foreach ( var VARIABLE in colData )
-                {
-                    VARIABLE.Value.Dispose();
-                }
-                colData.Clear();//
-                */
-                
+                //store the old collider in the cleanup component to be disposed later
+                //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
+                ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
+                //ecb.SetComponentEnabled( e, typeof(OldCollider), false );
                 PhysicsCollider physicsCollider = new PhysicsCollider
                 {
                     Value = CompoundCollider.Create( childCols )
                 };
-                //physicsCollider.MakeUnique( e, state.EntityManager );
-
+                ecb.SetComponent( e, new DestructibleCleanUp{Value = physicsCollider} );
                 ecb.SetComponent( e, physicsCollider );
-                ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsCollider.Value} );
 
                 foreach ( BlobAssetReference<Unity.Physics.Collider> col in colsMade )
                 {
@@ -161,11 +164,9 @@ public partial struct PlayerShootingSystem : ISystem
             }
         }
         
-        
-        //
+       
         hitEntities.Dispose();
-        //ecb.Playback( state.EntityManager );
-        //ecb.Dispose();
+        firedWeapon.Dispose();
     }
     
     
@@ -302,7 +303,7 @@ public struct DestroyStructureJob : IJob
     public DynamicBuffer<DestructibleData> Data;
     public LocalToWorld EntityPosition;
     public RaycastHit Hit;
-    public EntityCommandBuffer ECB;
+    public NativeReference<WeaponInfo> FiredWeapon;
     public void Execute( )
     {
         float3 relativeHit = Hit.Position - EntityPosition.Position;
@@ -315,7 +316,7 @@ public struct DestroyStructureJob : IJob
             int x = i % 32;
             int y = i / 32;
 
-            if ( math.distance( new float2( x, y ), new float2( hitX, hitY ) ) < 2 )
+            if ( math.distance( new float2( x, y ), new float2( hitX, hitY ) ) < FiredWeapon.Value.DestroyRadius )
             {
                 DestructibleData d = Data[i];
                 d.Value = 0;
@@ -323,25 +324,17 @@ public struct DestroyStructureJob : IJob
             }
             
         }
-        /*
-        Random rand = Random.CreateFromIndex( 2 );
-        for ( int i = 0; i < Data.Length; i++ )
-        {
-            DestructibleData d = Data[i];
-            if(!rand.NextBool())
-                d.Value = 0;
-            Data[i] = d;
-        }
-        */
     }
 }
 
+[BurstCompile]
 public partial struct PlayerShootJob : IJobEntity
 {
     private static readonly float Range = 30;
     public PhysicsWorldSingleton PhysicsWorld;
-    public EntityCommandBuffer ECB;
     public NativeList<RaycastHit>.ParallelWriter Hits;
+
+    public NativeReference<WeaponInfo> FiredWeapon;
     
     private static readonly CollisionFilter CastFilter = new CollisionFilter
     {
@@ -349,30 +342,17 @@ public partial struct PlayerShootJob : IJobEntity
         BelongsTo = ~(uint)( 1 << 6 )
     };
     
-    private void Execute( in LocalTransform transform, in PlayerInputs input )
+    private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponInfo weapon )
     {
         if ( !input.Shoot )
             return;
+
+        FiredWeapon.Value = weapon;
         
         if(CastRay( transform, out RaycastHit hit ))
         {
-            
-            BlobAssetReference<Unity.Physics.Collider> col = PhysicsWorld.Bodies[hit.RigidBodyIndex].Collider;
-            
             Hits.AddNoResize( hit );
-            
-            /*
-            ECB.SetComponent( hit.Entity, new PhysicsCollider
-            {
-                Value = child.Collider->Clone()
-            } );
-            */
-            //ECB.SetBuffer<>(  )
-
-            //col.As<CompoundCollider>()
-            //ECB.SetComponent( hit.Entity, new PhysicsCollider() );
-            
-        }
+        }//
 
     }
 
