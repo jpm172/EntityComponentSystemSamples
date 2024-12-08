@@ -10,6 +10,7 @@ public struct WeaponInfo : IComponentData
 {
     public float DestroyRadius;
     public float FireRate;
+    public float Timer;
     public float Penetration;
     public float PlayerDamage;
     public float StructureDamage;

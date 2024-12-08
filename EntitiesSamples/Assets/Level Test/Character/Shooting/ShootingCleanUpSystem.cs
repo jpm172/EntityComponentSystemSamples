@@ -11,16 +11,18 @@ public partial struct ShootingCleanUpSystem : ISystem
 {
 
     private EntityQuery query;
+    private EntityQuery _endQuery;
     private EntityQuery destroyedQuery;
     public void OnCreate( ref SystemState state )
     {
         query = new EntityQueryBuilder(Allocator.Temp).WithAll<DestructibleTag, OldCollider>().Build(ref state);
+        _endQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<DestructibleTag, OldCollider>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).Build(ref state);
         destroyedQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<DestructibleCleanUp>().WithNone<PhysicsCollider>().Build(ref state);
     }
 
-    public void OnDestroy( ref SystemState state )
+    public void OnDestroy( ref SystemState state )//
     {
-        var entities = query.ToEntityArray(Allocator.Temp);
+        var entities = _endQuery.ToEntityArray(Allocator.Temp);
         foreach ( Entity e in entities )
         {
             state.EntityManager.GetComponentData<PhysicsCollider>( e ).Value.Dispose();
@@ -37,10 +39,10 @@ public partial struct ShootingCleanUpSystem : ISystem
             if ( old.Value.IsCreated )
             {
                 old.Value.Dispose();
-                old.Value = BlobAssetReference<Collider>.Null;
-                state.EntityManager.SetComponentData( e, old );
-                //state.EntityManager.SetComponentEnabled(e, typeof(OldCollider), false);
-            }
+                //old.Value = BlobAssetReference<Collider>.Null;
+                //state.EntityManager.SetComponentData( e, old );
+                state.EntityManager.SetComponentEnabled(e, typeof(OldCollider), false);
+            }//
             
         }
         

@@ -22,10 +22,10 @@ using RaycastHit = Unity.Physics.RaycastHit;
 [UpdateInGroup(typeof(SimulationSystemGroup), OrderLast =  true)]
 public partial struct PlayerShootingSystem : ISystem
 {
-
+    private EntityQuery _playerQuery;
     public void OnCreate( ref SystemState state )
     {
-        
+        _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
     }
 
     public void OnDestroy( ref SystemState state )
@@ -38,7 +38,7 @@ public partial struct PlayerShootingSystem : ISystem
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
 
        NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
-
+       Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0];
        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>()
            .CreateCommandBuffer();
        
@@ -49,7 +49,9 @@ public partial struct PlayerShootingSystem : ISystem
            Hits = hitEntities.AsParallelWriter(),
            FiredWeapon = firedWeapon
        }.Run();
-
+       
+       
+       ecb.SetComponent( player, firedWeapon.Value );
        
        if ( hitEntities.Length > 0 )
         {
@@ -144,7 +146,7 @@ public partial struct PlayerShootingSystem : ISystem
 
                 //store the old collider in the cleanup component to be disposed later
                 //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
-                //ecb.SetComponentEnabled( e, typeof(OldCollider), true );//
+                ecb.SetComponentEnabled( e, typeof(OldCollider), true );//
                 ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
                 
 
@@ -346,15 +348,18 @@ public partial struct PlayerShootJob : IJobEntity
     
     private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponInfo weapon )
     {
-        if ( !input.Shoot )
+        FiredWeapon.Value = weapon;
+        if ( !input.Shoot || FiredWeapon.Value.Timer > 0.1f )
             return;
 
-        FiredWeapon.Value = weapon;
+        WeaponInfo newWeapon = weapon;
+        //newWeapon.Timer = 1;
+        FiredWeapon.Value = newWeapon;
         
         if(CastRay( transform, out RaycastHit hit ))
         {
             Hits.AddNoResize( hit );
-        }//
+        }
 
     }
 

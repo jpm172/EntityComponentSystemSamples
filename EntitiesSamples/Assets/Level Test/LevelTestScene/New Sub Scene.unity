@@ -342,6 +342,11 @@ PrefabInstance:
       propertyPath: forward.x
       value: 266.3
       objectReference: {fileID: 0}
+    - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
+        type: 3}
+      propertyPath: DestroyRadius
+      value: 20
+      objectReference: {fileID: 0}
     - target: {fileID: 5611399194605933441, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: m_Name

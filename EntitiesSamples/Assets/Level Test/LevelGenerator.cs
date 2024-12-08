@@ -959,8 +959,8 @@ public partial class LevelGenerator : MonoBehaviour
         Entity prototype = entityManager.CreateEntity();
         entityManager.AddBuffer<DestructibleData>( prototype );
         entityManager.AddComponentData( prototype, new OldCollider() );
-        //entityManager.AddBuffer<ColliderBufferElement>( prototype );//
-        //entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
+        //entityManager.AddBuffer<ColliderBufferElement>( prototype );
+        entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(gridSize*gridSize, Allocator.Temp);
         
         
@@ -1023,7 +1023,7 @@ public partial class LevelGenerator : MonoBehaviour
         entityManager.AddComponentData(prototype, physicsCollider);
         entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
 
-        entityManager.AddComponentData( prototype, new DestructibleCleanUp() );
+        entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
 #if UNITY_EDITOR
         entityManager.SetName( prototype, "Compound Test" );//
 #endif
