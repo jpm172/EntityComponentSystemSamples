@@ -144,9 +144,11 @@ public partial struct PlayerShootingSystem : ISystem
 
                 //store the old collider in the cleanup component to be disposed later
                 //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
+                //ecb.SetComponentEnabled( e, typeof(OldCollider), true );//
                 ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
-                //ecb.SetComponentEnabled( e, typeof(OldCollider), false );
-                PhysicsCollider physicsCollider = new PhysicsCollider
+                
+
+                PhysicsCollider physicsCollider = new PhysicsCollider//
                 {
                     Value = CompoundCollider.Create( childCols )
                 };
