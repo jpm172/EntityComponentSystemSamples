@@ -250,7 +250,7 @@ PrefabInstance:
     - target: {fileID: 1443705506694902011, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1653140421502468464, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
@@ -350,7 +350,7 @@ PrefabInstance:
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: DestroyRadius
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5611399194605933441, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}

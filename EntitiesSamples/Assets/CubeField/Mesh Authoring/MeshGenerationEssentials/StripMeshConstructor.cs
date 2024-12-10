@@ -149,13 +149,16 @@ public class StripMeshConstructor
     
     private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, int2 origin)
     {
+        //origin = int2.zero;
         NativeArray<MeshStrip> strips = mergedStrips.GetValueArray( Allocator.Temp );
 
         foreach ( MeshStrip strip in strips )
         {
 
-            int2 bottomLeft = origin + strip.Start;
-            int2 topRight = origin + strip.End;
+            int2 bottomLeft =  strip.Start;
+            //int2 bottomLeft = origin + strip.Start;
+            int2 topRight =  strip.End;
+            //int2 topRight = origin + strip.End;
             float2[] floorPoints =
             {
                 new float2(bottomLeft.x-.5f, bottomLeft.y-.5f), //bottom left
@@ -168,10 +171,10 @@ public class StripMeshConstructor
             
             VertexData[] vertices = 
             {
-                CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y), 
-                CoordinatesToVertex(floorPoints[1].x, floorPoints[1].y), 
-                CoordinatesToVertex(floorPoints[2].x, floorPoints[2].y),
-                CoordinatesToVertex(floorPoints[3].x, floorPoints[3].y), 
+                CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y, origin), 
+                CoordinatesToVertex(floorPoints[1].x, floorPoints[1].y, origin), 
+                CoordinatesToVertex(floorPoints[2].x, floorPoints[2].y, origin),
+                CoordinatesToVertex(floorPoints[3].x, floorPoints[3].y, origin), 
             };
             AddMeshSection(vertices[0],  vertices[2], vertices[1]);
             AddMeshSection(vertices[0], vertices[3], vertices[2]);
@@ -199,6 +202,23 @@ public class StripMeshConstructor
         _collisionQuads.Add( newBox );
     }
     
+    private VertexData CoordinatesToVertex(float x, float y, int2 origin)
+    {
+        //offset the UVs by .5 to counteract the bottomLeft vector
+        //float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
+        //float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
+        
+        float uvX = (x + origin.x +.5f) / GameSettings.PixelsPerUnit;
+        float uvY = (y + origin.y +.5f) / GameSettings.PixelsPerUnit;
+        
+        Vector3 position = new Vector3(x, y, 0) / GameSettings.PixelsPerUnit;
+        return new VertexData()
+        {
+            Postion = position,
+            Uv = new Vector2(uvX, uvY),
+            Normal = Vector3.forward
+        };
+    }
     
     private VertexData CoordinatesToVertex(float x, float y)
     {

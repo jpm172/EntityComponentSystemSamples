@@ -194,6 +194,17 @@ public partial class LevelGenerator
             entityManager.AddComponentData( prototype, new EntityCollider() );
             entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
 
+            entityManager.AddBuffer<DestructibleData>( prototype );
+            DynamicBuffer<DestructibleData> destructibleBuffer = entityManager.GetBuffer<DestructibleData>( prototype );
+            for ( int j = 0; j < wall.PointField.Length; j++ )
+            {
+                destructibleBuffer.Add( new DestructibleData {Value = wall.PointField[j]} );
+            }
+            
+            entityManager.AddComponentData( prototype, new OldCollider() );
+            entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
+            entityManager.AddComponentData( prototype, new DestructibleTag() );
+            
             entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
             entityManager.AddComponentData( prototype, new BufferData
             {
@@ -225,25 +236,15 @@ public partial class LevelGenerator
             }
 
             BlobAssetReference<Unity.Physics.Collider> compCol = Unity.Physics.CompoundCollider.Create( childCols );
-            
 
-            entityManager.AddComponentData(prototype, new PhysicsCollider()
-            {
-                Value = compCol
-            });
+            PhysicsCollider physicsCollider = new PhysicsCollider {Value = compCol};
+            entityManager.AddComponentData(prototype, physicsCollider );
+            entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
             childCols.Dispose();
             
-            //
-            /*
-            BlobAssetReference<Unity.Physics.Collider> col = Unity.Physics.MeshCollider.Create( wall.Mesh, CollisionFilter.Default, Unity.Physics.Material.Default );
-            entityManager.AddComponentData(prototype, new PhysicsCollider()
-            {
-                Value = col
-            });
-            */
             entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
             
-            _collidersMade.Add( compCol );
+            //_collidersMade.Add( compCol );//
         }
     }
 

@@ -238,7 +238,7 @@ public partial class LevelGenerator : MonoBehaviour
         if(CreateOnStart)
             GenerateLevel();
         
-        MakeTestCollider();
+        //MakeTestCollider();
     }
 
     public void GenerateLevel()
@@ -843,7 +843,7 @@ public partial class LevelGenerator : MonoBehaviour
         JobHandle fetchHandle = fetchJob.Schedule( _levelLayout.Length, 256 );
         fetchHandle.Complete();
 
-        int binSize = 64;
+        int binSize = 32;
         int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
         int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
         int binCount = xBins * yBins;
@@ -905,13 +905,14 @@ public partial class LevelGenerator : MonoBehaviour
                 mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
                 mat.SetInt( "_BlockSize", binSize );
 
-
+                Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
                 LevelWall newWall = new LevelWall
                 {
                     Material = mat,
                     Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
                     PointField = pointField.ToArray(),
-                    Position = Vector2.zero,
+                    Position = wallPos,
+                    //Position = Vector2.zero,
                     Geo = meshConstructor.CollisionQuads
                 };
                 pointField.Dispose();
@@ -939,7 +940,7 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 FloorMesh = room.FloorMesh, 
                 FloorMaterial = floorMaterials[Random.Range( 0, floorMaterials.Length )],
-                Position = new Vector2(0,0 )
+                Position = new Vector2(room.Origin.x,room.Origin.y )/GameSettings.PixelsPerUnit
             };
 
             _floors.Add( newFloor  );
@@ -980,7 +981,7 @@ public partial class LevelGenerator : MonoBehaviour
         
         
         entityManager.AddComponentData( prototype, new LocalToWorld {Value = float4x4.TRS(
-            new float3(new float3(0,0,0)),
+            new float3(new float3(4,0,0)),
             quaternion.identity,
             new float3(1))});
         entityManager.AddComponentData( prototype, new DestructibleTag() );

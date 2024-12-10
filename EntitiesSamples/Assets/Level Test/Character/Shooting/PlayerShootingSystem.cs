@@ -118,7 +118,7 @@ public partial struct PlayerShootingSystem : ISystem
                     int2 bottomLeft =  strip.Start;
                     int2 topRight = strip.End;
 
-                    float3 center = new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit);
+                    float3 center = (new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
                     float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
                     BoxGeometry newBox = new BoxGeometry
                     {
@@ -356,7 +356,6 @@ public partial struct PlayerShootJob : IJobEntity
         FiredWeapon.Value = weapon;
         if ( !input.Shoot || FiredWeapon.Value.Timer > 0.1f )
             return;
-        Debug.Log( "shoot" );
 
         WeaponInfo newWeapon = weapon;
         //newWeapon.Timer = 1;//
