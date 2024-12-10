@@ -19,7 +19,9 @@ using RaycastHit = Unity.Physics.RaycastHit;
 //[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))] works for schedule, not run
 //[UpdateAfter(typeof(PhysicsSystemGroup))]
 
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderLast =  true)]
+//[UpdateInGroup(typeof(SimulationSystemGroup), OrderLast =  true)]
+[UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+[UpdateAfter(typeof(PhysicsSystemGroup))]
 public partial struct PlayerShootingSystem : ISystem
 {
     private EntityQuery _playerQuery;
@@ -35,12 +37,14 @@ public partial struct PlayerShootingSystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
+        state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
 
        NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
        Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0];
-       EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>()
+       EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndFixedStepSimulationEntityCommandBufferSystem>()
            .CreateCommandBuffer();
+       
        
        NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
        new PlayerShootJob
@@ -146,11 +150,12 @@ public partial struct PlayerShootingSystem : ISystem
 
                 //store the old collider in the cleanup component to be disposed later
                 //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
-                ecb.SetComponentEnabled( e, typeof(OldCollider), true );//
+                //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = state.EntityManager.GetComponentData<PhysicsCollider>( hit.Entity )} );
+                ecb.SetComponentEnabled( e, typeof(OldCollider), true );
                 ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
                 
 
-                PhysicsCollider physicsCollider = new PhysicsCollider//
+                PhysicsCollider physicsCollider = new PhysicsCollider
                 {
                     Value = CompoundCollider.Create( childCols )
                 };
@@ -351,9 +356,10 @@ public partial struct PlayerShootJob : IJobEntity
         FiredWeapon.Value = weapon;
         if ( !input.Shoot || FiredWeapon.Value.Timer > 0.1f )
             return;
+        Debug.Log( "shoot" );
 
         WeaponInfo newWeapon = weapon;
-        //newWeapon.Timer = 1;
+        //newWeapon.Timer = 1;//
         FiredWeapon.Value = newWeapon;
         
         if(CastRay( transform, out RaycastHit hit ))

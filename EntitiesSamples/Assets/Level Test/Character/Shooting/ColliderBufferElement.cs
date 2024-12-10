@@ -6,10 +6,12 @@ using Unity.Physics;
 [InternalBufferCapacity(100)]
 public struct ColliderBufferElement : IBufferElementData
 {
-    public BlobAssetReference<Collider> Value;
+    //public BlobAssetReference<Collider> Value;
+    public PhysicsCollider Value;
 }
 
 public struct OldCollider : IComponentData, IEnableableComponent
 {
     public BlobAssetReference<Collider> Value;
+    
 }
