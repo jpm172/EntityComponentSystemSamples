@@ -8,6 +8,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Extensions;
 using Unity.Physics.Systems;
+using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 using BoxCollider = Unity.Physics.BoxCollider;
@@ -22,12 +23,16 @@ using RaycastHit = Unity.Physics.RaycastHit;
 //[UpdateInGroup(typeof(SimulationSystemGroup), OrderLast =  true)]
 [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
 [UpdateAfter(typeof(PhysicsSystemGroup))]
+//float startTime = Time.realtimeSinceStartup; Debug.Log( "done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
 public partial struct PlayerShootingSystem : ISystem
 {
     private EntityQuery _playerQuery;
+    private static readonly int PointsBuffer = Shader.PropertyToID( "_PointsBuffer" );
+
     public void OnCreate( ref SystemState state )
     {
         _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
+        state.RequireForUpdate<PhysicsWorldSingleton>();
     }
 
     public void OnDestroy( ref SystemState state )
@@ -38,14 +43,15 @@ public partial struct PlayerShootingSystem : ISystem
     public void OnUpdate( ref SystemState state )
     {
         state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
+        
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
-
+        
        NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
-       Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0];
+       //Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0];
        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndFixedStepSimulationEntityCommandBufferSystem>()
            .CreateCommandBuffer();
-       
-       
+
+
        NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
        new PlayerShootJob
        {
@@ -54,17 +60,20 @@ public partial struct PlayerShootingSystem : ISystem
            FiredWeapon = firedWeapon
        }.Run();
        
-       
-       ecb.SetComponent( player, firedWeapon.Value );
-       
+
        if ( hitEntities.Length > 0 )
         {
             foreach ( RaycastHit hit in hitEntities )
             {
                 Entity e = hit.Entity;
+                StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( e );
+                
+                if(structure.Material == LevelMaterial.Indestructible)
+                    continue;
+                
                 DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( e );
                 LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( e );
-                
+
                 new DestroyStructureJob
                 {
                     Data = data,
@@ -72,6 +81,14 @@ public partial struct PlayerShootingSystem : ISystem
                     Hit = hit,
                     FiredWeapon = firedWeapon
                 }.Run();
+
+                
+                BufferData d = state.EntityManager.GetComponentData<BufferData>( e );
+                d.SetBuffer(data.Reinterpret<int>().AsNativeArray().ToArray());
+                
+                MaterialMeshInfo info = state.EntityManager.GetComponentData<MaterialMeshInfo>( e );
+                RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(e);
+                arr.GetMaterial( info ).SetBuffer( PointsBuffer, d.Buffer );
 
                 int dim = 32;
                 NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
@@ -95,7 +112,7 @@ public partial struct PlayerShootingSystem : ISystem
                 
                 
                 NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
-
+                //destroy the structure if there is no geometry
                 if ( geometry.Length == 0 )
                 {
                     ecb.DestroyEntity( e );
@@ -383,10 +400,10 @@ public partial struct PlayerShootJob : IJobEntity
         
         if ( PhysicsWorld.CastRay( rayInput, out hit ) )
         {
-            Debug.DrawLine( rayInput.Start, hit.Position, Color.red, .2f );
+            //Debug.DrawLine( rayInput.Start, hit.Position, Color.red, .2f );
             return true;
         } 
-        Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
+        //Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
 
         return false;
     }

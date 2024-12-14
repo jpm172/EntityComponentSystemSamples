@@ -38,7 +38,9 @@ public partial class LevelGenerator : MonoBehaviour
     private Dictionary<LevelMaterial, Texture2D> _textureDict;
 
     [SerializeField]
-    private Material wallMaterial;
+    private Material dynamicWallMaterial;
+    [SerializeField]
+    private Material staticWallMaterial;
     
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
@@ -893,9 +895,12 @@ public partial class LevelGenerator : MonoBehaviour
             JobHandle createHandle = createWallsJob.Schedule( binCount, 1 );
             createHandle.Complete();
 
+            
+            
 
             for ( int i = 0; i < usedBins; i++ )
             {
+                /*
                 NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
                 StripMeshConstructor meshConstructor = new StripMeshConstructor();
                 
@@ -909,13 +914,25 @@ public partial class LevelGenerator : MonoBehaviour
                 LevelWall newWall = new LevelWall
                 {
                     Material = mat,
+                    StructureMat = targetMat,
                     Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
                     PointField = pointField.ToArray(),
                     Position = wallPos,
                     //Position = Vector2.zero,
                     Geo = meshConstructor.CollisionQuads
                 };
-                pointField.Dispose();
+                */
+                LevelWall newWall = new LevelWall();
+                if ( targetMat == LevelMaterial.Indestructible )
+                {
+                    newWall = MakeStaticWall( i, binSize, targetMat, pointFields, positions );
+                }
+                else
+                {
+                    newWall = MakeDynamicWall( i, binSize, targetMat, pointFields, positions );
+                }
+                
+                
                 _walls.Add( newWall );
             }
             
@@ -928,6 +945,54 @@ public partial class LevelGenerator : MonoBehaviour
 
         wallArr.Dispose();
         wallCells.Dispose();
+    }
+
+    
+    private LevelWall MakeStaticWall( int i, int binSize, LevelMaterial targetMat, NativeArray<int> pointFields, NativeArray<int2> positions  )
+    {
+        NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
+        StripMeshConstructor meshConstructor = new StripMeshConstructor();
+        
+        Material mat = new Material( staticWallMaterial );
+        mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
+
+        Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
+        LevelWall newWall = new LevelWall
+        {
+            Material = mat,
+            StructureMat = targetMat,
+            Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
+            PointField = pointField.ToArray(),
+            Position = wallPos,
+            Geo = meshConstructor.CollisionQuads
+        };
+        pointField.Dispose();
+        return newWall;
+    }
+    
+    private LevelWall MakeDynamicWall( int i, int binSize, LevelMaterial targetMat, NativeArray<int> pointFields, NativeArray<int2> positions  )
+    {
+        NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
+        StripMeshConstructor meshConstructor = new StripMeshConstructor();
+                
+        //Material mat = new Material( wallMaterial ) {mainTexture = _textureDict[targetMat]};
+        Material mat = new Material( dynamicWallMaterial );
+        mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
+        mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
+        mat.SetInt( "_BlockSize", binSize );
+
+        Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
+        LevelWall newWall = new LevelWall
+        {
+            Material = mat,
+            StructureMat = targetMat,
+            Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
+            PointField = pointField.ToArray(),
+            Position = wallPos,
+            Geo = meshConstructor.CollisionQuads
+        };
+        pointField.Dispose();
+        return newWall;
     }
     
     private void MakeFloors()
@@ -1079,6 +1144,7 @@ public struct LevelWall
 {
     public Mesh Mesh;
     public Material Material;
+    public LevelMaterial StructureMat;
     public Vector2 Position;
     public int[] PointField;
     public List<BoxGeometry> Geo;

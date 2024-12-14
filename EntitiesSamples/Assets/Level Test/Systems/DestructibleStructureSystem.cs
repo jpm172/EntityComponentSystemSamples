@@ -14,6 +14,7 @@ partial struct DestructibleStructureSystem : ISystem
     //[BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        /*
         foreach (
             var (col, info, entity)
             in SystemAPI.Query<EnabledRefRO<EntityCollider>, RefRO<MaterialMeshInfo>>().WithEntityAccess() )
@@ -22,14 +23,17 @@ partial struct DestructibleStructureSystem : ISystem
             
             RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(entity);
 
+            
             for ( int i = 0; i < data.PointField.Length; i++ )
             {
                 data.PointField[i] = 0;
             }
             data.SetBuffer();
             
+            
             arr.GetMaterial( info.ValueRO ).SetBuffer( "_PointsBuffer", data.Buffer );
         }
+    */
     }
 
     [BurstCompile]

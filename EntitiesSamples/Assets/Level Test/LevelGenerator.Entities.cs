@@ -191,63 +191,114 @@ public partial class LevelGenerator
                 new float3(info.Position),
                 quaternion.identity,
                 new float3(1))});
-            entityManager.AddComponentData( prototype, new EntityCollider() );
-            entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
 
-            entityManager.AddBuffer<DestructibleData>( prototype );
-            DynamicBuffer<DestructibleData> destructibleBuffer = entityManager.GetBuffer<DestructibleData>( prototype );
-            for ( int j = 0; j < wall.PointField.Length; j++ )
+            if ( wall.StructureMat == LevelMaterial.Indestructible )
             {
-                destructibleBuffer.Add( new DestructibleData {Value = wall.PointField[j]} );
+                CreateStaticWall(entityManager, prototype, wall, renderMeshArray, info);
             }
-            
-            entityManager.AddComponentData( prototype, new OldCollider() );
-            entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
-            entityManager.AddComponentData( prototype, new DestructibleTag() );
-            
-            entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
-            entityManager.AddComponentData( prototype, new BufferData
+            else
             {
-                PointField = wall.PointField,
-                Buffer = new ComputeBuffer( wall.PointField.Length,sizeof(int) )
-            } );
-            entityManager.GetComponentData<BufferData>(prototype).SetBuffer();
-            renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
-            
-            
-            //
-            NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
-
-            for(int w = 0; w < wall.Geo.Count; w++)
-            {
-                BoxGeometry geo = wall.Geo[w];
-                CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
-                {
-                    Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, Unity.Physics.Material.Default ),
-                    Entity = prototype,
-                    CompoundFromChild = new RigidTransform
-                    {
-                        rot = quaternion.identity,
-                        pos = float3.zero
-                    }
-                };
-                childCols[w] = newChild;
-                _collidersMade.Add( newChild.Collider );
+                CreateDynamicWall(entityManager, prototype, wall, renderMeshArray, info);
             }
 
-            BlobAssetReference<Unity.Physics.Collider> compCol = Unity.Physics.CompoundCollider.Create( childCols );
-
-            PhysicsCollider physicsCollider = new PhysicsCollider {Value = compCol};
-            entityManager.AddComponentData(prototype, physicsCollider );
-            entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
-            childCols.Dispose();
             
-            entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
             
             //_collidersMade.Add( compCol );//
         }
     }
 
+    private void CreateDynamicWall(EntityManager entityManager, Entity prototype, LevelWall wall, RenderMeshArray renderMeshArray, EntityRenderInfo info)
+    {
+        entityManager.AddBuffer<DestructibleData>( prototype );
+        DynamicBuffer<DestructibleData> destructibleBuffer = entityManager.GetBuffer<DestructibleData>( prototype );
+        for ( int j = 0; j < wall.PointField.Length; j++ )
+        {
+            destructibleBuffer.Add( new DestructibleData {Value = wall.PointField[j]} );
+        }
+
+        entityManager.AddComponentData( prototype, new StructureInfo{Material = wall.StructureMat} );
+        entityManager.AddComponentData( prototype, new OldCollider() );
+        entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
+        entityManager.AddComponentData( prototype, new DestructibleTag() );
+        
+        entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
+        entityManager.AddComponentData( prototype, new BufferData
+        {
+            Buffer = new ComputeBuffer( wall.PointField.Length,sizeof(int) )
+        } );
+        entityManager.GetComponentData<BufferData>(prototype).SetBuffer(wall.PointField);
+        renderMeshArray.Materials[info.MaterialIndex].SetBuffer( "_PointsBuffer", entityManager.GetComponentData<BufferData>(prototype).Buffer );
+        
+        
+        NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
+
+        for(int w = 0; w < wall.Geo.Count; w++)
+        {
+            BoxGeometry geo = wall.Geo[w];
+            CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+            {
+                Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, Unity.Physics.Material.Default ),
+                Entity = prototype,
+                CompoundFromChild = new RigidTransform
+                {
+                    rot = quaternion.identity,
+                    pos = float3.zero
+                }
+            };
+            childCols[w] = newChild;
+            _collidersMade.Add( newChild.Collider );
+        }
+
+        BlobAssetReference<Unity.Physics.Collider> compCol = Unity.Physics.CompoundCollider.Create( childCols );
+
+        PhysicsCollider physicsCollider = new PhysicsCollider {Value = compCol};
+        entityManager.AddComponentData(prototype, physicsCollider );
+        entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
+        childCols.Dispose();
+        
+        entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
+    }
+    
+    private void CreateStaticWall(EntityManager entityManager, Entity prototype, LevelWall wall, RenderMeshArray renderMeshArray, EntityRenderInfo info)
+    {
+        
+        entityManager.AddComponentData( prototype, new StructureInfo{Material = wall.StructureMat} );
+        //entityManager.AddComponentData( prototype, new OldCollider() );
+        //entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
+        entityManager.AddComponentData( prototype, new DestructibleTag() );
+        
+        entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
+
+
+        NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
+
+        for(int w = 0; w < wall.Geo.Count; w++)
+        {
+            BoxGeometry geo = wall.Geo[w];
+            CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+            {
+                Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, Unity.Physics.Material.Default ),
+                Entity = prototype,
+                CompoundFromChild = new RigidTransform
+                {
+                    rot = quaternion.identity,
+                    pos = float3.zero
+                }
+            };
+            childCols[w] = newChild;
+            _collidersMade.Add( newChild.Collider );
+        }
+
+        BlobAssetReference<Unity.Physics.Collider> compCol = Unity.Physics.CompoundCollider.Create( childCols );
+
+        PhysicsCollider physicsCollider = new PhysicsCollider {Value = compCol};
+        entityManager.AddComponentData(prototype, physicsCollider );
+        entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
+        childCols.Dispose();
+        
+        entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
+    }
+    
     private Entity CreateBaseFloorEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
     {
         //create the base entity that will be used as a template for spawning the reset
