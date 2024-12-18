@@ -551,6 +551,7 @@ public partial class LevelGenerator : MonoBehaviour
         //create the level array and seed it with the rooms  
         dimensions = new int2((adjustedMaxSize*layoutDimensions.x) + (adjustedBuffer*2*layoutDimensions.x) , (adjustedMaxSize*layoutDimensions.y) + (adjustedBuffer*2*layoutDimensions.y) );
         _levelLayout = new NativeArray<int>(dimensions.x*dimensions.y, Allocator.Persistent);
+        GameSettings.Dimensions = dimensions;
         foreach ( LevelRoom room in _rooms )
         {
             DrawRoomSeed( room );
@@ -935,6 +936,7 @@ public partial class LevelGenerator : MonoBehaviour
                 
                 _walls.Add( newWall );
             }
+
             
             binnedWalls.Dispose();
             binTracker.Dispose();

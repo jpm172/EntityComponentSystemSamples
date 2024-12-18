@@ -829,11 +829,12 @@ MonoBehaviour:
   - {fileID: 2800000, guid: e51cee94b42a4194eba8b2eecbefaf78, type: 3}
   - {fileID: 2800000, guid: 0aa26ae6587a2ae4eb3001c81169e13d, type: 3}
   - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
-  wallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
+  dynamicWallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
+  staticWallMaterial: {fileID: 2100000, guid: e148d9c713eebb542bbb5882dea2f44a, type: 2}
   FoWTexture: {fileID: 0}
   useSeed: 1
-  _minWallThickness: 3
-  _maxWallThickness: 3
+  _minWallThickness: 6
+  _maxWallThickness: 6
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
   _seedBuffer: 20

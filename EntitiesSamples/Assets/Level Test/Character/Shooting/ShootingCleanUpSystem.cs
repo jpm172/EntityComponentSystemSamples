@@ -50,6 +50,7 @@ public partial struct ShootingCleanUpSystem : ISystem
             OldCollider old = state.EntityManager.GetComponentData<OldCollider>( e );
             if ( old.Value.IsCreated )
             {
+                //Debug.Log( "dispose" );
                 old.Value.Dispose();
                 //old.Value = BlobAssetReference<Collider>.Null;
                 //state.EntityManager.SetComponentDa ta( e, old );

@@ -9,6 +9,9 @@ using UnityEngine;
 public struct WeaponInfo : IComponentData
 {
     public float DestroyRadius;
+    public float WeaponSpread;
+    public int BulletsPerShot;
+    public float Range;
     public float FireRate;
     public float Timer;
     public float Penetration;

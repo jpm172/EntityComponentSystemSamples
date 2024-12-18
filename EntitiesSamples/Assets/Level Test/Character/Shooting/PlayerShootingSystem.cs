@@ -11,8 +11,6 @@ using Unity.Physics.Systems;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
-using BoxCollider = Unity.Physics.BoxCollider;
-using Collider = UnityEngine.Collider;
 using Random = Unity.Mathematics.Random;
 using RaycastHit = Unity.Physics.RaycastHit;
 
@@ -26,11 +24,13 @@ using RaycastHit = Unity.Physics.RaycastHit;
 //float startTime = Time.realtimeSinceStartup; Debug.Log( "done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
 public partial struct PlayerShootingSystem : ISystem
 {
+    private Random _rng;
     private EntityQuery _playerQuery;
     private static readonly int PointsBuffer = Shader.PropertyToID( "_PointsBuffer" );
 
     public void OnCreate( ref SystemState state )
     {
+        _rng = Random.CreateFromIndex( 100 );
         _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
         state.RequireForUpdate<PhysicsWorldSingleton>();
     }
@@ -42,44 +42,61 @@ public partial struct PlayerShootingSystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
+        
         state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
         
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         
-       NativeList<RaycastHit> hitEntities = new NativeList<RaycastHit>(5, Allocator.TempJob);
-       //Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0];
+       NativeList<ShootInfo> hitEntities = new NativeList<ShootInfo>(20, Allocator.TempJob);
+       //Entity player = _playerQuery.ToEntityArray( Allocator.Temp )[0]; //THIS DOESNT WORK IN BUILD
        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndFixedStepSimulationEntityCommandBufferSystem>()
            .CreateCommandBuffer();
 
 
        NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
+       float randSpread = _rng.NextFloat( -1, 1 );
+       //Debug.Log( $"{firedWeapon.Value.WeaponSpread} - rand: {randSpread}" );
        new PlayerShootJob
        {
            PhysicsWorld = physicsWorld,
            Hits = hitEntities.AsParallelWriter(),
-           FiredWeapon = firedWeapon
+           FiredWeapon = firedWeapon,
+           Spread = randSpread
        }.Run();
        
+       //state.EntityManager.SetComponentData( player, firedWeapon.Value );
 
        if ( hitEntities.Length > 0 )
-        {
-            foreach ( RaycastHit hit in hitEntities )
-            {
+       {
+           NativeArray<ShootInfo> si = hitEntities.ToArray( Allocator.Temp );
+           foreach ( ShootInfo shootInfo in hitEntities )
+           {
+                RaycastHit hit = shootInfo.Hit;
                 Entity e = hit.Entity;
+
                 StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( e );
-                
-                if(structure.Material == LevelMaterial.Indestructible)
+
+                if ( structure.Material == LevelMaterial.Indestructible )
+                {
+                    //Debug.Log( "indestructible" );//
+                    firedWeapon.Dispose();
+                    hitEntities.Dispose();
+                    return;
                     continue;
-                
+                }
+
                 DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( e );
                 LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( e );
 
+                
                 new DestroyStructureJob
                 {
                     Data = data,
                     EntityPosition = ltw,
-                    Hit = hit,
-                    FiredWeapon = firedWeapon
+                    Info = shootInfo,
+                    FiredWeapon = firedWeapon,
+                    PPU = GameSettings.PixelsPerUnit,
+                    Dimensions = GameSettings.Dimensions
                 }.Run();
 
                 
@@ -171,6 +188,7 @@ public partial struct PlayerShootingSystem : ISystem
                 ecb.SetComponentEnabled( e, typeof(OldCollider), true );
                 ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
                 
+                //Debug.Log( "create" );
 
                 PhysicsCollider physicsCollider = new PhysicsCollider
                 {
@@ -194,10 +212,16 @@ public partial struct PlayerShootingSystem : ISystem
         hitEntities.Dispose();
         firedWeapon.Dispose();
     }
-    
-    
-    
 }
+
+public struct CreateCollidersJob :IJobParallelFor
+{
+    public void Execute( int index )
+    {
+        
+    }
+}
+
 
 [BurstCompile]
 public struct MakeColliderStripsJob : IJobParallelFor
@@ -328,15 +352,33 @@ public struct DestroyStructureJob : IJob
 {
     public DynamicBuffer<DestructibleData> Data;
     public LocalToWorld EntityPosition;
-    public RaycastHit Hit;
+    public ShootInfo Info;
     public NativeReference<WeaponInfo> FiredWeapon;
+    public float PPU;
+    public int2 Dimensions;
     public void Execute( )
     {
-        float3 relativeHit = Hit.Position - EntityPosition.Position;
+        /*
+        float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
         float width = 2; //32/16
+        
+        
         int hitX = (int)((relativeHit.x / width)*32);
         int hitY = (int)((relativeHit.y / width)*32);
+        */
 
+        int x1 = (int) ( ( Info.Start.x / PPU ) * Dimensions.x );
+        int y1 = (int) ( ( Info.Start.y / PPU ) * Dimensions.y );
+        int x2 = (int)((Info.End.x / PPU) * Dimensions.x);
+        int y2 = (int) ( ( Info.End.y / PPU ) * Dimensions.y );
+        //int2 start = new int2( (int)((Info.Start.x / PPU) * Dimensions.x), (int)((Info.Start.y / PPU)*Dimensions.y) );
+        //int2 end = new int2( (int)((Info.End.x / PPU) * Dimensions.x), (int)((Info.End.y / PPU)*Dimensions.y) );
+        
+        DestroyLine(  x1, y1, x2, y2 );
+
+        //Debug.Log( $"{start} -> {end}" );
+
+        /*
         for ( int i = 0; i < Data.Length; i++ )
         {
             int x = i % 32;
@@ -350,15 +392,144 @@ public struct DestroyStructureJob : IJob
             }
             
         }
+        */
     }
+
+    private void DestroyLine(  int x1, int y1, int x2, int y2 )
+    {
+        if ( math.abs( x2 - x1 ) > math.abs( y2 - y1 ) )
+        {
+            DestroyHorizontal(  x1, y1, x2, y2 );
+        }
+        else
+        {
+            DestroyVertical( x1, y1, x2, y2 );
+        }
+    }
+
+    private void DestroyHorizontal(  int x0, int y0, int x1, int y1 )
+    {
+        
+        float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
+        float width = 2; //32/16
+        
+        
+        int hitX = (int)((relativeHit.x / width)*32);
+        int hitY = (int)((relativeHit.y / width)*32);
+        //Debug.Log( $"{hitX}, {hitY} | {x0}, {y0} -> {x1}, {y1}" );
+        
+        int dx = x1 - x0;
+        int dy = y1- y0;
+
+        int xDir = 1;
+        if ( dx < 0 )
+            xDir = -1;
+        dx = math.abs( dx );
+        
+        int dir = 1;
+        if ( dy < 0 )
+            dir = -1;
+        dy *= dir;
+
+
+        if ( dx == 0 )
+            return;
+        
+        int y = hitY;
+        int p = 2 * dy - dx;
+        for ( int x = hitX; x < 32 && x >= 0; x+= xDir )
+        {
+            
+            if ( IsInBounds( x, y ) )
+            {
+                int index =  x + y* 32;
+                DestructibleData d = Data[index];
+                d.Value = 0;
+                Data[index] = d;
+            }
+            
+
+            if ( p >= 0 )
+            {
+                y += dir;
+                p -= 2 * dx;
+            }
+
+            p += 2 * dy;
+
+        }
+        
+        
+    }
+
+    private bool IsInBounds( int x, int y )
+    {
+        if ( (x < 0 || x >= 32) || (y < 0 || y >= 32) )
+            return false;
+
+        return true;
+    }
+    
+    private void DestroyVertical( int x0, int y0, int x1, int y1 )
+    {
+        float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
+        float width = 2; //32/16
+        
+        
+        int hitX = (int)((relativeHit.x / width)*32);
+        int hitY = (int)((relativeHit.y / width)*32);
+
+
+        int dx = x1 - x0;
+        int dy = y1- y0;
+
+        int yDir = 1;
+        if ( dy < 0 )
+            yDir = -1;
+        dy = math.abs( dy );
+        
+        int dir = 1;
+        if ( dx < 0 )
+            dir = -1;
+        dx *= dir;
+
+        
+        if ( dy != 0 )
+        {
+            int x = hitX;
+            int p = 2 * dy - dx;
+            for ( int y = hitY; y < 32 && y >= 0; y+= yDir )
+            {
+                
+                if ( IsInBounds( x, y ) )
+                {
+                    int index =  x  + y* 32;
+                    DestructibleData d = Data[index];
+                    d.Value = 0;
+                    Data[index] = d;
+                }
+                
+
+                if ( p >= 0 )
+                {
+                    x += dir;
+                    p -= 2 * dy;
+                }
+
+                p += 2 * dx;
+
+            }
+        }
+    }
+    
 }
 
 [BurstCompile]
 public partial struct PlayerShootJob : IJobEntity
 {
-    private static readonly float Range = 30;
     public PhysicsWorldSingleton PhysicsWorld;
-    public NativeList<RaycastHit>.ParallelWriter Hits;
+    public NativeList<ShootInfo>.ParallelWriter Hits;
+    public float Spread;
 
     public NativeReference<WeaponInfo> FiredWeapon;
     
@@ -373,21 +544,26 @@ public partial struct PlayerShootJob : IJobEntity
         FiredWeapon.Value = weapon;
         if ( !input.Shoot || FiredWeapon.Value.Timer > 0.1f )
             return;
+        
 
         WeaponInfo newWeapon = weapon;
-        //newWeapon.Timer = 1;//
+        newWeapon.Timer = weapon.FireRate;//
         FiredWeapon.Value = newWeapon;
-        
-        if(CastRay( transform, out RaycastHit hit ))
+        NativeList<ShootInfo> allInfo = new NativeList<ShootInfo>(10, Allocator.Temp);
+        if(CastRay( transform, ref allInfo ))
         {
-            Hits.AddNoResize( hit );
+            Hits.AddRangeNoResize( allInfo );
         }
 
+        
+        
     }
 
-    private bool CastRay( LocalTransform transform, out RaycastHit hit)
+    private bool CastRay( LocalTransform transform, ref NativeList<ShootInfo> allInfo)
     {
-        float3 rayEnd = transform.Right() * Range;
+        float spread = Spread*(FiredWeapon.Value.WeaponSpread/2) * math.TORADIANS;
+        //Debug.Log( RNG.NextFloat(-spread, spread) );
+        float3 rayEnd = transform.RotateZ( spread ).Right() * FiredWeapon.Value.Range;
 
         RaycastInput rayInput = new RaycastInput
         {
@@ -395,16 +571,122 @@ public partial struct PlayerShootJob : IJobEntity
             End = transform.Position + rayEnd,
             Filter = CastFilter
         };
+        NativeList<RaycastHit> allHits = new NativeList<RaycastHit>(10, Allocator.Temp);
+        NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>(10, Allocator.Temp);
         
+        Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
         
+        if ( PhysicsWorld.CastRay( rayInput, ref allHits ) )
+        {
+            
+            foreach ( RaycastHit hit in allHits )
+            {
+                float dist = math.distance( rayInput.Start, hit.Position );
+                if ( !hitMap.ContainsKey( hit.Entity ) )
+                {
+                    hitMap.Add( hit.Entity, hit );
+                }
+                else if(dist < math.distance( rayInput.Start, hitMap[hit.Entity].Position ))
+                {
+                    hitMap[hit.Entity] = hit;
+                }
+                /*
+                allInfo.Add(  new ShootInfo
+                {
+                    Start = rayInput.Start,
+                    End = rayInput.End,
+                    Hit = hit
+                } );
+                if ( allInfo.Length == 10 )
+                {
+                    break;//
+                }
+                */
+            }
+            
+            
+            NativeArray<RaycastHit> result = hitMap.GetValueArray( Allocator.Temp );
+            NativeHashSet<int> sorted = new NativeHashSet<int>(result.Length, Allocator.Temp);
+            //sort the hits by distance
+            for(int i = 0; i < result.Length; i++)
+            {
+                RaycastHit minHit = new RaycastHit();
+                int minIndex = -1;
+                float min = math.INFINITY;
+                for ( int x = 0; x < result.Length; x++ )
+                {
+                    if ( sorted.Contains( x ) )
+                        continue;
+                    float dist = math.distance( rayInput.Start, result[x].Position );
+                    if ( dist < min )
+                    {
+                        minHit = result[x];
+                        minIndex = x;
+                        min = math.distance( rayInput.Start, result[x].Position );
+                    }
+                }
+                
+                sorted.Add( minIndex );
+                
+                
+                allInfo.Add( new ShootInfo
+                {
+                    Start = rayInput.Start,
+                    End = rayInput.End,
+                    Hit = minHit
+                } );
+
+                if ( allInfo.Length == 10 )
+                {
+                    break;
+                }
+                
+            }
+            /*
+            foreach ( RaycastHit hit in result )
+            {
+                allInfo.Add(  new ShootInfo
+                {
+                    Start = rayInput.Start,
+                    End = rayInput.End,
+                    Hit = hit
+                } );
+
+                if ( allInfo.Length == 10 )
+                {
+                    break;
+                }
+            }
+            */
+            return true;
+        }
         
-        if ( PhysicsWorld.CastRay( rayInput, out hit ) )
+        /*
+        //shootInfo = new ShootInfo();//
+        if ( PhysicsWorld.CastRay( rayInput, out RaycastHit hit ) )
         {
             //Debug.DrawLine( rayInput.Start, hit.Position, Color.red, .2f );
+            ShootInfo shootInfo = new ShootInfo
+            {
+                Start = rayInput.Start,
+                End = rayInput.End,
+                Hit = hit
+            };
+            allInfo.Add( shootInfo );
             return true;
         } 
         //Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
+        */
 
         return false;
     }
+}
+
+public struct ShootInfo
+{
+    public float3 Start;
+    public float3 End;
+    public RaycastHit Hit;
+
+
 }
