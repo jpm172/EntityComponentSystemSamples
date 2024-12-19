@@ -11,6 +11,7 @@ using Unity.Physics.Systems;
 using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
+using Collider = Unity.Physics.Collider;
 using Random = Unity.Mathematics.Random;
 using RaycastHit = Unity.Physics.RaycastHit;
 
@@ -24,12 +25,14 @@ using RaycastHit = Unity.Physics.RaycastHit;
 //float startTime = Time.realtimeSinceStartup; Debug.Log( "done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
 public partial struct PlayerShootingSystem : ISystem
 {
+    private NativeHashMap<int2, BlobAssetReference<Unity.Physics.Collider>> _colliderMap;
     private Random _rng;
     private EntityQuery _playerQuery;
     private static readonly int PointsBuffer = Shader.PropertyToID( "_PointsBuffer" );
 
     public void OnCreate( ref SystemState state )
     {
+        CreateColliderMap( 32 );
         _rng = Random.CreateFromIndex( 100 );
         _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
         state.RequireForUpdate<PhysicsWorldSingleton>();
@@ -38,6 +41,11 @@ public partial struct PlayerShootingSystem : ISystem
     public void OnDestroy( ref SystemState state )
     {
         
+        foreach ( BlobAssetReference<Collider> col in _colliderMap.GetValueArray( Allocator.Temp ) )
+        {
+            col.Dispose();
+        }
+        _colliderMap.Dispose();
     }
 
     public void OnUpdate( ref SystemState state )
@@ -55,7 +63,6 @@ public partial struct PlayerShootingSystem : ISystem
 
        NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
        float randSpread = _rng.NextFloat( -1, 1 );
-       //Debug.Log( $"{firedWeapon.Value.WeaponSpread} - rand: {randSpread}" );
        new PlayerShootJob
        {
            PhysicsWorld = physicsWorld,
@@ -68,7 +75,7 @@ public partial struct PlayerShootingSystem : ISystem
 
        if ( hitEntities.Length > 0 )
        {
-           NativeArray<ShootInfo> si = hitEntities.ToArray( Allocator.Temp );
+           //NativeArray<ShootInfo> si = hitEntities.ToArray( Allocator.Temp );
            foreach ( ShootInfo shootInfo in hitEntities )
            {
                 RaycastHit hit = shootInfo.Hit;
@@ -82,7 +89,6 @@ public partial struct PlayerShootingSystem : ISystem
                     firedWeapon.Dispose();
                     hitEntities.Dispose();
                     return;
-                    continue;
                 }
 
                 DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( e );
@@ -140,87 +146,225 @@ public partial struct PlayerShootingSystem : ISystem
                     return;
                 }
 
+                //float startTime = Time.realtimeSinceStartup; 
+                /*
+                new CreateCollidersJob
+                {
+                    ECB = ecb,
+                    geometry =  geometry,
+                    PhysicsWorld = physicsWorld,
+                    ColliderMap = _colliderMap,
+                    e = e,
+                    Hit = hit,
+                    PPU = GameSettings.PixelsPerUnit
+                    
+                }.Run(  );
+                */
+                
+                
+                
                 int count = geometry.Length;
 
                 NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
-                    = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
-                NativeList<BlobAssetReference<Unity.Physics.Collider>> colsMade = new NativeList<BlobAssetReference<Unity.Physics.Collider>>(count, Allocator.Temp);
+                    = new NativeArray<CompoundCollider.ColliderBlobInstance>(count*100, Allocator.Temp);
+                 NativeList<BlobAssetReference<Unity.Physics.Collider>> colsMade = new NativeList<BlobAssetReference<Unity.Physics.Collider>>(count, Allocator.Temp);
                 int counter = 0;
-                foreach ( MeshStrip strip in geometry )
+                float startTime = Time.realtimeSinceStartup; 
+                for ( int i = 0; i < 100; i++ )
                 {
-                    
-                    int2 bottomLeft =  strip.Start;
-                    int2 topRight = strip.End;
+                    foreach ( MeshStrip strip in geometry )
+                    {
 
-                    float3 center = (new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
-                    float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
-                    BoxGeometry newBox = new BoxGeometry
-                    {
-                        Center = center,
-                        Size = size,
-                        Orientation = quaternion.identity
-                    };
-                    
-                    
-                    BlobAssetReference<Unity.Physics.Collider> col =
-                        Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
-                    colsMade.Add( col );
-    
-                    CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
-                    {
-                        Collider = col,
-                        Entity = e,
-                        CompoundFromChild = new RigidTransform
+                        int2 bottomLeft = strip.Start;
+                        int2 topRight = strip.End;
+
+                        float3 position = ( new float3( bottomLeft.x, bottomLeft.y, 0 ) / GameSettings.PixelsPerUnit );
+                        /*
+                        float3 center = (new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
+                        float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
+                        BoxGeometry newBox = new BoxGeometry
                         {
-                            rot = quaternion.identity,
-                            pos = float3.zero
-                        }
-                    };
-                    
-                    childCols[counter] = newChild;
+                            Center = center,
+                            Size = size,
+                            Orientation = quaternion.identity
+                        };
+                        
+                        
+                        BlobAssetReference<Unity.Physics.Collider> col =
+                            Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+                        colsMade.Add( col );
+                        */
+                        
+                        BlobAssetReference<Collider> col = _colliderMap[topRight - bottomLeft];
+                        CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+                        {
+                            Collider = col,
+                            Entity = e,
+                            CompoundFromChild = new RigidTransform
+                            {
+                                rot = quaternion.identity,
+                                //pos = float3.zero
+                                pos = position
+                            }
+                        };
 
-                    counter++;
+                        childCols[counter] = newChild;
+
+                        counter++;
+                    }
                 }
 
                 //store the old collider in the cleanup component to be disposed later
                 //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
                 //ecb.AppendToBuffer( e, new ColliderBufferElement {Value = state.EntityManager.GetComponentData<PhysicsCollider>( hit.Entity )} );
-                ecb.SetComponentEnabled( e, typeof(OldCollider), true );
-                ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
+                //ecb.SetComponentEnabled( e, typeof(OldCollider), true );
+                //ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
                 
                 //Debug.Log( "create" );
 
+                /*
                 PhysicsCollider physicsCollider = new PhysicsCollider
                 {
                     Value = CompoundCollider.Create( childCols )
                 };
                 ecb.SetComponent( e, new DestructibleCleanUp{Value = physicsCollider} );
                 ecb.SetComponent( e, physicsCollider );
+                */
 
+                /*
                 foreach ( BlobAssetReference<Unity.Physics.Collider> col in colsMade )
                 {
                     col.Dispose();
                 }
-
+                */
+                
+                
+                Debug.Log( "done cm: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
+                
+               
+                
+                //geometry.Dispose();
                 mergedStrips.Dispose();
                 colStrips.Dispose();
-                colsMade.Dispose();
-            }
+                //colsMade.Dispose();
+           }
         }
         
        
         hitEntities.Dispose();
         firedWeapon.Dispose();
     }
-}
 
-public struct CreateCollidersJob :IJobParallelFor
-{
-    public void Execute( int index )
+    private void CreateColliderMap( int binSize )
     {
+        _colliderMap = new NativeHashMap<int2, BlobAssetReference<Collider>>(binSize*binSize, Allocator.Persistent);
+        
+        for ( int x = 0; x < binSize; x++ )
+        {
+            for ( int y = 0; y < binSize; y++ )
+            {
+                int2 key = new int2( x, y );
+                int2 bottomLeft = new int2(0,0);
+                int2 topRight = new int2(x,y);
+                float3 center = (new float3( topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
+                float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
+                BoxGeometry newBox = new BoxGeometry
+                {
+                    Center = center,
+                    Size = size,
+                    Orientation = quaternion.identity
+                };
+            
+            
+                BlobAssetReference<Unity.Physics.Collider> col =
+                    Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+                _colliderMap.Add( key, col );
+            }
+        }
         
     }
 }
+
+
+[BurstCompile]
+public struct CreateCollidersJob :IJob
+{
+    [ReadOnly] public NativeHashMap<int2, BlobAssetReference<Collider>> ColliderMap;
+    public EntityCommandBuffer ECB;
+    public NativeArray<MeshStrip> geometry;
+    public PhysicsWorldSingleton PhysicsWorld;
+    public Entity e;
+    public RaycastHit Hit;
+    public float PPU;
+    public void Execute( )
+    {
+        int count = geometry.Length;
+
+        NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
+            = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
+        NativeList<BlobAssetReference<Unity.Physics.Collider>> colsMade = new NativeList<BlobAssetReference<Unity.Physics.Collider>>(count, Allocator.Temp);
+        int counter = 0;
+        foreach ( MeshStrip strip in geometry )
+        {
+            
+            int2 bottomLeft =  strip.Start;
+            int2 topRight = strip.End;
+            
+            float3 center = (new float3(bottomLeft.x + topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*PPU) );
+            //float3 position = (new float3(bottomLeft.x , bottomLeft.y , 0 ) / PPU );
+            
+            float3 size = new float3(topRight-bottomLeft + new int2(1,1), PPU)/ (PPU);
+            
+            BoxGeometry newBox = new BoxGeometry
+            {
+                Center = center,
+                Size = size,
+                Orientation = quaternion.identity
+            };
+            
+            
+            BlobAssetReference<Unity.Physics.Collider> col =
+                Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+            colsMade.Add( col );
+            
+            
+            //BlobAssetReference<Unity.Physics.Collider> col = ColliderMap[topRight - bottomLeft];
+            CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+            {
+                Collider = col,
+                Entity = e,
+                CompoundFromChild = new RigidTransform
+                {
+                    rot = quaternion.identity,
+                    pos = float3.zero
+                    //pos = position
+                }
+            };
+            
+            childCols[counter] = newChild;
+
+            counter++;
+        }
+        
+        //ECB.SetComponentEnabled( e, typeof(OldCollider), true );
+        ECB.SetComponentEnabled( e, ComponentType.ReadWrite<OldCollider>(), true );
+        ECB.SetComponent( e, new OldCollider{Value = PhysicsWorld.Bodies[Hit.RigidBodyIndex].Collider} );
+
+        PhysicsCollider physicsCollider = new PhysicsCollider
+        {
+            Value = CompoundCollider.Create( childCols )
+        };
+        ECB.SetComponent( e, new DestructibleCleanUp{Value = physicsCollider} );
+        ECB.SetComponent( e, physicsCollider );
+        
+        foreach ( BlobAssetReference<Unity.Physics.Collider> col in colsMade )
+        {
+            col.Dispose();
+        }
+
+    }
+}
+
 
 
 [BurstCompile]
@@ -578,7 +722,7 @@ public partial struct PlayerShootJob : IJobEntity
         
         if ( PhysicsWorld.CastRay( rayInput, ref allHits ) )
         {
-            
+            //since it is possible to hit the same structure twice, make sure to only take the closest hit
             foreach ( RaycastHit hit in allHits )
             {
                 float dist = math.distance( rayInput.Start, hit.Position );
@@ -590,18 +734,6 @@ public partial struct PlayerShootJob : IJobEntity
                 {
                     hitMap[hit.Entity] = hit;
                 }
-                /*
-                allInfo.Add(  new ShootInfo
-                {
-                    Start = rayInput.Start,
-                    End = rayInput.End,
-                    Hit = hit
-                } );
-                if ( allInfo.Length == 10 )
-                {
-                    break;//
-                }
-                */
             }
             
             
@@ -610,7 +742,6 @@ public partial struct PlayerShootJob : IJobEntity
             //sort the hits by distance
             for(int i = 0; i < result.Length; i++)
             {
-                RaycastHit minHit = new RaycastHit();
                 int minIndex = -1;
                 float min = math.INFINITY;
                 for ( int x = 0; x < result.Length; x++ )
@@ -620,9 +751,8 @@ public partial struct PlayerShootJob : IJobEntity
                     float dist = math.distance( rayInput.Start, result[x].Position );
                     if ( dist < min )
                     {
-                        minHit = result[x];
                         minIndex = x;
-                        min = math.distance( rayInput.Start, result[x].Position );
+                        min = dist;
                     }
                 }
                 
@@ -633,7 +763,7 @@ public partial struct PlayerShootJob : IJobEntity
                 {
                     Start = rayInput.Start,
                     End = rayInput.End,
-                    Hit = minHit
+                    Hit = result[minIndex]
                 } );
 
                 if ( allInfo.Length == 10 )
