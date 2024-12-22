@@ -30,13 +30,14 @@ public partial struct PlayerShootingSystem : ISystem
     private Random _rng;
     private EntityQuery _playerQuery;
     private static readonly int PointsBuffer = Shader.PropertyToID( "_PointsBuffer" );
-
+    private int track;
     public void OnCreate( ref SystemState state )
     {
         CreateColliderMap( 32 );
         _rng = Random.CreateFromIndex( 100 );
         _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
         state.RequireForUpdate<PhysicsWorldSingleton>();
+        track = 0;
     }
 
     public void OnDestroy( ref SystemState state )
@@ -52,6 +53,7 @@ public partial struct PlayerShootingSystem : ISystem
     private void QueryShootTest(LocalTransform transform, PlayerInputs input, WeaponInfo weapon, Entity entity, PhysicsWorldSingleton physicsWorld )
     {
         NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
+        
         new ParallelPlayerShootJob
         {
             EntityHitMap = entityHitMap.AsParallelWriter(),
@@ -61,7 +63,7 @@ public partial struct PlayerShootingSystem : ISystem
             Transform = transform,
             Weapon = weapon
         }.Run( weapon.BulletsPerShot );
-
+        
 
         
         entityHitMap.Dispose();
@@ -69,22 +71,31 @@ public partial struct PlayerShootingSystem : ISystem
     
     public void OnUpdate( ref SystemState state )
     {
+        track++;
         state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
         PhysicsWorldSingleton physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
+        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndFixedStepSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
             //in LocalTransform transform, in PlayerInputs input, in WeaponInfo weapon
+            
         foreach ( var (transform, input, weapon, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<WeaponInfo>>().WithEntityAccess())
         {
-            
-            
-        }
-        
-       //NativeList<ShootInfo> hitEntities = new NativeList<ShootInfo>(32, Allocator.TempJob);
-       NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
-       EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndFixedStepSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
+            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap2 = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
+            new ParallelPlayerShootJob
+            {
+                EntityHitMap = entityHitMap2.AsParallelWriter(),
+                Input = input.ValueRO,
+                PhysicsWorld = physicsWorld,
+                RandomSeed = _rng.NextUInt(),
+                Transform = transform.ValueRO,
+                Weapon = weapon.ValueRO
+            }.Schedule( weapon.ValueRO.BulletsPerShot, 1 ).Complete();
 
-       
-       NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
+            entityHitMap2.Dispose();
+        }    
         
+        
+        NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
+       NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
        new PlayerShootJob
        {
            PhysicsWorld = physicsWorld,
@@ -228,136 +239,11 @@ public partial struct PlayerShootingSystem : ISystem
            shootKeys.Dispose();
            destroyedEntities.Dispose();
        }
-       
-        /*
-       if ( hitEntities.Length > 0 )
-       {
-           foreach ( ShootInfo shootInfo in hitEntities )
-           {
-                RaycastHit hit = shootInfo.Hit;
-                Entity e = hit.Entity;
 
-                StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( e );
 
-                if ( structure.Material == LevelMaterial.Indestructible )
-                {
-                    //Debug.Log( "indestructible" );//
-                    firedWeapon.Dispose();
-                    hitEntities.Dispose();
-                    return;
-                }
-
-                DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( e );
-                LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( e );
-
-                new DestroyStructureJob
-                {
-                    Data = data,
-                    EntityPosition = ltw,
-                    Info = shootInfo,
-                    FiredWeapon = firedWeapon,
-                    PPU = GameSettings.PixelsPerUnit,
-                    Dimensions = GameSettings.Dimensions
-                }.Run();
-
-                
-                BufferData d = state.EntityManager.GetComponentData<BufferData>( e );
-                d.SetBuffer(data.Reinterpret<int>().AsNativeArray().ToArray());
-                
-                MaterialMeshInfo info = state.EntityManager.GetComponentData<MaterialMeshInfo>( e );
-                RenderMeshArray arr = state.EntityManager.GetSharedComponentManaged<RenderMeshArray>(e);
-                arr.GetMaterial( info ).SetBuffer( PointsBuffer, d.Buffer );
-
-                int dim = 32;
-                NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
-                new MakeColliderStripsJob
-                {
-                    Data = data,
-                    Dimensions = new int2(dim, dim),
-                    Strips = colStrips.AsParallelWriter()
-                }.Run( dim );
-
-                
-                NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(data.Length, Allocator.TempJob);
-                
-                new MergeColliderStripsJob
-                {
-                    MergedStrips = mergedStrips.AsParallelWriter(),
-                    Strips = colStrips
-                }.Run( dim );
-
-                
-                
-                
-                NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
-                //destroy the structure if there is no geometry
-                if ( geometry.Length == 0 )
-                {
-                    ecb.DestroyEntity( e );
-                    colStrips.Dispose();
-                    mergedStrips.Dispose();
-                    hitEntities.Dispose();
-                    firedWeapon.Dispose();
-                    return;
-                }
-                
-                int count = geometry.Length;
-
-                NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
-                    = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
-               
-                int counter = 0;
-
-                foreach ( MeshStrip strip in geometry )
-                {
-                    int2 bottomLeft = strip.Start;
-                    int2 topRight = strip.End;
-
-                    float3 position = ( new float3( bottomLeft.x, bottomLeft.y, 0 ) / GameSettings.PixelsPerUnit );
-
-                    BlobAssetReference<Collider> col = _colliderMap[topRight - bottomLeft];
-                    CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
-                    {
-                        Collider = col,
-                        Entity = e,
-                        CompoundFromChild = new RigidTransform
-                        {
-                            rot = quaternion.identity,
-                            pos = position
-                        }
-                    };
-
-                    childCols[counter] = newChild;
-
-                    counter++;
-                }
-                
-
-                //store the old collider in the cleanup component to be disposed later
-                ecb.SetComponentEnabled( e, typeof(OldCollider), true );
-                ecb.SetComponent( e, new OldCollider{Value = physicsWorld.Bodies[hit.RigidBodyIndex].Collider} );
-                
-                //Debug.Log( "create" );
-
-                
-                PhysicsCollider physicsCollider = new PhysicsCollider
-                {
-                    Value = CompoundCollider.Create( childCols )
-                };
-                ecb.SetComponent( e, new DestructibleCleanUp{Value = physicsCollider} );
-                ecb.SetComponent( e, physicsCollider );
-                
-                //geometry.Dispose();
-                mergedStrips.Dispose();
-                colStrips.Dispose();
-           }
-        }
-        */
-
-        
        entityHitMap.Dispose();
-        //hitEntities.Dispose();
-        firedWeapon.Dispose();
+       firedWeapon.Dispose();
+       
     }
 
     private void CreateColliderMap( int binSize )
@@ -918,6 +804,8 @@ public partial struct PlayerShootJob : IJobEntity
     }
 }
 
+
+[BurstCompile]
 public struct ParallelPlayerShootJob : IJobParallelFor
 {
     [ReadOnly] public PhysicsWorldSingleton PhysicsWorld;
