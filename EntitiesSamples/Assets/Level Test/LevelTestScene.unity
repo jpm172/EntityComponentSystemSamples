@@ -824,7 +824,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: bd2bd65ddb71c284bb3834fe0b8ee006, type: 2}
   - {fileID: 2100000, guid: 61514f3719f610c4da08cf6875c70fef, type: 2}
   - {fileID: 2100000, guid: 135c06844cdd979458be08b94fbadb23, type: 2}
-  _textureKeys: 030001000200
+  _textureKeys: fe0102
   _textureValues:
   - {fileID: 2800000, guid: e51cee94b42a4194eba8b2eecbefaf78, type: 3}
   - {fileID: 2800000, guid: 0aa26ae6587a2ae4eb3001c81169e13d, type: 3}

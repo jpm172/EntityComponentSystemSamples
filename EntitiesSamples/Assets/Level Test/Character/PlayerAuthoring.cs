@@ -8,7 +8,7 @@ public class PlayerAuthoring : MonoBehaviour
 {
 
     public float MoveSpeed;
-    public float DestroyRadius = 2;
+    public float ExplosionRadius = 2;
     public float WeaponRange = 20;
     public int BulletsPerShot = 1;
     public float WeaponSpread;
@@ -25,7 +25,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new WeaponInfo
             {
-                DestroyRadius = authoring.DestroyRadius,
+                ExplosionRadius = authoring.ExplosionRadius,
                 Range = authoring.WeaponRange,
                 WeaponSpread = authoring.WeaponSpread,
                 BulletsPerShot = authoring.BulletsPerShot,

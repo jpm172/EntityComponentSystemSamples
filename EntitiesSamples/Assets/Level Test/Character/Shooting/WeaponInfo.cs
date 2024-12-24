@@ -8,7 +8,7 @@ using UnityEngine;
 [Serializable]
 public struct WeaponInfo : IComponentData
 {
-    public float DestroyRadius;
+    public float ExplosionRadius;
     public float WeaponSpread;
     public int BulletsPerShot;
     public float Range;
