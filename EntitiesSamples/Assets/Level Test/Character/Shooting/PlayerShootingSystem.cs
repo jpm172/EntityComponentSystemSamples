@@ -91,6 +91,42 @@ public partial struct PlayerShootingSystem : ISystem
 
         return modifiedEntities;
     }
+
+
+    private NativeParallelMultiHashMap<ShootInfo, Entity> FireWeapon(PhysicsWorldSingleton physicsWorld, LocalTransform transform, PlayerInputs input, WeaponInfo weapon)
+    {
+        NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>();
+        //NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>(8*weapon.BulletsPerShot, Allocator.TempJob);
+
+        if ( weapon.IsExplosion )
+        {
+            entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>(4*360, Allocator.TempJob);
+            new ExplosionJob
+            {
+                EntityHitMap = entityHitMap.AsParallelWriter(),
+                PhysicsWorld = physicsWorld,
+                RandomSeed = _rng.NextUInt(),
+                Transform = transform,
+                Weapon = weapon
+            }.Schedule( 360, 45 ).Complete();
+            
+        }
+        else
+        {
+            entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>(8*weapon.BulletsPerShot, Allocator.TempJob);
+            new ParallelPlayerShootJob
+            {
+                EntityHitMap = entityHitMap.AsParallelWriter(),
+                PhysicsWorld = physicsWorld,
+                RandomSeed = _rng.NextUInt(),
+                Transform = transform,
+                Weapon = weapon
+            }.Schedule( weapon.BulletsPerShot, 1 ).Complete();
+        }
+        
+
+        return entityHitMap;
+    }
     
     public void OnUpdate( ref SystemState state )
     {
@@ -106,30 +142,8 @@ public partial struct PlayerShootingSystem : ISystem
             weapon.ValueRW.Timer = weapon.ValueRW.FireRate;
             
             
-            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
-
-/*
-            new ExplosionJob
-            {
-                EntityHitMap = entityHitMap.AsParallelWriter(),
-                PhysicsWorld = physicsWorld,
-                RandomSeed = _rng.NextUInt(),
-                Transform = transform.ValueRO,
-                Weapon = weapon.ValueRW
-            }.Schedule( 360, 45 ).Complete();
-
-            entityHitMap.Dispose();
-            */
-
-            new ParallelPlayerShootJob
-            {
-                EntityHitMap = entityHitMap.AsParallelWriter(),
-                Input = input.ValueRO,
-                PhysicsWorld = physicsWorld,
-                RandomSeed = _rng.NextUInt(),
-                Transform = transform.ValueRO,
-                Weapon = weapon.ValueRO
-            }.Schedule( weapon.ValueRO.BulletsPerShot, 1 ).Complete();
+            //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
+            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, input.ValueRO, weapon.ValueRO);
 
 
             if ( !entityHitMap.IsEmpty )
@@ -645,24 +659,7 @@ public struct DestroyStructureJob : IJob
         //int2 end = new int2( (int)((Info.End.x / PPU) * Dimensions.x), (int)((Info.End.y / PPU)*Dimensions.y) );
         
         DestroyLine(  x1, y1, x2, y2 );
-
-        //Debug.Log( $"{start} -> {end}" );
-
-        /*
-        for ( int i = 0; i < Data.Length; i++ )
-        {
-            int x = i % 32;
-            int y = i / 32;
-
-            if ( math.distance( new float2( x, y ), new float2( hitX, hitY ) ) < FiredWeapon.Value.DestroyRadius )
-            {
-                DestructibleData d = Data[i];
-                d.Value = 0;
-                Data[i] = d;
-            }
-            
-        }
-        */
+        
     }
 
     private void DestroyLine(  int x1, int y1, int x2, int y2 )
@@ -684,10 +681,11 @@ public struct DestroyStructureJob : IJob
         float width = 2; //32/16
         
         
-        int hitX = (int)((relativeHit.x / width)*32);
-        int hitY = (int)((relativeHit.y / width)*32);
-        //Debug.Log( $"{hitX}, {hitY} | {x0}, {y0} -> {x1}, {y1}" );
-        
+        //int hitX = (int)((relativeHit.x / width)*32);
+        //int hitY = (int)((relativeHit.y / width)*32);
+        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*32) , 0, 31 );
+        int hitY = (int)math.clamp ( math.round((relativeHit.y / width)*32) , 0, 31 );
+
         int dx = x1 - x0;
         int dy = y1- y0;
 
@@ -739,23 +737,17 @@ public struct DestroyStructureJob : IJob
         
     }
 
-    private bool IsInBounds( int x, int y )
-    {
-        if ( (x < 0 || x >= 32) || (y < 0 || y >= 32) )
-            return false;
-
-        return true;
-    }
+    
     
     private void DestroyVertical( int x0, int y0, int x1, int y1 )
     {
         float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
         float width = 2; //32/16
         
-        
-        int hitX = (int)((relativeHit.x / width)*32);
-        int hitY = (int)((relativeHit.y / width)*32);
-
+        //int hitX = (int)((relativeHit.x / width)*32);
+        //int hitY = (int)((relativeHit.y / width)*32);
+        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*32) , 0, 31 );
+        int hitY = (int)math.clamp ( math.round((relativeHit.y / width)*32) , 0, 31 );
 
         int dx = x1 - x0;
         int dy = y1- y0;
@@ -770,40 +762,49 @@ public struct DestroyStructureJob : IJob
             dir = -1;
         dx *= dir;
 
+
+        if ( dy == 0 )
+            return;
         
-        if ( dy != 0 )
+        int x = hitX;
+        int p = 2 * dx - dy;
+        for ( int y = hitY; y < 32 && y >= 0; y+= yDir )
         {
-            int x = hitX;
-            int p = 2 * dy - dx;
-            for ( int y = hitY; y < 32 && y >= 0; y+= yDir )
+            
+            if ( IsInBounds( x, y ) )
             {
-                
+                int index =  x  + y* 32;
+                DestructibleData d = Data[index];
+                d.Value = 0;
+                Data[index] = d;
+            }
+            
+
+            if ( p >= 0 )
+            {
+                x += dir;
+                p -= 2 * dy;
                 if ( IsInBounds( x, y ) )
                 {
-                    int index =  x  + y* 32;
+                    int index =  x + y* 32;
                     DestructibleData d = Data[index];
                     d.Value = 0;
                     Data[index] = d;
                 }
-                
-
-                if ( p >= 0 )
-                {
-                    x += dir;
-                    p -= 2 * dy;
-                    if ( IsInBounds( x, y ) )
-                    {
-                        int index =  x + y* 32;
-                        DestructibleData d = Data[index];
-                        d.Value = 0;
-                        Data[index] = d;
-                    }
-                }
-
-                p += 2 * dx;
-
             }
+
+            p += 2 * dx;
+
         }
+        
+    }
+    
+    private bool IsInBounds( int x, int y )
+    {
+        if ( (x < 0 || x >= 32) || (y < 0 || y >= 32) )
+            return false;
+
+        return true;
     }
     
 }
@@ -946,22 +947,18 @@ public struct ParallelPlayerShootJob : IJobParallelFor
     
     public LocalTransform Transform;
     public WeaponInfo Weapon;
-    public PlayerInputs Input;
-    
+
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
-    
+
+    private static readonly int MaxHitCount = 8;
     private static readonly CollisionFilter CastFilter = new CollisionFilter
     {
         CollidesWith = ~(uint)( 1 << 6 ),
         BelongsTo = ~(uint)( 1 << 6 )
     };
+    
     public void Execute( int index )
     {
-
-        //newWeapon.Timer = weapon.FireRate;//
-        //FiredWeapon.Value = newWeapon;
-        //NativeList<ShootInfo> allInfo = new NativeList<ShootInfo>(32, Allocator.Temp);
-        
         CastRay( Transform,  index );
     }
     
@@ -977,7 +974,7 @@ public struct ParallelPlayerShootJob : IJobParallelFor
             End = transform.Position + rayEnd,
             Filter = CastFilter
         };
-        NativeList<RaycastHit> allHits = new NativeList<RaycastHit>(32, Allocator.Temp);
+        NativeList<RaycastHit> allHits = new NativeList<RaycastHit>(32, Allocator.Temp);//CHECK IF initialCapacity CONTROLS HOW MANY HITS ARE RECEIVED
         NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>(32, Allocator.Temp);
         
         Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
@@ -1037,10 +1034,8 @@ public struct ParallelPlayerShootJob : IJobParallelFor
 
                 EntityHitMap.Add( newInfo, newInfo.Hit.Entity );
 
-                /*
-                if ( allInfo.Length >= 32 )
-                    return true;
-                */
+                if ( i + 1 >= MaxHitCount )
+                    return;
             }
         }
     }
@@ -1058,6 +1053,7 @@ public struct ExplosionJob : IJobParallelFor
 
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 
+    private static readonly int MaxHitCount = 4;
     private static readonly CollisionFilter CastFilter = new CollisionFilter
     {
         CollidesWith = ~(uint) ( 1 << 6 ),
@@ -1066,10 +1062,7 @@ public struct ExplosionJob : IJobParallelFor
 
     public void Execute( int index )
     {
-
-        //newWeapon.Timer = weapon.FireRate;//
-        //FiredWeapon.Value = newWeapon;
-        //NativeList<ShootInfo> allInfo = new NativeList<ShootInfo>(32, Allocator.Temp);
+        
 
         CastRay( Transform, index );
     }
@@ -1089,7 +1082,6 @@ public struct ExplosionJob : IJobParallelFor
         NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>( 32, Allocator.Temp );
         
         Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
-        return;
         if ( PhysicsWorld.CastRay( rayInput, ref allHits ) )
         {
             //since it is possible to hit the same structure twice, make sure to only take the closest hit
@@ -1126,6 +1118,11 @@ public struct ExplosionJob : IJobParallelFor
                     }
                 }
 
+                if ( result[minIndex].Material.CustomTags == (byte)LevelMaterial.Indestructible )
+                {
+                    return;
+                }
+                
                 sorted.Add( minIndex );
 
                 ShootInfo newInfo = new ShootInfo
@@ -1140,10 +1137,10 @@ public struct ExplosionJob : IJobParallelFor
 
                 EntityHitMap.Add( newInfo, newInfo.Hit.Entity );
 
-                /*
-                if ( allInfo.Length >= 32 )
-                    return true;
-                */
+                
+                if ( i+1 >= MaxHitCount )
+                    return;
+                
             }
         }
     }

@@ -11,7 +11,9 @@ public class PlayerAuthoring : MonoBehaviour
     public float ExplosionRadius = 2;
     public float WeaponRange = 20;
     public int BulletsPerShot = 1;
+    public float FireRate = 0.5f;
     public float WeaponSpread;
+    public bool IsExplosion;
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
@@ -25,11 +27,12 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new WeaponInfo
             {
+                IsExplosion = authoring.IsExplosion,
                 ExplosionRadius = authoring.ExplosionRadius,
                 Range = authoring.WeaponRange,
                 WeaponSpread = authoring.WeaponSpread,
                 BulletsPerShot = authoring.BulletsPerShot,
-                FireRate = 1
+                FireRate = authoring.FireRate
             });
             
             AddComponent<PlayerInputs>(entity);
