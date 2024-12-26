@@ -54,37 +54,56 @@ public partial struct PlayerShootingSystem : ISystem
     {
         NativeHashMap<Entity, int> modifiedEntities = new NativeHashMap<Entity, int>( entityHitMap.Count(), Allocator.TempJob );
         NativeArray<ShootInfo> shootKeys = entityHitMap.GetKeyArray( Allocator.Temp );
-                
-        for ( int i = shootKeys.Length -1; i >= 0 ; i-- )
+        
+        
+        for ( int i = shootKeys.Length -1; i >= 0; )
         {
-            ShootInfo shootInfo = shootKeys[i];
-                    
-            Entity entity = shootInfo.Hit.Entity;
             
-            /*
-            StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( entity );
-            if ( structure.Material == LevelMaterial.Indestructible )
-            {
-                i -= shootInfo.Step;
-                continue;
-            }
-            */
+            ShootInfo shootInfo = shootKeys[i];
 
-            if ( !modifiedEntities.ContainsKey( entity ) )
-                modifiedEntities.Add( entity, shootInfo.Hit.RigidBodyIndex);
+            int hits = entityHitMap.CountValuesForKey( shootInfo );
+            for ( int x = 0; x < hits; x++ )
+            {
+                shootInfo = shootKeys[i];
+                Entity entity = shootInfo.Hit.Entity;
+
+                if ( !modifiedEntities.ContainsKey( entity ) )
+                    modifiedEntities.Add( entity, shootInfo.Hit.RigidBodyIndex);
                
-            DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( entity );
-            LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( entity );
+                DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( entity );
+                LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( entity );
+                NativeReference<ShootInfo> shootRef = new NativeReference<ShootInfo>(shootInfo, Allocator.TempJob);
+                new DestroyStructureJob
+                {
+                    Data = data,
+                    EntityPosition = ltw,
+                    Info = shootRef,
+                    Weapon = weapon,
+                    PPU = GameSettings.PixelsPerUnit,
+                    Dimensions = GameSettings.Dimensions
+                }.Run();
 
-            new DestroyStructureJob
-            {
-                Data = data,
-                EntityPosition = ltw,
-                Info = shootInfo,
-                Weapon = weapon,
-                PPU = GameSettings.PixelsPerUnit,
-                Dimensions = GameSettings.Dimensions
-            }.Run();
+                if ( shootRef.Value.Penetration <= 0 )
+                {
+                    //int skip = ( entityHitMap.CountValuesForKey( shootInfo ) - shootInfo.Step );
+                    i -= hits - shootInfo.Step ;
+                    shootRef.Dispose();
+                    break;
+                }
+
+                //if this shot still has more structures to run through, pass its penetration onto the next shot
+                if ( x < hits - 1 && i != 0 )
+                {
+                    ShootInfo nextShoot = shootKeys[i - 1];
+                    nextShoot.Penetration = shootRef.Value.Penetration;
+                    shootKeys[i - 1] = nextShoot;
+                }
+
+                i--;
+                shootRef.Dispose();
+            }
+            
+            
         }
 
         //shootKeys.Dispose();
@@ -635,7 +654,7 @@ public struct DestroyStructureJob : IJob
 {
     public DynamicBuffer<DestructibleData> Data;
     public LocalToWorld EntityPosition;
-    public ShootInfo Info;
+    public NativeReference<ShootInfo> Info;
     //public NativeReference<WeaponInfo> FiredWeapon;
     public WeaponInfo Weapon;
     public float PPU;
@@ -651,10 +670,12 @@ public struct DestroyStructureJob : IJob
         int hitY = (int)((relativeHit.y / width)*32);
         */
 
-        int x1 = (int) ( ( Info.Start.x / PPU ) * Dimensions.x );
-        int y1 = (int) ( ( Info.Start.y / PPU ) * Dimensions.y );
-        int x2 = (int)((Info.End.x / PPU) * Dimensions.x);
-        int y2 = (int) ( ( Info.End.y / PPU ) * Dimensions.y );
+        
+        
+        int x1 = (int) ( ( Info.Value.Start.x / PPU ) * Dimensions.x );
+        int y1 = (int) ( ( Info.Value.Start.y / PPU ) * Dimensions.y );
+        int x2 = (int)((Info.Value.End.x / PPU) * Dimensions.x);
+        int y2 = (int) ( ( Info.Value.End.y / PPU ) * Dimensions.y );
         //int2 start = new int2( (int)((Info.Start.x / PPU) * Dimensions.x), (int)((Info.Start.y / PPU)*Dimensions.y) );
         //int2 end = new int2( (int)((Info.End.x / PPU) * Dimensions.x), (int)((Info.End.y / PPU)*Dimensions.y) );
         
@@ -676,8 +697,9 @@ public struct DestroyStructureJob : IJob
 
     private void DestroyHorizontal(  int x0, int y0, int x1, int y1 )
     {
+        ShootInfo curInfo = Info.Value;
         
-        float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
+        float3 relativeHit = Info.Value.Hit.Position - EntityPosition.Position;
         float width = 2; //32/16
         
         
@@ -712,8 +734,18 @@ public struct DestroyStructureJob : IJob
             {
                 int index =  x + y* 32;
                 DestructibleData d = Data[index];
-                d.Value = 0;
-                Data[index] = d;
+                if ( d.Value > 0 )
+                {
+                    d.Value = 0;
+                    Data[index] = d;
+                    curInfo.Penetration--;
+                    if ( curInfo.Penetration <= 0 )
+                    {
+                        Info.Value = curInfo;
+                        return;
+                    }
+                }
+                
             }
             
 
@@ -731,17 +763,17 @@ public struct DestroyStructureJob : IJob
             }
 
             p += 2 * dy;
-
         }
         
-        
+        Info.Value = curInfo;
     }
 
     
     
     private void DestroyVertical( int x0, int y0, int x1, int y1 )
     {
-        float3 relativeHit = Info.Hit.Position - EntityPosition.Position;
+        ShootInfo curInfo = Info.Value;
+        float3 relativeHit = Info.Value.Hit.Position - EntityPosition.Position;
         float width = 2; //32/16
         
         //int hitX = (int)((relativeHit.x / width)*32);
@@ -775,8 +807,17 @@ public struct DestroyStructureJob : IJob
             {
                 int index =  x  + y* 32;
                 DestructibleData d = Data[index];
-                d.Value = 0;
-                Data[index] = d;
+                if ( d.Value > 0 )
+                {
+                    d.Value = 0;
+                    Data[index] = d;
+                    curInfo.Penetration--;
+                    if ( curInfo.Penetration <= 0 )
+                    {
+                        Info.Value = curInfo;
+                        return;
+                    }
+                }
             }
             
 
@@ -794,8 +835,9 @@ public struct DestroyStructureJob : IJob
             }
 
             p += 2 * dx;
-
         }
+        
+        Info.Value = curInfo;
         
     }
     
@@ -1027,8 +1069,10 @@ public struct ParallelPlayerShootJob : IJobParallelFor
                     Start = rayInput.Start,
                     End = rayInput.End,
                     Hit = result[minIndex],
+                    Penetration = Weapon.Penetration,
                     Key = key,
-                    Step = result.Length - i - 1
+                    //Step = result.Length - i - 1 //since this implies that all hits will be added, this stops working with the early out functionality
+                    Step = i
                 };
                 
 
@@ -1079,6 +1123,7 @@ public struct ExplosionJob : IJobParallelFor
             Filter = CastFilter
         };
         NativeList<RaycastHit> allHits = new NativeList<RaycastHit>( 32, Allocator.Temp );
+        //NativeList<ShootInfo> result = new NativeList<ShootInfo>( 32, Allocator.Temp );
         NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>( 32, Allocator.Temp );
         
         Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
@@ -1087,7 +1132,6 @@ public struct ExplosionJob : IJobParallelFor
             //since it is possible to hit the same structure twice, make sure to only take the closest hit
             foreach ( RaycastHit hit in allHits )
             {
-
                 float dist = math.distance( rayInput.Start, hit.Position );
                 if ( !hitMap.ContainsKey( hit.Entity ) )
                 {
@@ -1099,18 +1143,18 @@ public struct ExplosionJob : IJobParallelFor
                 }
             }
 
-            NativeArray<RaycastHit> result = hitMap.GetValueArray( Allocator.Temp );
-            NativeHashSet<int> sorted = new NativeHashSet<int>( result.Length, Allocator.Temp );
+            NativeArray<RaycastHit> firstClosestHits = hitMap.GetValueArray( Allocator.Temp );
+            NativeHashSet<int> sorted = new NativeHashSet<int>( firstClosestHits.Length, Allocator.Temp );
             //sort the hits by distance
-            for ( int i = 0; i < result.Length; i++ )
+            for ( int i = 0; i < firstClosestHits.Length; i++ )
             {
                 int minIndex = -1;
                 float min = math.INFINITY;
-                for ( int x = 0; x < result.Length; x++ )
+                for ( int x = 0; x < firstClosestHits.Length; x++ )
                 {
                     if ( sorted.Contains( x ) )
                         continue;
-                    float dist = math.distance( rayInput.Start, result[x].Position );
+                    float dist = math.distance( rayInput.Start, firstClosestHits[x].Position );
                     if ( dist < min )
                     {
                         minIndex = x;
@@ -1118,7 +1162,7 @@ public struct ExplosionJob : IJobParallelFor
                     }
                 }
 
-                if ( result[minIndex].Material.CustomTags == (byte)LevelMaterial.Indestructible )
+                if ( firstClosestHits[minIndex].Material.CustomTags == (byte)LevelMaterial.Indestructible )
                 {
                     return;
                 }
@@ -1129,12 +1173,13 @@ public struct ExplosionJob : IJobParallelFor
                 {
                     Start = rayInput.Start,
                     End = rayInput.End,
-                    Hit = result[minIndex],
+                    Hit = firstClosestHits[minIndex],
+                    Penetration = Weapon.Penetration,
                     Key = key,
                     Step = i
                 }; 
 
-
+                //result.Add( newInfo );
                 EntityHitMap.Add( newInfo, newInfo.Hit.Entity );
 
                 
@@ -1153,6 +1198,7 @@ public struct ShootInfo: IEquatable<ShootInfo>
     public float3 Start;
     public float3 End;
     public RaycastHit Hit;
+    public float Penetration;
     public int Key;
     public int Step;
 
