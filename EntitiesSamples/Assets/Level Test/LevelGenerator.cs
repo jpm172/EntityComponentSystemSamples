@@ -955,20 +955,22 @@ public partial class LevelGenerator : MonoBehaviour
     
     private LevelWall MakeDynamicWall( int i, int binSize, LevelMaterial targetMat, NativeArray<int> pointFields, NativeArray<int2> positions, NativeArray<int4> bounds  )
     {
-        //NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
-        int4 b = bounds[i];
-        int2 trueSize = b.Size() - MyExtensionMethods.Int2One;
-        int offset = b.x + b.y*binSize;
-        int length = trueSize.x + trueSize.y * binSize;
-        //NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ) + offset, length );
+        Vector4 offset = new Vector4(bounds[i].x, bounds[i].y);
+        int2 size = bounds[i].Size();
         NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
         StripMeshConstructor meshConstructor = new StripMeshConstructor();
-                
+
+        Vector4 blockPosition = new Vector4( positions[i].x, positions[i].y );
+        blockPosition += offset;
         //Material mat = new Material( wallMaterial ) {mainTexture = _textureDict[targetMat]};
         Material mat = new Material( dynamicWallMaterial );
         mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
-        mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
-        mat.SetInt( "_BlockSize", binSize );
+        mat.SetVector( "_BlockPosition", blockPosition);
+        //mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
+        //mat.SetVector( "_BlockPosition", offset);
+        //mat.SetInt( "_BlockSize", binSize );
+        mat.SetInt( "_BlockWidth", size.x );
+        mat.SetInt( "_BlockHeight", size.y );
 
         Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
         LevelWall newWall = new LevelWall
@@ -976,13 +978,14 @@ public partial class LevelGenerator : MonoBehaviour
             Material = mat,
             StructureMat = targetMat,
             Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
-            PointField = pointField.ToArray(),
+            //PointField = pointField.ToArray(),
+            PointField = MapPointFieldToWall( bounds[i], pointFields, i * ( binSize * binSize ), binSize ),
             Position = wallPos,
             Bounds = bounds[i],
             Geo = meshConstructor.CollisionQuads
         };
         
-        int[] mapped = MapPointFieldToWall( bounds[i], pointFields, i * ( binSize * binSize ), binSize );
+        //int[] mapped = MapPointFieldToWall( bounds[i], pointFields, i * ( binSize * binSize ), binSize );
 
         pointField.Dispose();
         return newWall;
@@ -991,18 +994,28 @@ public partial class LevelGenerator : MonoBehaviour
     private int[] MapPointFieldToWall(int4 bounds, NativeArray<int> pointFields, int start, int binSize)
     {
         int2 size = bounds.Size();
-        int offset = bounds.x + bounds.y*binSize;
+        int offset = start + (bounds.x + bounds.y*binSize);
         int[] result = new int[size.Area()];
-        
-        for ( int x = 0; x < size.x; x++ )
+
+        for ( int i = 0; i < result.Length; i++ )
         {
-            for ( int y = 0; y < size.y; y++ )
+            int x = i % size.x;
+            int y = i / size.x;
+            int index = x + y * size.x;
+            int mapIndex = offset + x + y * binSize;
+            result[index] = pointFields[mapIndex];
+        }
+        /*
+        for ( int y = 0; y < size.y; y++ ) 
+        {
+            for ( int x = 0; x < size.x; x++ )
             {
-                int index = x + y * size.x;
-                int mapIndex = offset + x + y * binSize;
-                result[index] = pointFields[mapIndex];
+            int index = x + y * size.x;
+            int mapIndex = offset + x + y * binSize;
+            result[index] = pointFields[mapIndex];
             }
         }
+        */
 
         return result;
     }

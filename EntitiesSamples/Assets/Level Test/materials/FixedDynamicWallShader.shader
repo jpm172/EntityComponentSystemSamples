@@ -1,4 +1,4 @@
-Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
+Shader "Universal Render Pipeline/Custom/FixedDynamicWallShader"
 {
     Properties
     {

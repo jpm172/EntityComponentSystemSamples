@@ -178,7 +178,7 @@ public partial class LevelGenerator
             EntityRenderInfo info = renderMap[entityCountOffset+i];
             
 #if UNITY_EDITOR
-            entityManager.SetName( prototype, "Wall" + (i+1) );
+            entityManager.SetName( prototype, wall.StructureMat +" Wall" + (i+1) );
 #endif
         
             RenderMeshUtility.AddComponents(

@@ -77,6 +77,8 @@ Shader "Universal Render Pipeline/Custom/DynamicWallShader"
                 UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
                     UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
                     UNITY_DOTS_INSTANCED_PROP(float4, _BlockPosition)
+                    UNITY_DOTS_INSTANCED_PROP(int, _BlockWidth)
+                    UNITY_DOTS_INSTANCED_PROP(int, _BlockHeight)
                 UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
                 #define _BaseColor UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor)
             #endif
@@ -112,7 +114,7 @@ Shader "Universal Render Pipeline/Custom/DynamicWallShader"
                 x = clamp(x, 0, _BlockWidth-1);
                 y = clamp(y, 0, _BlockHeight-1);
                 
-                 int index = x + _BlockWidth*y;
+                 int index = x + (_BlockWidth*y);
                 
                 if(_PointsBuffer[index] == 0)
                 {
