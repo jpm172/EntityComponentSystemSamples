@@ -1069,13 +1069,15 @@ public struct ParallelPlayerShootJob : IJobParallelFor
             End = transform.Position + rayEnd,
             Filter = CastFilter
         };
-        NativeList<RaycastHit> allHits = new NativeList<RaycastHit>(32, Allocator.Temp);//CHECK IF initialCapacity CONTROLS HOW MANY HITS ARE RECEIVED
-        NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>(32, Allocator.Temp);
+        
+        NativeList<RaycastHit> allHits = new NativeList<RaycastHit>(32, Allocator.Temp);
+        
         
         Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
         
         if ( PhysicsWorld.CastRay( rayInput, ref allHits ) )
         {
+            NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>(allHits.Length, Allocator.Temp);
             //since it is possible to hit the same structure twice, make sure to only take the closest hit
             foreach ( RaycastHit hit in allHits )
             {
@@ -1176,12 +1178,12 @@ public struct ExplosionJob : IJobParallelFor
             Filter = CastFilter
         };
         NativeList<RaycastHit> allHits = new NativeList<RaycastHit>( 32, Allocator.Temp );
-        //NativeList<ShootInfo> result = new NativeList<ShootInfo>( 32, Allocator.Temp );
-        NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>( 32, Allocator.Temp );
-        
+
+
         Debug.DrawLine( rayInput.Start, rayInput.End, Color.blue, .2f );
         if ( PhysicsWorld.CastRay( rayInput, ref allHits ) )
         {
+            NativeHashMap<Entity, RaycastHit> hitMap = new NativeHashMap<Entity, RaycastHit>( allHits.Length, Allocator.Temp );
             //since it is possible to hit the same structure twice, make sure to only take the closest hit
             foreach ( RaycastHit hit in allHits )
             {
