@@ -217,7 +217,11 @@ public partial class LevelGenerator
             destructibleBuffer.Add( new DestructibleData {Value = wall.PointField[j]} );
         }
 
-        entityManager.AddComponentData( prototype, new StructureInfo{Material = wall.StructureMat} );
+        entityManager.AddComponentData( prototype, new StructureInfo
+        {
+            Material = wall.StructureMat,
+            Dimensions = wall.Bounds.Size()
+        } );
         entityManager.AddComponentData( prototype, new OldCollider() );
         entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
         entityManager.AddComponentData( prototype, new DestructibleTag() );
@@ -264,7 +268,11 @@ public partial class LevelGenerator
     private void CreateStaticWall(EntityManager entityManager, Entity prototype, LevelWall wall, RenderMeshArray renderMeshArray, EntityRenderInfo info)
     {
         
-        entityManager.AddComponentData( prototype, new StructureInfo{Material = wall.StructureMat} );
+        entityManager.AddComponentData( prototype, new StructureInfo
+        {
+            Material = wall.StructureMat,
+            Dimensions = wall.Bounds.Size()
+        } );
         //entityManager.AddComponentData( prototype, new OldCollider() );
         //entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
         entityManager.AddComponentData( prototype, new DestructibleTag() );

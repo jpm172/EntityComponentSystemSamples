@@ -505,6 +505,9 @@ public struct LevelCreateWallsJob : IJobParallelFor
     
     [NativeDisableParallelForRestriction]
     public NativeArray<int2> Positions;
+    
+    [NativeDisableParallelForRestriction]
+    public NativeArray<int4> Bounds;
     public void Execute( int index )
     {
         
@@ -532,14 +535,19 @@ public struct LevelCreateWallsJob : IJobParallelFor
         Positions[countsIndex] = origin;
         
         NativeParallelMultiHashMap<int2, int2>.Enumerator enumerator =  BinnedWalls.GetValuesForKey( key );
-
+        int4 bounds = new int4(int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
         while ( enumerator.MoveNext() )
         {
             int2 pos = enumerator.Current - origin;
+            bounds.xy = math.min( bounds.xy, pos );
+            bounds.zw = math.max( bounds.zw, pos );
+            
             int posIndex = startIndex + pos.x + pos.y * BinSize;
             PointFields[posIndex] = 1;
             Counts[countsIndex]++;
         }
+
+        Bounds[countsIndex] = bounds;
 
     }
 }
