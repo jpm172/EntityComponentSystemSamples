@@ -134,6 +134,43 @@ public class StripMeshConstructor
         
         return FinishMesh();
     }
+    
+    public Mesh ConstructMesh( int[] mappedPointField, int2 blockSize, int binSize, int2 blockOrigin )
+    {
+        NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
+        NativeArray<int> pointField = new NativeArray<int>(mappedPointField, Allocator.TempJob);
+        MakeMeshStripsDynamicPointFieldJob stripJob = new MakeMeshStripsDynamicPointFieldJob
+        {
+            PointField = pointField,
+            Size = blockSize,
+            Strips = stripMap.AsParallelWriter()
+        };
+            
+        JobHandle applyHandle = stripJob.Schedule(blockSize.x, math.max( blockSize.x/4, 1 ));
+        applyHandle.Complete();
+
+        pointField.Dispose();
+        
+        NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
+            
+        MergeMeshStripsJob mergeJob = new MergeMeshStripsJob
+        {
+            Strips = stripMap,
+            MergedStrips = mergedStrips.AsParallelWriter()
+        };
+        
+        JobHandle mergeHandle = mergeJob.Schedule(blockSize.x, math.max( blockSize.x/4, 1 ));
+        mergeHandle.Complete();
+        
+        StripsToMesh( mergedStrips, blockOrigin );
+        
+        
+        stripMap.Dispose();
+        mergedStrips.Dispose();
+        
+        return FinishMesh();
+    }
+    
 
     private Mesh FinishMesh()
     {

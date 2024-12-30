@@ -532,21 +532,25 @@ public struct LevelCreateWallsJob : IJobParallelFor
         int2 key = new int2(binX, binY);
 
         int2 origin = key * BinSize;
-        Positions[countsIndex] = origin;
+        
         
         NativeParallelMultiHashMap<int2, int2>.Enumerator enumerator =  BinnedWalls.GetValuesForKey( key );
         int4 bounds = new int4(int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
         while ( enumerator.MoveNext() )
         {
             int2 pos = enumerator.Current - origin;
-            bounds.xy = math.min( bounds.xy, pos );
-            bounds.zw = math.max( bounds.zw, pos );
+            //bounds.xy = math.min( bounds.xy, pos );
+            //bounds.zw = math.max( bounds.zw, pos );
+            bounds.xy = math.min( bounds.xy, enumerator.Current );
+            bounds.zw = math.max( bounds.zw, enumerator.Current);
             
             int posIndex = startIndex + pos.x + pos.y * BinSize;
             PointFields[posIndex] = 1;
             Counts[countsIndex]++;
         }
-
+        
+        //Positions[countsIndex] = origin;
+        Positions[countsIndex] = origin;
         Bounds[countsIndex] = bounds;
 
     }

@@ -220,7 +220,8 @@ public partial class LevelGenerator
         entityManager.AddComponentData( prototype, new StructureInfo
         {
             Material = wall.StructureMat,
-            Dimensions = wall.Bounds.Size()
+            Size = wall.Bounds.Size(),
+            //Bounds = wall.Bounds
         } );
         entityManager.AddComponentData( prototype, new OldCollider() );
         entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
@@ -271,7 +272,8 @@ public partial class LevelGenerator
         entityManager.AddComponentData( prototype, new StructureInfo
         {
             Material = wall.StructureMat,
-            Dimensions = wall.Bounds.Size()
+           Size = wall.Bounds.Size(),
+           //Bounds = wall.Bounds
         } );
         //entityManager.AddComponentData( prototype, new OldCollider() );
         //entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );

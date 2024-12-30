@@ -365,7 +365,7 @@ PrefabInstance:
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: WeaponRange
-      value: 16
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
@@ -380,7 +380,7 @@ PrefabInstance:
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
       propertyPath: BulletsPerShot
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}

@@ -66,8 +66,8 @@ public partial struct PlayerShootingSystem : ISystem
             {
                 shootInfo = shootKeys[i];
                 Entity entity = shootInfo.Hit.Entity;
-                
-               
+
+                StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( entity );
                 DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( entity );
                 LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( entity );
                 NativeReference<ShootInfo> shootRef = new NativeReference<ShootInfo>(shootInfo, Allocator.TempJob);
@@ -75,6 +75,7 @@ public partial struct PlayerShootingSystem : ISystem
                 new DestroyStructureJob
                 {
                     Data = data,
+                    Structure = structure,
                     EntityPosition = ltw,
                     Info = shootRef,
                     Weapon = weapon,
@@ -178,7 +179,127 @@ public partial struct PlayerShootingSystem : ISystem
                
                     BufferData d = state.EntityManager.GetComponentData<BufferData>( entity );
                     d.SetBuffer(data.Reinterpret<int>().AsNativeArray().ToArray());
+                  
+                    StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( entity );
+                    //int dim = 32;
+                    int width = structure.Size.x;
+                    int loopCount = math.max( width / 4, 1 );
+                    NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
+                    new MakeColliderStripsJob
+                    {
+                        Data = data,
+                        //Dimensions = new int2(dim, dim),
+                        Dimensions = structure.Size,
+                        Strips = colStrips.AsParallelWriter()
+                    }.Schedule( width, loopCount ).Complete();
+
+                    NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(data.Length, Allocator.TempJob);
+
+                    new MergeColliderStripsJob
+                    {
+                        MergedStrips = mergedStrips.AsParallelWriter(),
+                        Strips = colStrips
+                    }.Schedule( width, loopCount ).Complete();
+
+                    NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
+                    //destroy the structure if there is no geometry
+                    if ( geometry.Length == 0 )
+                    {
+                        ecb.DestroyEntity( entity );
+                        colStrips.Dispose();
+                        mergedStrips.Dispose();
+                        continue;
+                    }
+                    
+                    int count = geometry.Length;
+
+                    NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
+                        = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
                    
+                    int counter = 0;
+
+                    foreach ( MeshStrip strip in geometry )
+                    {
+                        int2 bottomLeft = strip.Start;
+                        int2 topRight = strip.End;
+
+                        float3 position = ( new float3( bottomLeft.x, bottomLeft.y, 0 ) / GameSettings.PixelsPerUnit );
+
+                        BlobAssetReference<Collider> col = _colliderMap[topRight - bottomLeft];
+                        CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
+                        {
+                            Collider = col,
+                            Entity = entity,
+                            CompoundFromChild = new RigidTransform
+                            {
+                                rot = quaternion.identity,
+                                pos = position
+                            }
+                        };
+
+                        childCols[counter] = newChild;
+
+                        counter++;
+                    }
+                    
+
+                    //store the old collider in the cleanup component to be disposed later
+                    ecb.SetComponentEnabled( entity, typeof(OldCollider), true );
+                    ecb.SetComponent( entity, new OldCollider{Value = physicsWorld.Bodies[modifiedEntities[entity]].Collider} );
+                    
+                    PhysicsCollider physicsCollider = new PhysicsCollider
+                    {
+                        Value = CompoundCollider.Create( childCols )
+                    };
+                    ecb.SetComponent( entity, new DestructibleCleanUp{Value = physicsCollider} );
+                    ecb.SetComponent( entity, physicsCollider );
+                    
+                    mergedStrips.Dispose();
+                    colStrips.Dispose();
+                    
+                }
+
+                //shootKeys.Dispose();
+                modifiedEntities.Dispose();
+                
+
+            }
+
+            entityHitMap.Dispose();
+        }    //
+    }
+
+    private void CreateColliderMap( int binSize )
+    {
+        _colliderMap = new NativeHashMap<int2, BlobAssetReference<Collider>>(binSize*binSize, Allocator.Persistent);
+        
+        for ( int x = 0; x < binSize; x++ )
+        {
+            for ( int y = 0; y < binSize; y++ )
+            {
+                int2 key = new int2( x, y );
+                int2 bottomLeft = new int2(0,0);
+                int2 topRight = new int2(x,y);
+                float3 center = (new float3( topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
+                float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
+                BoxGeometry newBox = new BoxGeometry
+                {
+                    Center = center,
+                    Size = size,
+                    Orientation = quaternion.identity
+                };
+            
+            
+                BlobAssetReference<Unity.Physics.Collider> col =
+                    Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
+                _colliderMap.Add( key, col );
+            }
+        }
+        
+    }
+}
+
+/*
                     int dim = 32;
                     NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
                     new MakeColliderStripsJob
@@ -251,200 +372,7 @@ public partial struct PlayerShootingSystem : ISystem
                     
                     mergedStrips.Dispose();
                     colStrips.Dispose();
-                }
-
-                //shootKeys.Dispose();
-                modifiedEntities.Dispose();
-
-            }
-
-            entityHitMap.Dispose();
-        }    //
-        
-        /*
-        NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
-       NativeReference<WeaponInfo> firedWeapon = new NativeReference<WeaponInfo>(Allocator.TempJob);
-
-       new PlayerShootJob
-       {
-           PhysicsWorld = physicsWorld,
-           EntityHitMap = entityHitMap,
-           FiredWeapon = firedWeapon,
-           RNG = Random.CreateFromIndex( _rng.NextUInt() )
-       }.Run();
-       
-       
-       //state.EntityManager.SetComponentData( player, firedWeapon.Value );
-       
-       if ( !entityHitMap.IsEmpty )
-       {
-           NativeHashMap<Entity, int> destroyedEntities = new NativeHashMap<Entity, int>(entityHitMap.Count(), Allocator.TempJob);
-           NativeArray<ShootInfo> shootKeys = entityHitMap.GetKeyArray( Allocator.TempJob );
-
-           for ( int i = 0; i < shootKeys.Length; i++ )
-           {
-               ShootInfo shootInfo = shootKeys[i];
-        
-
-               Entity entity = shootInfo.Hit.Entity;
-               StructureInfo structure = state.EntityManager.GetComponentData<StructureInfo>( entity );
-               if ( structure.Material == LevelMaterial.Indestructible )
-               {
-                   i += shootInfo.Step;
-                   continue;
-               }
-
-               if ( !destroyedEntities.ContainsKey( entity ) )
-                   destroyedEntities.Add( entity, shootInfo.Hit.RigidBodyIndex);
-               
-               DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( entity );
-               LocalToWorld ltw = state.EntityManager.GetComponentData<LocalToWorld>( entity );
-
-               new DestroyStructureJob
-               {
-                   Data = data,
-                   EntityPosition = ltw,
-                   Info = shootInfo,
-                   FiredWeapon = firedWeapon,
-                   PPU = GameSettings.PixelsPerUnit,
-                   Dimensions = GameSettings.Dimensions
-               }.Run();
-           }
-
-
-           foreach ( Entity entity in destroyedEntities.GetKeyArray( Allocator.Temp ) )
-           {
-               DynamicBuffer<DestructibleData> data = state.EntityManager.GetBuffer<DestructibleData>( entity );
-               
-               BufferData d = state.EntityManager.GetComponentData<BufferData>( entity );
-               d.SetBuffer(data.Reinterpret<int>().AsNativeArray().ToArray());
-               
-               int dim = 32;
-                NativeParallelMultiHashMap<int, MeshStrip> colStrips = new NativeParallelMultiHashMap<int, MeshStrip>( data.Length, Allocator.TempJob);
-                new MakeColliderStripsJob
-                {
-                    Data = data,
-                    Dimensions = new int2(dim, dim),
-                    Strips = colStrips.AsParallelWriter()
-                }.Run( dim );
-
-                
-                NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(data.Length, Allocator.TempJob);
-
-                new MergeColliderStripsJob
-                {
-                    MergedStrips = mergedStrips.AsParallelWriter(),
-                    Strips = colStrips
-                }.Run( dim );
-
-                NativeArray<MeshStrip> geometry = mergedStrips.GetValueArray( Allocator.Temp );
-                //destroy the structure if there is no geometry
-                if ( geometry.Length == 0 )
-                {
-                    ecb.DestroyEntity( entity );
-                    shootKeys.Dispose();
-                    destroyedEntities.Dispose();
-                    colStrips.Dispose();
-                    mergedStrips.Dispose();
-                    entityHitMap.Dispose();
-                    //hitEntities.Dispose();
-                    firedWeapon.Dispose();
-                    return;//
-                }
-                
-                int count = geometry.Length;
-
-                NativeArray<CompoundCollider.ColliderBlobInstance> childCols 
-                    = new NativeArray<CompoundCollider.ColliderBlobInstance>(count, Allocator.Temp);
-               
-                int counter = 0;
-
-                foreach ( MeshStrip strip in geometry )
-                {
-                    int2 bottomLeft = strip.Start;
-                    int2 topRight = strip.End;
-
-                    float3 position = ( new float3( bottomLeft.x, bottomLeft.y, 0 ) / GameSettings.PixelsPerUnit );
-
-                    BlobAssetReference<Collider> col = _colliderMap[topRight - bottomLeft];
-                    CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
-                    {
-                        Collider = col,
-                        Entity = entity,
-                        CompoundFromChild = new RigidTransform
-                        {
-                            rot = quaternion.identity,
-                            pos = position
-                        }
-                    };
-
-                    childCols[counter] = newChild;
-
-                    counter++;
-                }
-                
-
-                //store the old collider in the cleanup component to be disposed later
-                ecb.SetComponentEnabled( entity, typeof(OldCollider), true );
-                ecb.SetComponent( entity, new OldCollider{Value = physicsWorld.Bodies[destroyedEntities[entity]].Collider} );
-                
-                //Debug.Log( "create" );
-
-                
-                PhysicsCollider physicsCollider = new PhysicsCollider
-                {
-                    Value = CompoundCollider.Create( childCols )
-                };
-                ecb.SetComponent( entity, new DestructibleCleanUp{Value = physicsCollider} );
-                ecb.SetComponent( entity, physicsCollider );
-                
-                //geometry.Dispose();
-                mergedStrips.Dispose();
-                colStrips.Dispose();
-               
-           }
-           
-
-           shootKeys.Dispose();
-           destroyedEntities.Dispose();
-       }
-
-
-       entityHitMap.Dispose();
-       firedWeapon.Dispose();
-       */
-       
-    }
-
-    private void CreateColliderMap( int binSize )
-    {
-        _colliderMap = new NativeHashMap<int2, BlobAssetReference<Collider>>(binSize*binSize, Allocator.Persistent);
-        
-        for ( int x = 0; x < binSize; x++ )
-        {
-            for ( int y = 0; y < binSize; y++ )
-            {
-                int2 key = new int2( x, y );
-                int2 bottomLeft = new int2(0,0);
-                int2 topRight = new int2(x,y);
-                float3 center = (new float3( topRight.x, bottomLeft.y + topRight.y, 0 ) /(2*GameSettings.PixelsPerUnit) );
-                float3 size = new float3(topRight-bottomLeft + new int2(1,1), GameSettings.PixelsPerUnit)/ (GameSettings.PixelsPerUnit);
-                BoxGeometry newBox = new BoxGeometry
-                {
-                    Center = center,
-                    Size = size,
-                    Orientation = quaternion.identity
-                };
-            
-            
-                BlobAssetReference<Unity.Physics.Collider> col =
-                    Unity.Physics.BoxCollider.Create( newBox, CollisionFilter.Default, Unity.Physics.Material.Default );
-                _colliderMap.Add( key, col );
-            }
-        }
-        
-    }
-}
+                    */
 
 
 [BurstCompile]
@@ -538,7 +466,7 @@ public struct MakeColliderStripsJob : IJobParallelFor
     public NativeParallelMultiHashMap<int, MeshStrip>.ParallelWriter Strips;
     public void Execute( int index )
     {
-        int levelIndex =index;
+        int levelIndex = index;
 
         //makes vertical strips
         bool hasStrip = false;
@@ -655,6 +583,7 @@ public struct MergeColliderStripsJob : IJobParallelFor
 [BurstCompile]
 public struct DestroyStructureJob : IJob
 {
+    [ReadOnly] public StructureInfo Structure;
     public DynamicBuffer<DestructibleData> Data;
     public LocalToWorld EntityPosition;
     public NativeReference<ShootInfo> Info;
@@ -691,17 +620,21 @@ public struct DestroyStructureJob : IJob
     private void DestroyHorizontal(  int x0, int y0, int x1, int y1 )
     {
         ShootInfo curInfo = Info.Value;
-
-        //Debug.Log( $"{x0}, {y0} -> {x1}, {y1} | {worldHitX}, {worldHitY}" );
         
+        //float3 worldPos = new float3(Structure.Bounds.x, Structure.Bounds.y, 0)/PPU;
         float3 relativeHit = Info.Value.Hit.Position - EntityPosition.Position;
-        float width = 2; //32/16
+        //float3 relativeHit = Info.Value.Hit.Position - worldPos;
         
         
-        //int hitX = (int)((relativeHit.x / width)*32);
-        //int hitY = (int)((relativeHit.y / width)*32);
-        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*32) , 0, 31 );
-        int hitY = (int)math.clamp ( math.round((relativeHit.y / width)*32) , 0, 31 );
+        //float width = 2; //32/16
+        float width = Structure.Size.x / PPU;
+        float height = Structure.Size.y / PPU;
+
+        
+        //int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*32) , 0, 31 );
+        //int hitY = (int)math.clamp ( math.round((relativeHit.y / width)*32) , 0, 31 );
+        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*Structure.Size.x) , 0, Structure.Size.x -1 );
+        int hitY = (int)math.clamp ( math.round((relativeHit.y / height)*Structure.Size.y) , 0, Structure.Size.y - 1 );
 
         int dx = x1 - x0;
         int dy = y1- y0;
@@ -727,8 +660,8 @@ public struct DestroyStructureJob : IJob
         float range = ( Weapon.IsExplosion ) ? Weapon.ExplosionRadius : Weapon.Range;
         
         int remainingRange = (int)((range * (1 - curInfo.Hit.Fraction))*PPU) ;
-        int limit = math.min( remainingRange, 32 );
-
+        int limit = math.min( remainingRange, Structure.Size.x );
+        
         int x = hitX;
         int y = hitY;
         int p = 2 * dy - dx;
@@ -738,7 +671,8 @@ public struct DestroyStructureJob : IJob
         {
             if ( IsInBounds( x, y ) )
             {
-                int index =  x + y* 32;
+                //int index =  x + y* 32;
+                int index =  x + y* Structure.Size.x;
                 DestructibleData d = Data[index];
                 if ( d.Value > 0 )
                 {
@@ -762,7 +696,8 @@ public struct DestroyStructureJob : IJob
                 if ( IsInBounds( x, y ) )
                 {
                     Modified.Value = true;
-                    int index =  x + y* 32;
+                    //int index =  x + y* 32;
+                    int index =  x + y* Structure.Size.x;
                     DestructibleData d = Data[index];
                     d.Value = 0;
                     Data[index] = d;
@@ -820,11 +755,16 @@ public struct DestroyStructureJob : IJob
     private void DestroyVertical( int x0, int y0, int x1, int y1 )
     {
         ShootInfo curInfo = Info.Value;
-        float3 relativeHit = Info.Value.Hit.Position - EntityPosition.Position;
-        float width = 2; //32/16
         
-        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*32) , 0, 31 );
-        int hitY = (int)math.clamp ( math.round((relativeHit.y / width)*32) , 0, 31 );
+        //float3 worldPos = new float3(Structure.Bounds.x, Structure.Bounds.y, 0)/PPU;
+        float3 relativeHit = Info.Value.Hit.Position - EntityPosition.Position;
+        
+        
+        float width = Structure.Size.x / PPU;
+        float height = Structure.Size.y / PPU;
+        
+        int hitX = (int)math.clamp ( math.round((relativeHit.x / width)*Structure.Size.x) , 0, Structure.Size.x -1 );
+        int hitY = (int)math.clamp ( math.round((relativeHit.y / height)*Structure.Size.y) , 0, Structure.Size.y - 1 );
 
         int dx = x1 - x0;
         int dy = y1- y0;
@@ -845,7 +785,7 @@ public struct DestroyStructureJob : IJob
         
         float range = ( Weapon.IsExplosion ) ? Weapon.ExplosionRadius : Weapon.Range;
         int remainingRange = (int)((range * (1 - curInfo.Hit.Fraction))*PPU) ;
-        int limit = math.min( remainingRange, 32 );
+        int limit = math.min( remainingRange, Structure.Size.y );
         
         int x = hitX;
         int y = hitY;
@@ -855,7 +795,7 @@ public struct DestroyStructureJob : IJob
             
             if ( IsInBounds( x, y ) )
             {
-                int index =  x  + y* 32;
+                int index =  x  + y* Structure.Size.x;
                 DestructibleData d = Data[index];
                 if ( d.Value > 0 )
                 {
@@ -878,11 +818,15 @@ public struct DestroyStructureJob : IJob
                 p -= 2 * dy;
                 if ( IsInBounds( x, y ) )
                 {
-                    Modified.Value = true;
-                    int index =  x + y* 32;
+                    int index =  x + y* Structure.Size.x;
                     DestructibleData d = Data[index];
-                    d.Value = 0;
-                    Data[index] = d;
+                    if ( d.Value > 0 )
+                    {
+                        Modified.Value = true;
+                        d.Value = 0;
+                        Data[index] = d;
+                    }
+                    
                 }
             }
 
@@ -896,7 +840,7 @@ public struct DestroyStructureJob : IJob
     
     private bool IsInBounds( int x, int y )
     {
-        if ( (x < 0 || x >= 32) || (y < 0 || y >= 32) )
+        if ( (x < 0 || x >= Structure.Size.x) || (y < 0 || y >= Structure.Size.y) )
             return false;
 
         return true;
