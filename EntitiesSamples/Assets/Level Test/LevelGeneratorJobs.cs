@@ -539,8 +539,7 @@ public struct LevelCreateWallsJob : IJobParallelFor
         while ( enumerator.MoveNext() )
         {
             int2 pos = enumerator.Current - origin;
-            //bounds.xy = math.min( bounds.xy, pos );
-            //bounds.zw = math.max( bounds.zw, pos );
+
             bounds.xy = math.min( bounds.xy, enumerator.Current );
             bounds.zw = math.max( bounds.zw, enumerator.Current);
             
@@ -549,7 +548,6 @@ public struct LevelCreateWallsJob : IJobParallelFor
             Counts[countsIndex]++;
         }
         
-        //Positions[countsIndex] = origin;
         Positions[countsIndex] = origin;
         Bounds[countsIndex] = bounds;
 

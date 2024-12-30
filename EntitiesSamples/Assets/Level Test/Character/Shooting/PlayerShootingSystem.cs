@@ -686,7 +686,7 @@ public struct DestroyStructureJob : IJob
                         return;
                     }
                 }
-            }
+            } 
             
 
             if ( p >= 0 )
