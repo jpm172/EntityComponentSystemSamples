@@ -79,6 +79,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     //gizmos variables
     public bool UseGizmos;
+    public bool ShowBins;
     public bool UseMeshes;
     public bool ShowFloorMesh;
     public bool ShowWallMesh;
@@ -92,6 +93,26 @@ public partial class LevelGenerator : MonoBehaviour
         if ( !_levelLayout.IsCreated || !UseGizmos )
             return;
 
+
+        if ( ShowBins )
+        {
+            int binSize = 32;
+            int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
+            int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
+            Vector3 cubeSize = new Vector3(binSize, binSize)/GameSettings.PixelsPerUnit;
+            for ( int x = 0; x < xBins; x++ )
+            {
+                for ( int y = 0; y < yBins; y++ )
+                {
+                    Vector3 center = new Vector3(x*binSize, y*binSize) + new Vector3(binSize, binSize)/2;
+                    center /= GameSettings.PixelsPerUnit;
+                    Gizmos.DrawWireCube( center, cubeSize );
+                }
+            }
+            
+            return;
+        }
+        
         if ( UseMeshes || UseWireMeshes )
         {
             foreach ( LevelRoom room in _rooms )
@@ -827,10 +848,171 @@ public partial class LevelGenerator : MonoBehaviour
         
         return true;
     }
+
+    private void MakeWallsNew()
+    {
+        int binSize = 32;
+        int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
+        int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
+        int binCount = xBins * yBins;
+        for ( int x = 0; x < xBins; x++ )
+        {
+            for ( int y = 0; y < yBins; y++ )
+            {
+                MakeWallsInBin( new int2(x,y), binSize );
+            }
+        }
+        
+        
+    }
+
+    private void MakeWallsInBin(int2 bin, int binSize)
+    {
+        NativeArray<LevelMaterial> binLayout = new NativeArray<LevelMaterial>(binSize*binSize, Allocator.TempJob);
+        NativeParallelHashSet<byte> usedMaterialsSet = new NativeParallelHashSet<byte>(binSize*binSize, Allocator.TempJob);
+        new LevelFetchWallsFromBinJob
+        {
+            BinLayout = binLayout,
+            BinSize = binSize,
+            UsedMaterials = usedMaterialsSet.AsParallelWriter(),
+            CurrentBin = bin,
+            LevelDimensions = dimensions,
+            LevelLayout = _levelLayout,
+            RoomInfo = _roomInfo
+        }.Schedule( binSize * binSize, binSize ).Complete();
+
+        NativeArray<LevelMaterial> usedMaterials = usedMaterialsSet.ToNativeArray( Allocator.TempJob ).Reinterpret<LevelMaterial>();
+        NativeParallelMultiHashMap<int, WallStrip> strips = new NativeParallelMultiHashMap<int, WallStrip>(binSize*binSize*usedMaterials.Length, Allocator.TempJob);
+        
+        new LevelMakeWallStripsJob
+        {
+            BinLayout = binLayout,
+            BinSize = binSize,
+            UsedMaterials = usedMaterials,
+            Strips = strips.AsParallelWriter()
+        }.Schedule( binSize*usedMaterials.Length, 16 ).Complete();
+
+        
+        NativeParallelMultiHashMap<int, WallStrip> mergedStrips = new NativeParallelMultiHashMap<int, WallStrip>(binSize*binSize*usedMaterials.Length, Allocator.TempJob);
+
+        new LevelMergeWallStripsJob
+        {
+            MergedStrips = mergedStrips.AsParallelWriter(),
+            UsedMaterials = usedMaterials,
+            BinSize = binSize,
+            Strips = strips
+        }.Schedule( binSize , 16 ).Complete();
+
+
+        NativeArray<WallStrip> binWalls = mergedStrips.GetValueArray( Allocator.Temp );
+
+        int2 binOrigin = bin * binSize;
+        foreach ( WallStrip wall in binWalls )
+        {
+
+            if ( wall.Material == LevelMaterial.Indestructible )
+            {
+                MakeStaticWall( wall, binOrigin, binSize );
+            }
+            else
+            {
+                MakeDynamicWall(wall, binOrigin, binSize);
+            }
+            
+            
+        }
+        
+        usedMaterials.Dispose();
+        mergedStrips.Dispose();
+        strips.Dispose();
+        usedMaterialsSet.Dispose();
+        binLayout.Dispose();
+    }
+
+    private void MakeStaticWall( WallStrip wall, int2 binOrigin, int binSize )
+    {
+        int2 xy = binOrigin + wall.Start;
+        int2 zw = binOrigin + wall.End;
+        int4 wallBounds = new int4(xy, zw);
+        int2 wallSize = wallBounds.Size();
+        
+        Vector2 wallPos = new Vector2(wallBounds.x, wallBounds.y)/GameSettings.PixelsPerUnit;
+        int[] mappedPointField = GetPointFieldFromStrip( wall );
+            
+        Material mat = new Material( staticWallMaterial );
+        mat.SetTexture( "_BaseMap", _textureDict[wall.Material] );
+            
+        StripMeshConstructor meshConstructor = new StripMeshConstructor();
+            
+            
+        LevelWall newWall = new LevelWall
+        {
+            Material = mat,
+            StructureMat = wall.Material,
+            Mesh = meshConstructor.ConstructMesh( mappedPointField, wallSize, binSize, wallBounds.xy ),
+            PointField = mappedPointField,
+            Position = wallPos,
+            Bounds = wallBounds,
+            Geo = meshConstructor.CollisionQuads
+        };
+        _walls.Add( newWall );
+    }
     
+    private void MakeDynamicWall(WallStrip wall, int2 binOrigin, int binSize )
+    {
+        int2 xy = binOrigin + wall.Start;
+        int2 zw = binOrigin + wall.End;
+        int4 wallBounds = new int4(xy, zw);
+        int2 wallSize = wallBounds.Size();
+            
+        Vector4 blockPosition = new Vector4(wallBounds.x, wallBounds.y);
+        Vector2 wallPos = new Vector2(wallBounds.x, wallBounds.y)/GameSettings.PixelsPerUnit;
+        int[] mappedPointField = GetPointFieldFromStrip( wall );
+            
+        Material mat = new Material( dynamicWallMaterial );
+        mat.SetTexture( "_BaseMap", _textureDict[wall.Material] );
+        mat.SetVector( "_BlockPosition", blockPosition);
+        mat.SetInt( "_BlockWidth", wallSize.x );
+        mat.SetInt( "_BlockHeight", wallSize.y );
+            
+        StripMeshConstructor meshConstructor = new StripMeshConstructor();
+            
+            
+        LevelWall newWall = new LevelWall
+        {
+            Material = mat,
+            StructureMat = wall.Material,
+            Mesh = meshConstructor.ConstructMesh( mappedPointField, wallSize, binSize, wallBounds.xy ),
+            PointField = mappedPointField,
+            Position = wallPos,
+            Bounds = wallBounds,
+            Geo = meshConstructor.CollisionQuads
+        };
+        _walls.Add( newWall );
+    }
+    
+    private int[] GetPointFieldFromStrip(WallStrip strip)
+    {
+        int length = new int4(strip.Start, strip.End).Area();
+        int[] result = new int[length];
+        for ( int i = 0; i < length; i++ )
+        {
+            
+            result[i] = 1;
+        }
+
+        return result;
+    }
     
     private void MakeWalls()
     {
+        MakeWallsNew();
+        return;
+        int binSize = 32;
+        int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
+        int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
+        int binCount = xBins * yBins;
+
 
         //NativeStream stream = new NativeStream(1, Allocator.TempJob);
         NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
@@ -846,10 +1028,7 @@ public partial class LevelGenerator : MonoBehaviour
         JobHandle fetchHandle = fetchJob.Schedule( _levelLayout.Length, 256 );
         fetchHandle.Complete();
 
-        int binSize = 32;
-        int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
-        int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
-        int binCount = xBins * yBins;
+        
 
         NativeArray<WallInfo> wallArr = wallCells.ToArray( Allocator.TempJob );
         
@@ -958,6 +1137,19 @@ public partial class LevelGenerator : MonoBehaviour
         int2 size = bounds[i].Size();
         NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
         StripMeshConstructor meshConstructor = new StripMeshConstructor();
+        
+        /*
+        NativeQueue<int2> corners = new NativeQueue<int2>(Allocator.TempJob);
+        new LevelAnalyzeWallJob()
+        {
+            LevelLayout = _levelLayout,
+            LevelDimensions = dimensions,
+            WallBounds = bounds[i],
+            Corners = corners.AsParallelWriter()
+        }.Schedule( size.Area(), 32  ).Complete();
+
+        corners.Dispose();
+        */
         
         Vector4 blockPosition = new Vector4(bounds[i].x, bounds[i].y);
 

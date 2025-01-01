@@ -8,4 +8,6 @@ public enum LevelMaterial: byte
     Indestructible = byte.MaxValue - 1,
     //the editor does display MaxValue in GUI for some reason, but subtracting one fixes this
     //using MaxValue still works in code, but just doesnt display in GUI menus
+    
+    
 }

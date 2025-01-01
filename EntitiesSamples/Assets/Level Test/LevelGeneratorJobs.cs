@@ -447,12 +447,243 @@ public struct LevelCell
         
             return true;
         }
-
         
-            
     }
 
     [BurstCompile]
+    public struct LevelFetchWallsFromBinJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<int> LevelLayout;
+        [ReadOnly] public NativeArray<RoomInfo> RoomInfo;
+        [ReadOnly] public int2 CurrentBin;
+        [ReadOnly] public int BinSize;
+        [ReadOnly] public int2 LevelDimensions;
+
+        [NativeDisableParallelForRestriction]
+        public NativeArray<LevelMaterial> BinLayout;
+
+        public NativeParallelHashSet<byte>.ParallelWriter UsedMaterials; 
+
+        public void Execute( int index )
+        {
+            int x = index % BinSize;
+            int y = index / BinSize;
+
+            int levelX = CurrentBin.x*BinSize + x;
+            int levelY = CurrentBin.y*BinSize + y;
+
+            int levelIndex = levelX + levelY * LevelDimensions.x;
+            int binIndex = x + y * BinSize;
+            
+
+            
+            if ( !IsInBounds( levelX, levelY ) || LevelLayout[levelIndex] <= RoomInfo.Length )
+            {
+                BinLayout[binIndex] = LevelMaterial.None;
+                return;
+            }
+            
+            int wallId = LevelLayout[levelIndex];
+            int roomIndex = wallId - RoomInfo.Length - 1;
+
+            LevelMaterial usedMat = GetStrongestMaterialInRadius( levelX, levelY, RoomInfo[roomIndex], wallId );
+            BinLayout[binIndex] = usedMat;
+            UsedMaterials.Add( (byte) usedMat );
+
+
+        }
+        
+        private LevelMaterial GetStrongestMaterialInRadius(int startX, int startY, RoomInfo info, int wallId)
+        {
+            int thickness = info.WallThickness;
+            LevelMaterial result = info.WallMaterial;
+
+            for ( int x = -thickness; x <= thickness; x++ )
+            {
+                for ( int y = -thickness; y <= thickness; y++ )
+                {
+                    int xPos = startX + x;
+                    int yPos = startY + y;
+
+                    if ( !IsInBounds( xPos, yPos ) )
+                        return LevelMaterial.Indestructible;
+
+                    int index = xPos + yPos * LevelDimensions.x;
+                    
+                    if(LevelLayout[index] == 0)
+                        return LevelMaterial.Indestructible;
+
+
+                    int otherIndex = LevelLayout[index] - RoomInfo.Length - 1;
+                    if ( LevelLayout[index] > RoomInfo.Length && LevelLayout[index] != wallId && result < RoomInfo[otherIndex].WallMaterial )
+                        result = RoomInfo[otherIndex].WallMaterial;
+                }
+            }
+            
+
+            return result;
+        }
+        private bool IsInBounds( int x, int y )
+        {
+            if ( x < 0 || x >= LevelDimensions.x )
+                return false;
+            
+            
+            if ( y < 0 || y >= LevelDimensions.y )
+                return false;
+        
+            return true;
+        }
+
+    }
+
+    [BurstCompile]
+    public struct LevelMakeWallStripsJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<LevelMaterial> BinLayout;
+        [ReadOnly] public NativeArray<LevelMaterial> UsedMaterials;
+        [ReadOnly] public int BinSize;
+        
+        
+        public NativeParallelMultiHashMap<int, WallStrip>.ParallelWriter Strips;
+        public void Execute( int index )
+        {
+            LevelMaterial targetMat = UsedMaterials[index/BinSize];
+            int levelIndex = index% BinSize;
+            int key = levelIndex;
+
+            //makes vertical strips
+            bool hasStrip = false;
+            int2 stripStart = new int2(0,0);
+            for ( int y = 0; y < BinSize; y++ )
+            {
+                if ( IsTarget( levelIndex, targetMat ) && !hasStrip )
+                {
+                    stripStart = new int2(key, y);
+                    hasStrip = true;
+                }
+                
+                if ( !IsTarget( levelIndex, targetMat ) && hasStrip )
+                {
+                    WallStrip newStrip = new WallStrip
+                    {
+                        Start = stripStart,
+                        End = new int2( stripStart.x, y - 1 ),
+                        Material = targetMat
+                    };
+                    Strips.Add( key, newStrip );
+                    hasStrip = false;
+                }
+                
+                levelIndex += BinSize;
+            }
+
+            if ( hasStrip )
+            {
+                WallStrip newStrip = new WallStrip 
+                {
+                    Start = stripStart,
+                    End = new int2( stripStart.x, BinSize-1 ),
+                    Material = targetMat
+                };
+                Strips.Add( key, newStrip );
+            }
+            
+        }
+
+
+        private bool IsTarget( int index, LevelMaterial targetMat )
+        {
+            return BinLayout[index] == targetMat;
+        }
+        private bool IsTargetOrEmpty( int index, LevelMaterial targetMat )
+        {
+            return BinLayout[index] == targetMat ||  BinLayout[index] == LevelMaterial.None;
+        }
+
+    }
+
+    [BurstCompile]
+    public struct LevelMergeWallStripsJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeParallelMultiHashMap<int, WallStrip> Strips;
+        [ReadOnly] public NativeArray<LevelMaterial> UsedMaterials;
+        [ReadOnly] public int BinSize;
+        
+        public NativeParallelMultiHashMap<int, WallStrip>.ParallelWriter MergedStrips;
+        public void Execute( int index )
+        {
+            if(!Strips.ContainsKey( index ))
+                return;
+            
+            LevelMaterial targetMat = UsedMaterials[index/BinSize];
+
+            NativeParallelMultiHashMap<int, WallStrip>.Enumerator values = Strips.GetValuesForKey( index );
+            while ( values.MoveNext() )
+            {
+                TryMergeStrip( values.Current, index );
+            }
+        }
+
+        private void TryMergeStrip(  WallStrip strip, int index )
+        {
+            //if we can merge with the strip behind this one, then return and dont do anything with this strip
+            if ( Strips.ContainsKey( index - 1 ) )
+            {
+                if ( TryMerge( strip, Strips.GetValuesForKey( index - 1 ) ) )
+                {
+                    return;
+                }
+            }
+            
+            int checkIndex = index + 1;
+            while ( Strips.ContainsKey( checkIndex ) )
+            {
+                if ( TryMerge( strip, Strips.GetValuesForKey( checkIndex) ) )
+                {
+                    strip.End.x++;
+                    checkIndex++;
+                }
+                else
+                {
+                    MergedStrips.Add( index, strip );
+                    return;
+                }
+            }
+            MergedStrips.Add( index, strip );
+        }
+        
+        
+        private bool TryMerge( WallStrip strip, NativeParallelMultiHashMap<int, WallStrip>.Enumerator neighborValues )
+        {
+
+            while ( neighborValues.MoveNext() )
+            {
+                if ( CanMerge( strip, neighborValues.Current ) )
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        private bool CanMerge( WallStrip strip1, WallStrip strip2 )
+        {
+            return ( strip1.Start.y == strip2.Start.y ) && ( strip1.End.y == strip2.End.y ) && (strip1.Material == strip2.Material);
+        }
+    }
+
+
+public struct WallStrip
+{
+    public int2 Start;
+    public int2 End;
+    public LevelMaterial Material;
+}
+
+
+[BurstCompile]
     public struct LevelBinWallsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<WallInfo> WallCells;
@@ -477,7 +708,7 @@ public struct LevelCell
                 int x = wall.Position.x / BinSize;
                 int y = wall.Position.y / BinSize;
 
-                if (  x == binX && y == binY   )
+                if (  x == binX && y == binY  )
                 {
                     BinnedWalls.Add( key, wall.Position );
                     BinTracker[index] = true;
@@ -550,6 +781,30 @@ public struct LevelCreateWallsJob : IJobParallelFor
         
         Positions[countsIndex] = origin;
         Bounds[countsIndex] = bounds;
+
+    }
+}
+
+
+public struct LevelAnalyzeWallJob : IJobParallelFor
+{
+    [ReadOnly]public NativeArray<int> LevelLayout;
+    [ReadOnly] public int2 LevelDimensions;
+    [ReadOnly] public int4 WallBounds;
+    
+    public NativeQueue<int2>.ParallelWriter Corners;
+    public void Execute( int index )
+    {
+        int2 size = WallBounds.Size();
+        int x = index % size.x;
+        int y = index / size.x;
+
+        int levelX = WallBounds.x + x;
+        int levelY = WallBounds.y + y;
+        int levelIndex = levelX + levelY * LevelDimensions.x;
+
+        if ( LevelLayout[levelIndex] == 0 )
+            return;
 
     }
 }
