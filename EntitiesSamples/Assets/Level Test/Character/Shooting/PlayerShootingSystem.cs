@@ -526,7 +526,7 @@ public struct MergeColliderStripsJob : IJobParallelFor
 
         NativeParallelMultiHashMap<int, MeshStrip>.Enumerator values = Strips.GetValuesForKey( index );
         while ( values.MoveNext() )
-        {
+        { 
             TryMergeStrip( values.Current, index );
         }
     }
