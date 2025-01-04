@@ -170,7 +170,13 @@ public class StripMeshConstructor
         
         return FinishMesh();
     }
-    
+
+
+    public Mesh ConstructMesh( WallStrip wall )
+    {
+        WallStripToMesh( wall );
+        return FinishMesh();
+    }
 
     private Mesh FinishMesh()
     {
@@ -182,6 +188,44 @@ public class StripMeshConstructor
         mesh.uv = _uvs.ToArray();
 
         return mesh;
+    }
+
+    private void WallStripToMesh( WallStrip wall )
+    {
+        MeshStrip strip = new MeshStrip
+        {
+            Start = wall.Start,
+            End = wall.End
+        };
+
+        int4 bounds = new int4(strip.Start, strip.End);
+        int2 size = bounds.Size() - new int2(1,1);
+        //int2 bottomLeft =  strip.Start;
+        //int2 topRight =  strip.End;
+        int2 bottomLeft = new int2(0,0);
+        int2 topRight = size;
+
+        float2[] floorPoints =
+        {
+            new float2(bottomLeft.x-.5f, bottomLeft.y-.5f), //bottom left
+            new float2(topRight.x+.5f, bottomLeft.y-.5f), //bottom right
+            new float2(topRight.x+.5f, topRight.y+.5f), //top right
+            new float2(bottomLeft.x-.5f, topRight.y+.5f), //top left
+        };
+        
+        AddNewBoxCollider( new int2(0,0), size );
+        
+        VertexData[] vertices = 
+        {
+            CoordinatesToVertex(floorPoints[0].x, floorPoints[0].y, strip.Start), 
+            CoordinatesToVertex(floorPoints[1].x, floorPoints[1].y, strip.Start), 
+            CoordinatesToVertex(floorPoints[2].x, floorPoints[2].y, strip.Start),
+            CoordinatesToVertex(floorPoints[3].x, floorPoints[3].y, strip.Start), 
+        };
+        AddMeshSection(vertices[0],  vertices[2], vertices[1]);
+        AddMeshSection(vertices[0], vertices[3], vertices[2]);
+            
+        
     }
     
     private void StripsToMesh(NativeParallelMultiHashMap<int, MeshStrip> mergedStrips, int2 origin)
@@ -245,6 +289,7 @@ public class StripMeshConstructor
         //float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
         //float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
         
+        //coordinates are in world space, vertices are local
         float uvX = (x + origin.x +.5f) / GameSettings.PixelsPerUnit;
         float uvY = (y + origin.y +.5f) / GameSettings.PixelsPerUnit;
         
