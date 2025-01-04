@@ -82,6 +82,7 @@ public partial class LevelGenerator : MonoBehaviour
     public bool ShowBins;
     public bool UseMeshes;
     public bool ShowFloorMesh;
+    public bool HideFloors;
     public bool ShowWallMesh;
     public bool UseWireMeshes;
     public bool UseConnections;
@@ -174,22 +175,19 @@ public partial class LevelGenerator : MonoBehaviour
                 int index = x + y * dimensions.x;
                 if ( _levelLayout[index] > 0 )
                 {
+                    Vector3 pos = new Vector3(x,y)/GameSettings.PixelsPerUnit;
                     if ( _levelLayout[index] > _rooms.Length )
                     {
                         LevelRoom room = _rooms[_levelLayout[index] - _rooms.Length - 1];
                         Gizmos.color = room.DebugColor *new Color(.3f, .3f, .3f,1);
+                        Gizmos.DrawCube( pos, size );
                     }
-                    else
+                    else if(!HideFloors)
                     {
                         LevelRoom room = _rooms[_levelLayout[index] - 1];
                         Gizmos.color = room.DebugColor;
+                        Gizmos.DrawCube( pos, size );
                     }
-                    
-                    Vector3 pos = new Vector3(x,y)/GameSettings.PixelsPerUnit;
-                    
-                    
-                    Gizmos.DrawCube( pos, size );
-                    //Gizmos.DrawWireCube( pos,size );
                 }
                 else if ( IsBorder( x, y ) )
                 {
@@ -849,12 +847,12 @@ public partial class LevelGenerator : MonoBehaviour
         return true;
     }
 
-    private void MakeWallsNew()
+    private void MakeWallsOld()
     {
         int binSize = 32;
         int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
         int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
-        int binCount = xBins * yBins;
+
         for ( int x = 0; x < xBins; x++ )
         {
             for ( int y = 0; y < yBins; y++ )
@@ -1003,7 +1001,7 @@ public partial class LevelGenerator : MonoBehaviour
     }
 
 
-    private void MakeWallsFinal()
+    private void MakeWalls()
     {
         int binSize = 32;
         NativeArray<LevelMaterial> wallLayout = new NativeArray<LevelMaterial>(_levelLayout.Length, Allocator.TempJob);
@@ -1043,7 +1041,7 @@ public partial class LevelGenerator : MonoBehaviour
             {
                 MergedWalls = mergedWalls,
                 Walls = walls.AsParallelWriter(),
-                BinSize = ( mat == LevelMaterial.Indestructible) ? binSize * 2 : binSize
+                BinSize = ( mat == LevelMaterial.Indestructible) ? binSize * 3 : binSize
             }.Schedule( mergedWalls.Length, 64 ).Complete();
 
 
@@ -1069,7 +1067,6 @@ public partial class LevelGenerator : MonoBehaviour
         wallLayout.Dispose();
 
     }
-
     
     private void MakeDynamicWall(WallStrip wall )
     {
@@ -1127,279 +1124,6 @@ public partial class LevelGenerator : MonoBehaviour
             Geo = meshConstructor.CollisionQuads
         };
         _walls.Add( newWall );
-    }
-    
-    private void MakeWallsGrouping()
-    {
-        int binSize = 32;
-        NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
-        new LevelFetchWallsJob
-        {
-            LevelLayout  = _levelLayout,
-            LevelDimensions = dimensions,
-            RoomInfo = _roomInfo,
-            WallCells = wallCells.AsParallelWriter(),
-            WallRadius = _maxWallThickness
-        }.Schedule( _levelLayout.Length, 256 ).Complete();
-
-        foreach ( LevelMaterial targetMat in _matertialsUsed )
-        {
-             
-        }
-
-        wallCells.Dispose();
-
-    }
-
-
-    private void MakeWallsImprovedBinning()
-    {
-        int binSize = 32;
-        int expandedBinSize = binSize * 2;
-        int xBins = dimensions.x / expandedBinSize + math.sign( dimensions.x % expandedBinSize );
-        int yBins = dimensions.y / expandedBinSize + math.sign( dimensions.y % expandedBinSize );
-        int binCount = xBins * yBins;
-        
-        NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
-        new LevelFetchWallsJob
-        {
-            LevelLayout  = _levelLayout,
-            LevelDimensions = dimensions,
-            RoomInfo = _roomInfo,
-            WallCells = wallCells.AsParallelWriter(),
-            WallRadius = _maxWallThickness
-        }.Schedule( _levelLayout.Length, 256 ).Complete();
-
-        NativeArray<WallInfo> wallArr = wallCells.ToArray( Allocator.TempJob );
-        
-        foreach ( LevelMaterial targetMat in _matertialsUsed )
-        {
-            NativeArray<bool> binTracker = new NativeArray<bool>( binCount, Allocator.TempJob );
-            NativeParallelMultiHashMap<int2, int2> binnedWalls =
-                new NativeParallelMultiHashMap<int2, int2>( wallArr.Length, Allocator.TempJob );
-
-            new LevelBinWallsJob
-            {
-                WallCells = wallArr,
-                BinSize = expandedBinSize,
-                XBins = xBins,
-                TargetMaterial = targetMat,
-                BinTracker = binTracker,
-                BinnedWalls = binnedWalls.AsParallelWriter()
-            }.Schedule( binCount, 1 ).Complete();
-
-            binTracker.Dispose();
-            binnedWalls.Dispose();
-        }
-
-        wallArr.Dispose();
-        wallCells.Dispose();
-
-    }
-    
-    
-    private void MakeWalls()
-    {
-
-         MakeWallsFinal(); 
-        //MakeWallsNew(); 
-        return;
-        int binSize = 32;
-        int xBins = dimensions.x / binSize + math.sign( dimensions.x % binSize );
-        int yBins = dimensions.y / binSize + math.sign( dimensions.y % binSize );
-        int binCount = xBins * yBins;
-
-
-        //NativeStream stream = new NativeStream(1, Allocator.TempJob);
-        NativeQueue<WallInfo> wallCells = new NativeQueue<WallInfo>(Allocator.TempJob);
-        LevelFetchWallsJob fetchJob = new LevelFetchWallsJob
-        {
-            LevelLayout  = _levelLayout,
-            LevelDimensions = dimensions,
-            RoomInfo = _roomInfo,
-            WallCells = wallCells.AsParallelWriter(),
-            WallRadius = _maxWallThickness
-        };
-        
-        JobHandle fetchHandle = fetchJob.Schedule( _levelLayout.Length, 256 );
-        fetchHandle.Complete();
-
-        
-
-        NativeArray<WallInfo> wallArr = wallCells.ToArray( Allocator.TempJob );
-        
-        foreach ( LevelMaterial targetMat in _matertialsUsed )
-        {
-            NativeArray<bool> binTracker = new NativeArray<bool>(binCount, Allocator.TempJob);
-            NativeParallelMultiHashMap<int2, int2> binnedWalls = new NativeParallelMultiHashMap<int2, int2>(wallArr.Length, Allocator.TempJob);
-            
-            LevelBinWallsJob binWallsJob = new LevelBinWallsJob
-            {
-                WallCells = wallArr,
-                BinSize = binSize,
-                XBins = xBins,
-                TargetMaterial = targetMat,
-                BinTracker = binTracker,
-                BinnedWalls = binnedWalls.AsParallelWriter()
-            };
-
-            JobHandle binHandle = binWallsJob.Schedule( binCount, 1 );
-            binHandle.Complete();
-
-            int usedBins = 0;
-            foreach ( bool notEmpty in binTracker )
-            {
-                if ( notEmpty )
-                    usedBins++;
-            }
-
-            NativeArray<int> pointFields = new NativeArray<int>(usedBins*(binSize*binSize), Allocator.TempJob);
-            NativeArray<int> counts = new NativeArray<int>(usedBins, Allocator.TempJob);
-            NativeArray<int4> bounds = new NativeArray<int4>(usedBins, Allocator.TempJob);
-            NativeArray<int2> positions = new NativeArray<int2>(usedBins, Allocator.TempJob);
-
-            LevelCreateWallsJob createWallsJob = new LevelCreateWallsJob
-            {
-                BinnedWalls = binnedWalls,
-                BinTracker = binTracker,
-                BinSize = binSize,
-                XBins = xBins,
-                PointFields = pointFields,
-                Counts = counts,
-                Positions = positions,
-                Bounds = bounds
-            };
-
-            JobHandle createHandle = createWallsJob.Schedule( binCount, 1 );
-            createHandle.Complete();
-
-            
-            
-
-            for ( int i = 0; i < usedBins; i++ )
-            {
-                LevelWall newWall = new LevelWall();
-                if ( targetMat == LevelMaterial.Indestructible )
-                {
-                    newWall = MakeStaticWall( i, binSize, targetMat, pointFields, positions );
-                }
-                else
-                {
-                    newWall = MakeDynamicWall( i, binSize, targetMat, pointFields, positions, bounds );
-                }
-                
-                
-                _walls.Add( newWall );
-            }
-
-            
-            binnedWalls.Dispose();
-            binTracker.Dispose();
-            pointFields.Dispose();
-            counts.Dispose();
-            positions.Dispose();
-            bounds.Dispose();
-        }
-
-        wallArr.Dispose();
-        wallCells.Dispose();
-    }
-
-    
-    private LevelWall MakeStaticWall( int i, int binSize, LevelMaterial targetMat, NativeArray<int> pointFields, NativeArray<int2> positions  )
-    {
-        NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
-        StripMeshConstructor meshConstructor = new StripMeshConstructor();
-        
-        Material mat = new Material( staticWallMaterial );
-        mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
-
-        Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
-        LevelWall newWall = new LevelWall
-        {
-            Material = mat,
-            StructureMat = targetMat,
-            Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
-            PointField = pointField.ToArray(),
-            Position = wallPos,
-            Geo = meshConstructor.CollisionQuads
-        };
-        pointField.Dispose();
-        return newWall;
-    }
-    
-    private LevelWall MakeDynamicWall( int i, int binSize, LevelMaterial targetMat, NativeArray<int> pointFields, NativeArray<int2> positions, NativeArray<int4> bounds  )
-    {
-        int2 size = bounds[i].Size();
-        NativeArray<int> pointField = pointFields.GetSubArray( i * ( binSize * binSize ), ( binSize * binSize ) );
-        StripMeshConstructor meshConstructor = new StripMeshConstructor();
-        
-        /*
-        NativeQueue<int2> corners = new NativeQueue<int2>(Allocator.TempJob);
-        new LevelAnalyzeWallJob()
-        {
-            LevelLayout = _levelLayout,
-            LevelDimensions = dimensions,
-            WallBounds = bounds[i],
-            Corners = corners.AsParallelWriter()
-        }.Schedule( size.Area(), 32  ).Complete();
-
-        corners.Dispose();
-        */
-        
-        Vector4 blockPosition = new Vector4(bounds[i].x, bounds[i].y);
-
-        //Material mat = new Material( wallMaterial ) {mainTexture = _textureDict[targetMat]};
-        Material mat = new Material( dynamicWallMaterial );
-        mat.SetTexture( "_BaseMap", _textureDict[targetMat] );
-        mat.SetVector( "_BlockPosition", blockPosition);
-        //mat.SetVector( "_BlockPosition", new Vector4(positions[i].x, positions[i].y ));
-        //mat.SetVector( "_BlockPosition", offset);
-        //mat.SetInt( "_BlockSize", binSize );
-        mat.SetInt( "_BlockWidth", size.x );
-        mat.SetInt( "_BlockHeight", size.y );
-
-
-        //Vector2 wallPos = new Vector2(positions[i].x, positions[i].y)/GameSettings.PixelsPerUnit;
-        Vector2 wallPos = new Vector2(bounds[i].x, bounds[i].y)/GameSettings.PixelsPerUnit;
-        int[] mappedPointField = MapPointFieldToWall( bounds[i], positions[i], pointFields, i * ( binSize * binSize ), binSize );
-        LevelWall newWall = new LevelWall
-        {
-            Material = mat,
-            StructureMat = targetMat,
-            //Mesh = meshConstructor.ConstructMesh( pointField, binSize, positions[i] ),
-            Mesh = meshConstructor.ConstructMesh( mappedPointField, bounds[i].Size(), binSize, bounds[i].xy ),
-            //PointField = pointField.ToArray(),
-            PointField = mappedPointField,
-            Position = wallPos,
-            Bounds = bounds[i],
-            Geo = meshConstructor.CollisionQuads
-        };
-        
-        //int[] mapped = MapPointFieldToWall( bounds[i], pointFields, i * ( binSize * binSize ), binSize );
-
-        pointField.Dispose();
-        return newWall;
-    }
-
-    private int[] MapPointFieldToWall(int4 bounds, int2 position, NativeArray<int> pointFields, int start, int binSize)
-    {
-        
-        int2 size = bounds.Size();
-        int2 relativePos = bounds.xy - position;
-        int offset = start + (relativePos.x + relativePos.y*binSize);
-        int[] result = new int[size.Area()];
-
-        for ( int i = 0; i < result.Length; i++ )
-        {
-            int x = i % size.x;
-            int y = i / size.x;
-            int index = x + y * size.x;
-            int mapIndex = offset + x + y * binSize;
-            result[index] = pointFields[mapIndex];
-        }
-
-        return result;
     }
     
     

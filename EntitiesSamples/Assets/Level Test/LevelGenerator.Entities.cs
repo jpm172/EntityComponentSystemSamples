@@ -201,10 +201,7 @@ public partial class LevelGenerator
             {
                 CreateDynamicWall(entityManager, prototype, wall, renderMeshArray, info);
             }
-
             
-            
-            //_collidersMade.Add( compCol );//
         }
     }
 
@@ -275,8 +272,7 @@ public partial class LevelGenerator
            Size = wall.Bounds.Size(),
            //Bounds = wall.Bounds
         } );
-        //entityManager.AddComponentData( prototype, new OldCollider() );
-        //entityManager.SetComponentEnabled( prototype, typeof(OldCollider), false );
+
         entityManager.AddComponentData( prototype, new DestructibleTag() );
         
         entityManager.AddComponentData( prototype, new ClearOnNewLevelTag() );
@@ -335,30 +331,6 @@ public partial class LevelGenerator
         return prototype;
     }
     
-    private Entity CreateBaseWallEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )
-    {
-        //create the base entity that will be used as a template for spawning the reset
-        Entity prototype = entityManager.CreateEntity();
-        
-        #if UNITY_EDITOR
-        entityManager.SetName( prototype, "Wall" );
-        #endif
-        
-        RenderMeshUtility.AddComponents(
-            prototype,
-            entityManager,
-            renderMeshDescription,
-            renderMeshArray,
-            MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-
-        entityManager.AddComponentData( prototype, new EntityCollider() );
-        entityManager.SetComponentEnabled<EntityCollider>( prototype, false );
-        //entityManager.AddBuffer<DestructibleData>( prototype );
-        entityManager.AddComponentData( prototype, new BufferData() );
-        
-        
-        return prototype;
-    }
 }
 
 public struct EntityRenderInfo

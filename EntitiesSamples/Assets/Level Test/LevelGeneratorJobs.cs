@@ -654,7 +654,7 @@ public struct LevelCell
     }
 
 
-[BurstCompile]
+    [BurstCompile]
     public struct LevelMakeTargetWallStripsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<LevelMaterial> BinLayout;
@@ -783,6 +783,7 @@ public struct LevelCell
         }
     }
 
+    [BurstCompile]
     public struct LevelProcessWallStrips : IJobParallelFor
     {
         [ReadOnly] public NativeArray<WallStrip> MergedWalls;
@@ -1033,15 +1034,10 @@ public struct LevelCell
     }
 
 
-public struct WallStrip
-{
-    public int2 Start;
-    public int2 End;
-    public LevelMaterial Material;
-}
 
 
-[BurstCompile]
+
+    [BurstCompile]
     public struct LevelBinWallsJob : IJobParallelFor
     {
         [ReadOnly] public NativeArray<WallInfo> WallCells;
@@ -1144,36 +1140,21 @@ public struct LevelCreateWallsJob : IJobParallelFor
 }
 
 
-public struct LevelAnalyzeWallJob : IJobParallelFor
-{
-    [ReadOnly]public NativeArray<int> LevelLayout;
-    [ReadOnly] public int2 LevelDimensions;
-    [ReadOnly] public int4 WallBounds;
-    
-    public NativeQueue<int2>.ParallelWriter Corners;
-    public void Execute( int index )
+
+    public struct WallStrip
     {
-        int2 size = WallBounds.Size();
-        int x = index % size.x;
-        int y = index / size.x;
-
-        int levelX = WallBounds.x + x;
-        int levelY = WallBounds.y + y;
-        int levelIndex = levelX + levelY * LevelDimensions.x;
-
-        if ( LevelLayout[levelIndex] == 0 )
-            return;
-
+        public int2 Start;
+        public int2 End;
+        public LevelMaterial Material;
     }
-}
 
-public struct WallInfo
-{
-    public int2 Position;
-    public LevelMaterial Material;
-}
+    public struct WallInfo
+    {
+        public int2 Position;
+        public LevelMaterial Material;
+    }
 
-[BurstCompile]
+    [BurstCompile]
     public struct LevelAnalyzeNormalRoom : IJobParallelFor
     {
         [ReadOnly] public NativeArray<int> LevelLayout;

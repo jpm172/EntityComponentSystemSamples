@@ -28,41 +28,7 @@ public class StripMeshConstructor
         _normals = new List<Vector3>();
         _collisionQuads = new List<BoxGeometry>();
     }
-
-    public Mesh ConstructMesh(NativeArray<int> levelLayout, int2 dimensions, NativeArray<RoomInfo> roomInfo)
-    {
-        NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(levelLayout.Length, Allocator.TempJob);
-
-        MakeAllMeshStripsJob stripJob = new MakeAllMeshStripsJob
-        {
-            LevelLayout = levelLayout,
-            LevelDimensions = dimensions,
-            RoomInfo = roomInfo,
-            Strips = stripMap.AsParallelWriter()
-        };
-            
-        JobHandle applyHandle = stripJob.Schedule(dimensions.x, 128);
-        applyHandle.Complete();
-        
-        NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(levelLayout.Length, Allocator.TempJob);
-            
-        MergeMeshStripsJob mergeJob = new MergeMeshStripsJob
-        {
-            Strips = stripMap,
-            MergedStrips = mergedStrips.AsParallelWriter()
-        };
-        
-        JobHandle mergeHandle = mergeJob.Schedule( dimensions.x, 8 );
-        mergeHandle.Complete();
-        
-        StripsToMesh( mergedStrips, new int2(0,0) );
-        
-        
-        stripMap.Dispose();
-        mergedStrips.Dispose();
-        
-        return FinishMesh();
-    }
+    
     
     public Mesh ConstructMesh( NativeArray<int> levelLayout, int2 dimensions, LevelRoom room, int targetId )
     {
@@ -100,40 +66,7 @@ public class StripMeshConstructor
         
         return FinishMesh();
     }
-
-    public Mesh ConstructMesh( NativeArray<int> pointField, int binSize, int2 blockOrigin )
-    {
-        NativeParallelMultiHashMap<int, MeshStrip> stripMap = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
-
-        MakeMeshStripsPointFieldJob stripJob = new MakeMeshStripsPointFieldJob
-        {
-            PointField = pointField,
-            BinSize = binSize,
-            Strips = stripMap.AsParallelWriter()
-        };
-            
-        JobHandle applyHandle = stripJob.Schedule(binSize, 16);
-        applyHandle.Complete();
-        
-        NativeParallelMultiHashMap<int, MeshStrip> mergedStrips = new NativeParallelMultiHashMap<int, MeshStrip>(binSize*binSize, Allocator.TempJob);
-            
-        MergeMeshStripsJob mergeJob = new MergeMeshStripsJob
-        {
-            Strips = stripMap,
-            MergedStrips = mergedStrips.AsParallelWriter()
-        };
-        
-        JobHandle mergeHandle = mergeJob.Schedule( binSize, 8 );
-        mergeHandle.Complete();
-        
-        StripsToMesh( mergedStrips, blockOrigin );
-        
-        
-        stripMap.Dispose();
-        mergedStrips.Dispose();
-        
-        return FinishMesh();
-    }
+    
     
     public Mesh ConstructMesh( int[] mappedPointField, int2 blockSize, int binSize, int2 blockOrigin )
     {
@@ -301,25 +234,7 @@ public class StripMeshConstructor
             Normal = Vector3.forward
         };
     }
-    
-    private VertexData CoordinatesToVertex(float x, float y)
-    {
-        //offset the UVs by .5 to counteract the bottomLeft vector
-        //float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
-        //float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
-        
-        float uvX = (x+.5f) / GameSettings.PixelsPerUnit;
-        float uvY = (y+.5f) / GameSettings.PixelsPerUnit;
-        
-        Vector3 position = new Vector3(x, y, 0) / GameSettings.PixelsPerUnit;
-        return new VertexData()
-        {
-            Postion = position,
-            Uv = new Vector2(uvX, uvY),
-            Normal = Vector3.forward
-        };
-    }
-    
+
     private void AddMeshSection(VertexData vertexA, VertexData vertexB, VertexData vertexC)
     {
         Vector3 normal = VertexUtility.ComputeNormal(vertexA, vertexB, vertexC);
@@ -350,9 +265,7 @@ public class StripMeshConstructor
         {
             return vertexDict[vertexPosition];
         }
-        
-        
-        
+
         _vertices.Add(vertex.Postion);
         _uvs.Add(vertex.Uv);
         _normals.Add(vertex.Normal);

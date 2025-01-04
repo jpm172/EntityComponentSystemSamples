@@ -840,9 +840,10 @@ MonoBehaviour:
   _seedBuffer: 20
   maxEdgeWeight: 10
   UseGizmos: 0
-  ShowBins: 1
+  ShowBins: 0
   UseMeshes: 0
   ShowFloorMesh: 0
+  HideFloors: 1
   ShowWallMesh: 0
   UseWireMeshes: 0
   UseConnections: 0
