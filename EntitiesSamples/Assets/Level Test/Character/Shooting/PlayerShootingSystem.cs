@@ -33,7 +33,7 @@ public partial struct PlayerShootingSystem : ISystem
 
     public void OnCreate( ref SystemState state )
     {
-        CreateColliderMap( 32 );
+        CreateColliderMap( 32*2 );
         _rng = Random.CreateFromIndex( 100 );
         _playerQuery = new EntityQueryBuilder(Allocator.Temp).WithAll<PlayerInputs>().Build(ref state);
         state.RequireForUpdate<PhysicsWorldSingleton>();

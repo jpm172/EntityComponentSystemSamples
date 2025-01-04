@@ -800,6 +800,7 @@ public struct LevelCell
 
             if ( splitCheck )
             {
+                //we dont have to split a block if only one side exceeds the BinSize, but the collider map does have to expand to allow this
                 //Walls.Enqueue(wall);
                 //return;
             }
