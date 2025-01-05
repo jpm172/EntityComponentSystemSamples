@@ -234,14 +234,13 @@ public partial class LevelGenerator
         
         
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
-        Unity.Physics.Material levelMat = Unity.Physics.Material.Default;
-        levelMat.CustomTags = (byte)wall.StructureMat;
+        Unity.Physics.Material levelMat = GetPhysicsMaterial( wall );
         for(int w = 0; w < wall.Geo.Count; w++)
         {
             BoxGeometry geo = wall.Geo[w];
             CompoundCollider.ColliderBlobInstance newChild = new CompoundCollider.ColliderBlobInstance
             {
-                Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, Unity.Physics.Material.Default ),
+                Collider = Unity.Physics.BoxCollider.Create( geo, CollisionFilter.Default, levelMat ),
                 Entity = prototype,
                 CompoundFromChild = new RigidTransform
                 {
@@ -262,6 +261,16 @@ public partial class LevelGenerator
         
         entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
     }
+
+    private Unity.Physics.Material GetPhysicsMaterial(LevelWall wall)
+    {
+        Unity.Physics.Material levelMat = Unity.Physics.Material.Default;
+        levelMat.Restitution = .5f;
+        levelMat.RestitutionCombinePolicy = Unity.Physics.Material.CombinePolicy.ArithmeticMean;
+        levelMat.CustomTags = (byte)wall.StructureMat;
+
+        return levelMat;
+    }
     
     private void CreateStaticWall(EntityManager entityManager, Entity prototype, LevelWall wall, RenderMeshArray renderMeshArray, EntityRenderInfo info)
     {
@@ -280,9 +289,8 @@ public partial class LevelGenerator
 
         NativeArray<CompoundCollider.ColliderBlobInstance> childCols = new NativeArray<CompoundCollider.ColliderBlobInstance>(wall.Geo.Count, Allocator.Temp);
 
-        Unity.Physics.Material levelMat = Unity.Physics.Material.Default;
-
-        levelMat.CustomTags = (byte)wall.StructureMat;
+        
+        Unity.Physics.Material levelMat = GetPhysicsMaterial( wall );
 
         for(int w = 0; w < wall.Geo.Count; w++)
         {

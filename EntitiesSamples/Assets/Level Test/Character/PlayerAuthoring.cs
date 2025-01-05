@@ -8,6 +8,7 @@ public class PlayerAuthoring : MonoBehaviour
 {
 
     public float MoveSpeed;
+    public WeaponType WeaponType;
     public float ExplosionRadius = 2;
     public float WeaponRange = 20;
     public float Penetration = 10;
@@ -28,6 +29,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new WeaponInfo
             {
+                Type = authoring.WeaponType,
                 IsExplosion = authoring.IsExplosion,
                 ExplosionRadius = authoring.ExplosionRadius,
                 Range = authoring.WeaponRange,

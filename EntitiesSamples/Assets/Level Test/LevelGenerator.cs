@@ -41,7 +41,7 @@ public partial class LevelGenerator : MonoBehaviour
     private Material dynamicWallMaterial;
     [SerializeField]
     private Material staticWallMaterial;
-    
+
     private List<LevelFloor> _floors;
     private List<LevelWall> _walls;
     private LevelRoom[] _rooms;
@@ -256,6 +256,7 @@ public partial class LevelGenerator : MonoBehaviour
 
     private void Start()
     {
+
         if(CreateOnStart)
             GenerateLevel();
         

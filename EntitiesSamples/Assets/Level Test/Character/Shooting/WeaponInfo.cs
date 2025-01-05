@@ -8,6 +8,7 @@ using UnityEngine;
 [Serializable]
 public struct WeaponInfo : IComponentData
 {
+    public WeaponType Type;
     public bool IsExplosion;
     public float ExplosionRadius;
     public float WeaponSpread;
@@ -19,4 +20,10 @@ public struct WeaponInfo : IComponentData
     public float PlayerDamage;
     public float StructureDamage;
 
+}
+
+public enum WeaponType : int
+{
+    Gun = 0,
+    Throwable = 1
 }
