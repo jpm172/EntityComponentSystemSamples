@@ -10,6 +10,7 @@ public class PlayerAuthoring : MonoBehaviour
     public float MoveSpeed;
     public WeaponType WeaponType;
     public float ExplosionRadius = 2;
+    public float ThrowForce;
     public float WeaponRange = 20;
     public float Penetration = 10;
     public int BulletsPerShot = 1;
@@ -31,6 +32,7 @@ public class PlayerAuthoring : MonoBehaviour
             {
                 Type = authoring.WeaponType,
                 IsExplosion = authoring.IsExplosion,
+                ThrowForce = authoring.ThrowForce,
                 ExplosionRadius = authoring.ExplosionRadius,
                 Range = authoring.WeaponRange,
                 Penetration = authoring.Penetration,

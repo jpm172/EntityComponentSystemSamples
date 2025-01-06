@@ -315,8 +315,8 @@ public partial class LevelGenerator
         entityManager.AddComponentData(prototype, physicsCollider );
         entityManager.AddComponentData( prototype, new DestructibleCleanUp{Value = physicsCollider} );
         childCols.Dispose();
-        
-        entityManager.AddSharedComponent(prototype, new PhysicsWorldIndex());
+
+        entityManager.AddSharedComponent( prototype, new PhysicsWorldIndex() );
     }
     
     private Entity CreateBaseFloorEntity(EntityManager entityManager, RenderMeshArray renderMeshArray, RenderMeshDescription renderMeshDescription )

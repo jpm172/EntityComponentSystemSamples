@@ -10,6 +10,7 @@ public struct WeaponInfo : IComponentData
 {
     public WeaponType Type;
     public bool IsExplosion;
+    public float ThrowForce;
     public float ExplosionRadius;
     public float WeaponSpread;
     public int BulletsPerShot;

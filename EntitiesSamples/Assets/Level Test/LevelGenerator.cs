@@ -1208,9 +1208,6 @@ public partial class LevelGenerator : MonoBehaviour
                 //_collidersMade.Add( newChild.Collider );
             }
         }
-
-
-
         
 
         BlobAssetReference<Collider> compCol = CompoundCollider.Create( childCols );

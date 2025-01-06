@@ -141,7 +141,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &239060623
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -351,6 +351,11 @@ PrefabInstance:
         type: 3}
       propertyPath: forward.x
       value: 266.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
+        type: 3}
+      propertyPath: ThrowForce
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 5284871456637662837, guid: 4b9250a7fc6c0ea448dc8db1cb164dff,
         type: 3}
