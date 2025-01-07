@@ -8,7 +8,7 @@ public class FuseAuthoring : MonoBehaviour
     public float Timer;
     public float ExplosionRadius;
     public float Penetration;
-    
+    public float Drag;
     public class FuzeBaker : Baker<FuseAuthoring>
     {
         public override void Bake( FuseAuthoring authoring )
@@ -21,7 +21,10 @@ public class FuseAuthoring : MonoBehaviour
                 ExplosionRadius = authoring.ExplosionRadius,
                 Penetration = authoring.Penetration
             });
-            AddComponent(entity, new ProjectileInfo());
+            AddComponent(entity, new ProjectileInfo
+            {
+                Drag = authoring.Drag
+            });
         }
     }
 }

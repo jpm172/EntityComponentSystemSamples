@@ -7,6 +7,7 @@ using UnityEngine;
 public struct ProjectileInfo : IComponentData
 {
     public float3 Velocity;
+    public float Drag;
     public float Z;
 
 }
