@@ -1,16 +1,15 @@
-Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
+Shader "Universal Render Pipeline/Custom/DotsHeightShader"
 {
     Properties
     {
         _BaseMap ("Base Texture", 2D) = "white" {}
         _BaseColor ("Base Colour", Color) = (1, 1, 1, 1)
+        _Scale ("Scale", float) = 1
     }
 
     SubShader
     {
         Tags {"RenderType"="Opaque"  }
-        Zwrite off //set off for transparent shader
-        //Blend SrcAlpha OneMinusSrcAlpha
         
 
         Pass
@@ -45,6 +44,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                float3 positionWS : TEXCOORD1;
                 float2 uv : TEXCOORD0;
                 float4 color : COLOR;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -53,6 +53,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
             CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _BaseColor;
+            float _Scale;
             uniform float4 _BaseMap_TexelSize;
            
             CBUFFER_END
@@ -75,8 +76,12 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
                 const VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+                float height = positionInputs.positionWS.z;
+                height = 1;
+                const VertexPositionInputs scaledPositionInputs = GetVertexPositionInputs(input.positionOS.xyz * height);
                 
-                output.positionCS = positionInputs.positionCS;
+                output.positionWS = positionInputs.positionWS;             
+                output.positionCS = scaledPositionInputs.positionCS ;
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
                 output.color = input.color;
                 
@@ -90,7 +95,7 @@ Shader "Universal Render Pipeline/Custom/UnlitWithDotsInstancing"
                 half4 baseMap = half4(SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv));
                 
  
-                
+                //return half4(1,0,0,1);
                 return baseMap * _BaseColor * input.color;
             }
             ENDHLSL
