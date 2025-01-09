@@ -172,7 +172,9 @@ public partial struct PlayerShootingSystem : ISystem
 #endif
 
         //state.EntityManager.Instantiate( config.GrenadeReference )
-        float3 velocity = ( transform.Right() * weapon.ThrowForce ) + new float3( 0, 0, -4 );
+        float3 upwardForce = new float3( 0, 0, -4 );
+        float3 throwHeight = new float3(0,0,-1);
+        float3 velocity = ( transform.Right() * weapon.ThrowForce ) + upwardForce;
         state.EntityManager.SetComponentData( entity, new ProjectileInfo
         {
             Velocity = velocity,
@@ -180,8 +182,7 @@ public partial struct PlayerShootingSystem : ISystem
             Drag = 1
         } );
         LocalTransform pt = state.EntityManager.GetComponentData<LocalTransform>( entity );
-        state.EntityManager.SetComponentData(entity,
-            pt.WithPosition( transform.Position ));
+        state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
     
     public void OnUpdate( ref SystemState state )
@@ -1181,6 +1182,7 @@ public struct ExplosionJob : IJobParallelFor
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 
     private static readonly int MaxHitCount = 4;
+    private static readonly float3 XY = new float3(1,1,0);
     private static readonly CollisionFilter CastFilter = new CollisionFilter
     {
         CollidesWith = ~(uint) ( 1 << 6 ),
@@ -1201,8 +1203,8 @@ public struct ExplosionJob : IJobParallelFor
 
         RaycastInput rayInput = new RaycastInput
         {
-            Start = transform.Position,
-            End = transform.Position + rayEnd,
+            Start = transform.Position * XY,
+            End = (transform.Position + rayEnd)*XY,
             Filter = CastFilter
         };
         NativeList<RaycastHit> allHits = new NativeList<RaycastHit>( 32, Allocator.Temp );

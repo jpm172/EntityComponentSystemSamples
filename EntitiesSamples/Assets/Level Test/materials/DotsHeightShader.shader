@@ -68,6 +68,14 @@ Shader "Universal Render Pipeline/Custom/DotsHeightShader"
             TEXTURE2D(_BaseMap);
             SAMPLER(sampler_BaseMap);
 
+            float MapHeight(float height)
+            {
+                //clamp(height,0.5, 2)
+                //return height;
+                return clamp(abs(height),0.75, 2);
+            }
+
+
             Varyings UnlitPassVertex(Attributes input)
             {
                 Varyings output;
@@ -76,8 +84,8 @@ Shader "Universal Render Pipeline/Custom/DotsHeightShader"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
 
                 const VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
-                float height = positionInputs.positionWS.z;
-                height = 1;
+                float height = MapHeight(positionInputs.positionWS.z);
+                //height = 1;
                 const VertexPositionInputs scaledPositionInputs = GetVertexPositionInputs(input.positionOS.xyz * height);
                 
                 output.positionWS = positionInputs.positionWS;             

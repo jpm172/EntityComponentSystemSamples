@@ -49,7 +49,7 @@ public partial struct ProjectileMoveJob : IJobEntity
 
     private void Execute( ref LocalTransform transform, ref ProjectileInfo projectileInfo,  in PhysicsCollider col )
     {
-        
+        /*
         float2 targetMove =  projectileInfo.Velocity.xy * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
         
@@ -58,12 +58,12 @@ public partial struct ProjectileMoveJob : IJobEntity
         projectileInfo.Velocity.xy = (newVel* drag)/DeltaTime;
 
         transform.Position.xy += result.xy;
-        
+        */
         
         //float2 targetMove =  projectileInfo.Velocity.xy * DeltaTime;
         //float3 vel = new float3( targetMove, 0 );
         
-        /*
+        
          //Since camera is orthographic, changing the z value doesnt actually show that the projectile is falling/bouncing off ground,
          //need some special effect/shadow to do this
         float3 vel = projectileInfo.Velocity * DeltaTime;
@@ -75,8 +75,8 @@ public partial struct ProjectileMoveJob : IJobEntity
         projectileInfo.Velocity.z = newVel.z / DeltaTime;
         
         transform.Position += result;
-        */
         
+        //-z is going up, +z is falling down
     }
     
     private float3 CollideAndBounce3D( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform,  out float3 newVel )
@@ -90,6 +90,17 @@ public partial struct ProjectileMoveJob : IJobEntity
         
         float3 xyVel = new float3(vel.xy, 0);
         float3 xyPos = new float3(pos.xy, 0);
+
+        newVel.z += 4 * (DeltaTime/6);
+        //bounce off the ground
+        if ( pos.z + vel.z >= 0 )
+        {
+            vel.z = -vel.z * .75f;
+            newVel.z = vel.z;
+            
+        }
+        
+        
         
         if ( PhysicsWorld.SphereCast( xyPos, radius - skinWidth, math.normalizesafe( xyVel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
@@ -101,6 +112,7 @@ public partial struct ProjectileMoveJob : IJobEntity
             newVel.xy = math.reflect( vel.xy, hit.SurfaceNormal.xy );
 
             snapToSurface.z = vel.z;
+            
             return snapToSurface;
         }
         
