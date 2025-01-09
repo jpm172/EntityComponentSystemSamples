@@ -172,9 +172,10 @@ public partial struct PlayerShootingSystem : ISystem
 #endif
 
         //state.EntityManager.Instantiate( config.GrenadeReference )
+        float3 velocity = ( transform.Right() * weapon.ThrowForce ) + new float3( 0, 0, -4 );
         state.EntityManager.SetComponentData( entity, new ProjectileInfo
         {
-            Velocity = transform.Right() * weapon.ThrowForce,
+            Velocity = velocity,
             Z = 1,
             Drag = 1
         } );

@@ -49,46 +49,75 @@ public partial struct ProjectileMoveJob : IJobEntity
 
     private void Execute( ref LocalTransform transform, ref ProjectileInfo projectileInfo,  in PhysicsCollider col )
     {
-        //rotate the character to look at the mouse
-        //float3 forward = input.AimPosition - transform.Position;
-        /*
-        quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward );
-        
-        transform.Rotation = rotation;
-        transform = transform.RotateZ( AngleAdjust );
-
-        float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
-        float3 vel = new float3( targetMove, 0 );
-        */
         
         float2 targetMove =  projectileInfo.Velocity.xy * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
-
-        // result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel, out float2 newVel );
+        
         float3 result = CollideAndBounce( col, vel, transform.Position, transform, vel, out float2 newVel );
-        
-        float dragForceMagnitude = math.pow(math.length(newVel), 2) * projectileInfo.Drag ; // The variable you’re talking about
-        float2 dragForceVector = dragForceMagnitude * -math.normalizesafe(newVel);
-        
-        //projectileInfo.Velocity.xy = (newVel+dragForceVector)/DeltaTime;
-        projectileInfo.Velocity.xy = (newVel)/DeltaTime;
+        float drag = ( 1 - DeltaTime * projectileInfo.Drag );
+        projectileInfo.Velocity.xy = (newVel* drag)/DeltaTime;
 
         transform.Position.xy += result.xy;
+        
+        
+        //float2 targetMove =  projectileInfo.Velocity.xy * DeltaTime;
+        //float3 vel = new float3( targetMove, 0 );
+        
+        /*
+         //Since camera is orthographic, changing the z value doesnt actually show that the projectile is falling/bouncing off ground,
+         //need some special effect/shadow to do this
+        float3 vel = projectileInfo.Velocity * DeltaTime;
+        
+        float3 result = CollideAndBounce3D( col, vel, transform.Position, transform, out float3 newVel );
+        
+        float drag = ( 1 - DeltaTime * projectileInfo.Drag );
+        projectileInfo.Velocity.xy = (newVel.xy* drag)/DeltaTime;
+        projectileInfo.Velocity.z = newVel.z / DeltaTime;
+        
+        transform.Position += result;
+        */
+        
+    }
+    
+    private float3 CollideAndBounce3D( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform,  out float3 newVel )
+    {
+        float skinWidth = .1f;
+        newVel = vel;
+
+        float dist = math.length( vel ) + skinWidth;
+        
+        float radius = col.Value.As<SphereCollider>().Radius * transform.Scale;
+        
+        float3 xyVel = new float3(vel.xy, 0);
+        float3 xyPos = new float3(pos.xy, 0);
+        
+        if ( PhysicsWorld.SphereCast( xyPos, radius - skinWidth, math.normalizesafe( xyVel ), dist, out ColliderCastHit hit, CastFilter ) )
+        {
+            float3 snapToSurface = math.normalizesafe( xyVel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth  );
+
+            if(math.length( snapToSurface ) <= skinWidth)
+                snapToSurface = float3.zero;
+
+            newVel.xy = math.reflect( vel.xy, hit.SurfaceNormal.xy );
+
+            snapToSurface.z = vel.z;
+            return snapToSurface;
+        }
+        
+        return vel;
+        
     }
 
 
     private float3 CollideAndBounce( PhysicsCollider col, float3 vel, float3 pos, LocalTransform transform,  float3 velInit, out float2 newVel )
     {
-        int maxDepth = 5;
         float skinWidth = .1f;
         newVel = velInit.xy;
 
         float dist = math.length( vel ) + skinWidth;
         
-        float radius = col.Value.As<SphereCollider>().Radius * .25f;
-
-        Debug.DrawLine( pos, pos + math.normalizesafe( vel ), Color.red, .1f  );
-        //if ( PhysicsWorld.CastCollider( cast, out ColliderCastHit hit ) )
+        float radius = col.Value.As<SphereCollider>().Radius * transform.Scale;
+        
         if ( PhysicsWorld.SphereCast( pos, radius - skinWidth, math.normalizesafe( vel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
             //float3 snapToSurface = math.normalizesafe( vel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth );
