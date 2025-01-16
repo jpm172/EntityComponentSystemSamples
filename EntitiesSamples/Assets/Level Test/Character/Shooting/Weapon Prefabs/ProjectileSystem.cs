@@ -59,13 +59,8 @@ public partial struct ProjectileMoveJob : IJobEntity
 
         transform.Position.xy += result.xy;
         */
-        
-        //float2 targetMove =  projectileInfo.Velocity.xy * DeltaTime;
-        //float3 vel = new float3( targetMove, 0 );
-        
-        
-         //Since camera is orthographic, changing the z value doesnt actually show that the projectile is falling/bouncing off ground,
-         //need some special effect/shadow to do this
+
+
         float3 vel = projectileInfo.Velocity * DeltaTime;
         
         float3 result = CollideAndBounce3D( col, vel, transform.Position, transform, out float3 newVel );
@@ -95,13 +90,12 @@ public partial struct ProjectileMoveJob : IJobEntity
         //bounce off the ground
         if ( pos.z + vel.z >= 0 )
         {
+            //vel.xy *= new float2(.8f, .8f);
             vel.z = -vel.z * .75f;
             newVel.z = vel.z;
             
         }
-        
-        
-        
+
         if ( PhysicsWorld.SphereCast( xyPos, radius - skinWidth, math.normalizesafe( xyVel ), dist, out ColliderCastHit hit, CastFilter ) )
         {
             float3 snapToSurface = math.normalizesafe( xyVel ) * ( math.distance( pos.xy, hit.Position.xy ) - radius - skinWidth  );

@@ -178,7 +178,7 @@ public partial struct PlayerShootingSystem : ISystem
         state.EntityManager.SetComponentData( entity, new ProjectileInfo
         {
             Velocity = velocity,
-            Z = 1,
+            Z = 1, 
             Drag = 1
         } );
         LocalTransform pt = state.EntityManager.GetComponentData<LocalTransform>( entity );
