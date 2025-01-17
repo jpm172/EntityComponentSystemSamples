@@ -9,7 +9,7 @@ public class DragObject : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
     private DragManager _manager = null;
 
     private Vector2 _centerPoint;
-    private Vector2 _worldCenterPoint => transform.TransformPoint(_centerPoint);
+    public Vector2 _worldCenterPoint => transform.TransformPoint(_centerPoint);
 
     private void Awake()
     {
@@ -32,6 +32,6 @@ public class DragObject : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        _manager.UnregisterDraggedObject(this);
+        _manager.UnregisterDraggedObject(this, _worldCenterPoint);
     }
 }
