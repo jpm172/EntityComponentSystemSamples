@@ -2,9 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlot : MonoBehaviour
+public class InventorySlot : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField]
     private Image displayImage;
@@ -32,15 +33,16 @@ public class InventorySlot : MonoBehaviour
 
     public void GetItem()
     {
-        Debug.Log( "pressed" );
         if ( !_hasItem )
             return;
-        _dragManager.SpawnItem( _heldItem );
+        _dragManager.SpawnItem( _heldItem, GetComponent<RectTransform>().position );
         displayImage.sprite = null;
         _hasItem = false;
-        
-
     }
-    
-    
+
+
+    public void OnPointerDown( PointerEventData eventData )
+    {
+        GetItem();
+    }
 }

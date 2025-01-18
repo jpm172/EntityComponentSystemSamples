@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(RectTransform))]
-public class DragObject : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
+public class DragObject : MonoBehaviour, IPointerDownHandler
 {
     private DragManager _manager = null;
 
@@ -17,21 +17,14 @@ public class DragObject : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDr
         _centerPoint = (transform as RectTransform).rect.center;
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
+    public void Initialize()
     {
-        _manager.RegisterDraggedObject(this);
+        _manager = GetComponentInParent<DragManager>();
+        _centerPoint = (transform as RectTransform).rect.center;
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void OnPointerDown( PointerEventData eventData )
     {
-        if (_manager.IsWithinBounds(_worldCenterPoint + eventData.delta))
-        {
-            transform.Translate(eventData.delta);
-        }
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        _manager.UnregisterDraggedObject(this, _worldCenterPoint);
+        _manager.PickUpItem(this);
     }
 }
