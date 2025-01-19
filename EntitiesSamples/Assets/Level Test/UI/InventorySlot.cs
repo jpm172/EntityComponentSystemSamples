@@ -42,6 +42,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     {
         if ( !_hasItem )
             return;
+        
         _dragManager.SpawnItem( _heldItem, GetComponent<RectTransform>().position );
         _displayImage.sprite = null;
         _rect.sizeDelta = _emptySize;

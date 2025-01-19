@@ -16,17 +16,20 @@ public class DragManager : MonoBehaviour
     
     [SerializeField]
     private RectTransform
-        _defaultLayer = null,
-        _dragLayer = null;
+        _defaultLayer,
+        _dragLayer,
+        _invetoryLayer;
 
 
     [SerializeField]
     private GameObject _itemPrefab;
+    [SerializeField]
+    private GameObject _transferItemPrefab;
     
     private Rect _boundingBox;
 
     [SerializeField]
-    private GameObject[] _inventorySlots;
+    private GameObject[] _weaponSlots;
 
     [SerializeField]
     private DragObject _currentDraggedObject;
@@ -42,7 +45,7 @@ public class DragManager : MonoBehaviour
         _inputActions = new DemoInputActions();
         _mouseInput = _inputActions.DemoMap.Shoot;
         _mouseInput.Enable();
-        _inventorySlots = GameObject.FindGameObjectsWithTag( InventoryTag );
+        _weaponSlots = GameObject.FindGameObjectsWithTag( InventoryTag );
     }
 
     private void Update()
@@ -75,9 +78,7 @@ public class DragManager : MonoBehaviour
         {
             _currentDraggedObject.transform.SetParent( _defaultLayer );
         }
-        
-        
-        
+
         _currentDraggedObject = null;
     }
     
@@ -88,10 +89,8 @@ public class DragManager : MonoBehaviour
 
     public void SpawnItem( ItemData item, Vector3 position )
     {
-        DragObject newItem = Instantiate( ItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
+        DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
         newItem.GetComponent<ItemInfo>().Data = item;
-        
-
         
         if(_currentDraggedObject == null)
         {
@@ -102,13 +101,23 @@ public class DragManager : MonoBehaviour
     
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
-        for(int i = 0; i < _inventorySlots.Length; i++)
+        /*
+        Rect invRect = GetBoundingBoxRect( _invetoryLayer );
+        if ( invRect.Contains( position ) )
         {
-            Rect rect = GetBoundingBoxRect( _inventorySlots[i].GetComponent<RectTransform>() );
+            _currentDraggedObject.transform.SetParent( _invetoryLayer );
+            //Destroy( drag.gameObject );
+            return true;
+        }
+        */
+        
+        for(int i = 0; i < _weaponSlots.Length; i++)
+        {
+            Rect rect = GetBoundingBoxRect( _weaponSlots[i].GetComponent<RectTransform>() );
             if ( rect.Contains( position ) )
             {
                 ItemInfo item = drag.GetComponent<ItemInfo>();
-                _inventorySlots[i].GetComponent<InventorySlot>().AddItem( item );
+                _weaponSlots[i].GetComponent<InventorySlot>().AddItem( item );
                 Destroy( drag.gameObject );
                 return true;
             }
