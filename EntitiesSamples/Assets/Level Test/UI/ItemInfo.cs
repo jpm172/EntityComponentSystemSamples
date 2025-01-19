@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class ItemInfo: MonoBehaviour
 {
-    public Sprite ItemSprite;
+    public ItemData Data;
 }

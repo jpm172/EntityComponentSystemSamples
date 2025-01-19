@@ -86,9 +86,12 @@ public class DragManager : MonoBehaviour
         return _boundingBox.Contains(position);
     }
 
-    public void SpawnItem( ItemInfo item, Vector3 position )
+    public void SpawnItem( ItemData item, Vector3 position )
     {
         DragObject newItem = Instantiate( ItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
+        newItem.GetComponent<ItemInfo>().Data = item;
+        
+
         
         if(_currentDraggedObject == null)
         {
