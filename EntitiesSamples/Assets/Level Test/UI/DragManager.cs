@@ -20,6 +20,7 @@ public class DragManager : MonoBehaviour
         _dragLayer,
         _invetoryLayer;
 
+    private InventoryManager _weaponInventory;
 
     [SerializeField]
     private GameObject _itemPrefab;
@@ -41,6 +42,7 @@ public class DragManager : MonoBehaviour
 
     private void Awake()
     {
+        _weaponInventory = _invetoryLayer.GetComponent<InventoryManager>();
         _boundingBox = GetBoundingBoxRect(_dragLayer);
         _inputActions = new DemoInputActions();
         _mouseInput = _inputActions.DemoMap.Shoot;
@@ -73,43 +75,45 @@ public class DragManager : MonoBehaviour
     public void DropItem()
     {
         DragObject drag = _currentDraggedObject.GetComponent<DragObject>();
-        
+
         if ( !TryPutIntoSlot( drag, drag._worldCenterPoint ) )
         {
-            _currentDraggedObject.transform.SetParent( _defaultLayer );
+            
         }
-
+        Destroy( _currentDraggedObject.gameObject );
         _currentDraggedObject = null;
     }
     
-    public bool IsWithinBounds(Vector2 position)
-    {
-        return _boundingBox.Contains(position);
-    }
 
-    public void SpawnItem( ItemData item, Vector3 position )
+    public DragObject SpawnItem( ItemData item, Vector3 position )
     {
         DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
         newItem.GetComponent<ItemInfo>().Data = item;
-        
+
         if(_currentDraggedObject == null)
         {
             PickUpItem( newItem );
         }
-        
+
+        return newItem;
     }
     
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
-        /*
+
+        if ( !_boundingBox.Contains(position) )
+        {
+            //TODO implement dropping items onto ground
+            return true;
+        }
+        
         Rect invRect = GetBoundingBoxRect( _invetoryLayer );
         if ( invRect.Contains( position ) )
         {
-            _currentDraggedObject.transform.SetParent( _invetoryLayer );
-            //Destroy( drag.gameObject );
+            _weaponInventory.AddItem( drag.GetComponent<ItemInfo>() );
             return true;
         }
-        */
+        
         
         for(int i = 0; i < _weaponSlots.Length; i++)
         {
@@ -118,15 +122,13 @@ public class DragManager : MonoBehaviour
             {
                 ItemInfo item = drag.GetComponent<ItemInfo>();
                 _weaponSlots[i].GetComponent<InventorySlot>().AddItem( item );
-                Destroy( drag.gameObject );
                 return true;
             }
         }
 
         return false;
     }
-    
-    
+
     private Rect GetBoundingBoxRect(RectTransform rectTransform)
     {
         var corners = new Vector3[4];
@@ -139,5 +141,4 @@ public class DragManager : MonoBehaviour
 
         return new Rect(position, size);
     }
-    
 }

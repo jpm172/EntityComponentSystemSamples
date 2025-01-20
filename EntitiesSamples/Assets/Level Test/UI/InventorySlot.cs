@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class InventorySlot : MonoBehaviour, IPointerDownHandler
+public class InventorySlot : MonoBehaviour, IPointerDownHandler, IInventory
 {
     private static readonly Vector2 _emptySize = new Vector2( 40, 40 );
 
@@ -30,10 +30,8 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     public void AddItem( ItemInfo item )
     {
         _displayImage.sprite = item.Data.ItemSprite;
-        //Vector2 size = item.Data.ItemSprite.rect.size;
-        
         _displayImage.SetNativeSize();
-        //_rect.sizeDelta = size;
+
         _heldItem = item.Data;
         _hasItem = true;
         
@@ -44,15 +42,25 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         if ( !_hasItem )
             return;
         
-        _dragManager.SpawnItem( _heldItem, GetComponent<RectTransform>().position );
+        DragObject transferItem = _dragManager.SpawnItem( _heldItem, GetComponent<RectTransform>().position );
         _displayImage.sprite = null;
         _rect.sizeDelta = _emptySize;
         _hasItem = false;
     }
 
 
+    public void Callback(ItemInfo returnedItem)
+    {
+        AddItem( returnedItem );
+    }
+
     public void OnPointerDown( PointerEventData eventData )
     {
         GetItem();
+    }
+
+    public void Callback()
+    {
+        Debug.Log( "callback on slot" );
     }
 }

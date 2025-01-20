@@ -8,6 +8,8 @@ public class TransferItemInfo : MonoBehaviour
 {
     private TextMeshProUGUI _text;
     
+    
+    
     //use start instead of awake to let the ItemInfo properly update after being instantiated
     private void Start()
     {
