@@ -7,9 +7,12 @@ using UnityEngine;
 public class TransferItemInfo : MonoBehaviour
 {
     private TextMeshProUGUI _text;
-    private void Awake()
+    
+    //use start instead of awake to let the ItemInfo properly update after being instantiated
+    private void Start()
     {
         _text = GetComponentInChildren<TextMeshProUGUI>();
         _text.text = GetComponent<ItemInfo>().Data.ItemName;
     }
+    
 }

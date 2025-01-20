@@ -30,9 +30,10 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     public void AddItem( ItemInfo item )
     {
         _displayImage.sprite = item.Data.ItemSprite;
-        Vector2 size = item.Data.ItemSprite.rect.size;
-
-        _rect.sizeDelta = size;
+        //Vector2 size = item.Data.ItemSprite.rect.size;
+        
+        _displayImage.SetNativeSize();
+        //_rect.sizeDelta = size;
         _heldItem = item.Data;
         _hasItem = true;
         

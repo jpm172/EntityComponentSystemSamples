@@ -17,12 +17,6 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         _centerPoint = (transform as RectTransform).rect.center;
     }
 
-    public void Initialize()
-    {
-        _manager = GetComponentInParent<DragManager>();
-        _centerPoint = (transform as RectTransform).rect.center;
-    }
-
     public void OnPointerDown( PointerEventData eventData )
     {
         _manager.PickUpItem(this);
