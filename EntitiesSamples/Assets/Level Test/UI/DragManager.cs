@@ -75,11 +75,13 @@ public class DragManager : MonoBehaviour
     public void DropItem()
     {
         DragObject drag = _currentDraggedObject.GetComponent<DragObject>();
-
-        if ( !TryPutIntoSlot( drag, drag._worldCenterPoint ) )
+        TryPutIntoSlot( drag, drag._worldCenterPoint );
+        /*
+        if ( TryPutIntoSlot( drag, drag._worldCenterPoint ) )
         {
-            
+            drag.Callback?.Invoke();
         }
+        */
         Destroy( _currentDraggedObject.gameObject );
         _currentDraggedObject = null;
     }
@@ -104,6 +106,7 @@ public class DragManager : MonoBehaviour
         if ( !_boundingBox.Contains(position) )
         {
             //TODO implement dropping items onto ground
+            drag.Callback();
             return true;
         }
         
@@ -111,6 +114,7 @@ public class DragManager : MonoBehaviour
         if ( invRect.Contains( position ) )
         {
             _weaponInventory.AddItem( drag.GetComponent<ItemInfo>() );
+            drag.Callback();
             return true;
         }
         
@@ -121,7 +125,18 @@ public class DragManager : MonoBehaviour
             if ( rect.Contains( position ) )
             {
                 ItemInfo item = drag.GetComponent<ItemInfo>();
-                _weaponSlots[i].GetComponent<InventorySlot>().AddItem( item );
+                InventorySlot slot = _weaponSlots[i].GetComponent<InventorySlot>();
+
+                if ( slot.HasItem )
+                {
+                    slot.SwapItem( drag );
+                }
+                else
+                {
+                    slot.AddItem( item );
+                    drag.Callback?.Invoke();
+                }
+
                 return true;
             }
         }

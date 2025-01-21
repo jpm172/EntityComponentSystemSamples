@@ -39,15 +39,20 @@ public class InventoryItemLayout : MonoBehaviour
 
     private void Start()
     {
-        Debug.Log( $"{_currentAmmo} / {_maxAmmo}" );
+        Initialize();
+    }
+
+    private void Initialize()
+    {
         _item = GetComponent<ItemInfo>();
 
         //set the text and change rect to match its size
         _weaponText.SetText( _item.Data.ItemName );
         Vector2 textPref = _weaponText.GetPreferredValues();
+
         _weaponText.rectTransform.sizeDelta = textPref;
         _weaponText.rectTransform.anchoredPosition = new Vector2(_padding, 0);
-
+        
         Vector2 finalSize = textPref + new Vector2(_padding, 0);
         
         //set ammo counter to roughly match how much ammo is left
@@ -70,6 +75,18 @@ public class InventoryItemLayout : MonoBehaviour
 
         GetComponent<RectTransform>().sizeDelta = finalSize;
     }
-    
+
+    public void CallBack()
+    {
+        GetComponentInParent<InventoryManager>().RemovedItem();
+        Destroy( gameObject );
+        
+        
+    }
+
+    public void SwapCallback()
+    {
+        Initialize();
+    }
     
 }
