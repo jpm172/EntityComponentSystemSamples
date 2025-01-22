@@ -105,6 +105,11 @@ public class DragManager : MonoBehaviour
         Rect invRect = GetBoundingBoxRect( _invetoryLayer );
         if ( invRect.Contains( position ) )
         {
+            if ( drag.SourceObject == _invetoryLayer.gameObject )
+            {
+                _weaponInventory.ReOrderItem( drag, position );
+                return true;
+            }
             _weaponInventory.AddItem( drag.GetComponent<ItemInfo>() );
             drag.Callback();
             return true;

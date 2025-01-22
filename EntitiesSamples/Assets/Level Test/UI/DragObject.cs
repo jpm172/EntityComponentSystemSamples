@@ -34,6 +34,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         transfer.Callback = Callback;
         transfer.SwapCallback = SwapCallback;
         transfer.TransferFromObj = TransferFromObj;
+        transfer.SourceObject = SourceObject;
         //_manager.PickUpItem(this);
     }
 }
