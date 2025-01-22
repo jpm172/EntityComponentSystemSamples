@@ -19,6 +19,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     public SwapCallbackDelegate SwapCallback;
     
     public ItemInfo TransferFromObj;
+    public GameObject SourceObject;
     
     private void Start()
     {

@@ -8,6 +8,9 @@ public class ItemData : ScriptableObject
     [Tooltip("Item Name")]
     public string ItemName;
 
+    [Tooltip("Item Type")]
+    public ItemType ItemType;
+    
     [Tooltip( "Item Sprite" )] 
     public Sprite ItemSprite;
 

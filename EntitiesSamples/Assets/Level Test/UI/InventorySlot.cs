@@ -12,12 +12,19 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     [SerializeField]
     private Image _displayImage;
 
-    private RectTransform _rect;
+    [SerializeField]
+    private float _padding = 10;
     
+    [SerializeField] 
+    private RectTransform _containerRect;
+
     private DragManager _dragManager;
     [SerializeField]
     private ItemInfo _heldItem;
 
+    [SerializeField]
+    private ItemType _slotItemType;
+    
     private bool _hasItem;
 
     public bool HasItem => _hasItem;
@@ -26,20 +33,40 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     {
         _hasItem = false;
         _dragManager = GetComponentInParent<DragManager>();
-        _rect = _displayImage.GetComponent<RectTransform>();
         _heldItem = GetComponent<ItemInfo>();
+        _displayImage.gameObject.SetActive( false );
     }
 
     public void AddItem( ItemInfo item )
     {
-
+        _displayImage.gameObject.SetActive( true );
+        
+        Vector2 spriteSize = item.Data.ItemSprite.textureRect.size;
+        float xScale = _containerRect.rect.width  / (spriteSize.x+ _padding*2);
+        float yScale = _containerRect.rect.height / (spriteSize.y+ _padding*2);
+        float scale = Math.Min( xScale, yScale );
+        //Debug.Log( xScale + ", " + yScale + " == " + scale );
+        
         _displayImage.sprite = item.Data.ItemSprite;
-        _displayImage.SetNativeSize();
+        _displayImage.rectTransform.sizeDelta = spriteSize * scale;
 
         _heldItem.Data = item.Data;
         _hasItem = true;
         
     }
+
+    private void UpdateItem()
+    {
+        Vector2 spriteSize = _heldItem.Data.ItemSprite.textureRect.size;
+        float xScale = _containerRect.rect.width  / (spriteSize.x+ _padding*2);
+        float yScale = _containerRect.rect.height / (spriteSize.y+ _padding*2);
+        float scale = Math.Min( xScale, yScale );
+        //Debug.Log( xScale + ", " + yScale + " == " + scale );
+        
+        _displayImage.sprite = _heldItem.Data.ItemSprite;
+        _displayImage.rectTransform.sizeDelta = spriteSize * scale;
+    }
+    
 
     public void SwapItem(DragObject drag)
     {
@@ -50,6 +77,11 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         AddItem( _heldItem );
     }
 
+    public bool IsMatchingItemType(ItemInfo info)
+    {
+        return info.Data.ItemType == _slotItemType;
+    }
+
     public void GetTransferItem()
     {
         if ( !_hasItem )
@@ -57,13 +89,15 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         DragObject transferItem = _dragManager.SpawnItem( _heldItem.Data, GetComponent<RectTransform>().position );
         transferItem.Callback = Callback;
+        transferItem.SwapCallback = SwapCallback;
         transferItem.TransferFromObj = _heldItem;
+        transferItem.SourceObject = gameObject;
     }
 
     public void RemoveItem()
     {
         _displayImage.sprite = null;
-        _rect.sizeDelta = _emptySize;
+        _displayImage.gameObject.SetActive( false );
         _hasItem = false;
     }
     
@@ -76,5 +110,10 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     public void Callback()
     {
        RemoveItem();
+    }
+
+    public void SwapCallback()
+    {
+        UpdateItem();
     }
 }

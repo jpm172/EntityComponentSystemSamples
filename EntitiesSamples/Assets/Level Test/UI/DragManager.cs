@@ -26,8 +26,6 @@ public class DragManager : MonoBehaviour
     private GameObject _itemPrefab;
     [SerializeField]
     private GameObject _transferItemPrefab;
-    
-    private Rect _boundingBox;
 
     [SerializeField]
     private GameObject[] _weaponSlots;
@@ -43,7 +41,6 @@ public class DragManager : MonoBehaviour
     private void Awake()
     {
         _weaponInventory = _invetoryLayer.GetComponent<InventoryManager>();
-        _boundingBox = GetBoundingBoxRect(_dragLayer);
         _inputActions = new DemoInputActions();
         _mouseInput = _inputActions.DemoMap.Shoot;
         _mouseInput.Enable();
@@ -76,12 +73,7 @@ public class DragManager : MonoBehaviour
     {
         DragObject drag = _currentDraggedObject.GetComponent<DragObject>();
         TryPutIntoSlot( drag, drag._worldCenterPoint );
-        /*
-        if ( TryPutIntoSlot( drag, drag._worldCenterPoint ) )
-        {
-            drag.Callback?.Invoke();
-        }
-        */
+
         Destroy( _currentDraggedObject.gameObject );
         _currentDraggedObject = null;
     }
@@ -103,7 +95,7 @@ public class DragManager : MonoBehaviour
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
 
-        if ( !_boundingBox.Contains(position) )
+        if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
         {
             //TODO implement dropping items onto ground
             drag.Callback();
@@ -124,9 +116,16 @@ public class DragManager : MonoBehaviour
             Rect rect = GetBoundingBoxRect( _weaponSlots[i].GetComponent<RectTransform>() );
             if ( rect.Contains( position ) )
             {
+                //if trying to place the item in its original slot, just return
+                if ( drag.SourceObject == _weaponSlots[i].gameObject )
+                    return false;
+                
                 ItemInfo item = drag.GetComponent<ItemInfo>();
                 InventorySlot slot = _weaponSlots[i].GetComponent<InventorySlot>();
-
+                
+                if ( !slot.IsMatchingItemType( item ) )
+                    return false;
+                
                 if ( slot.HasItem )
                 {
                     slot.SwapItem( drag );
