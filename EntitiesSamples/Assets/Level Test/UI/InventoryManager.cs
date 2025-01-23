@@ -3,9 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InventoryManager : MonoBehaviour
 {
+
+    private const float _collapsedHeight = 30;
+    
+    private float _spacing;
+    
     [SerializeField]
     private GameObject _invItemPrefab;
 
@@ -24,19 +30,25 @@ public class InventoryManager : MonoBehaviour
     private int _itemCount;
     
     [SerializeField]
+    private List<ItemType> _itemTypeWhitelist;
+    
+    [SerializeField]
     private List<ItemData> _items;
 
     private bool _collapsed;
-   
+
+    private RectTransform _rectTransform;
 
     private void Awake()
     {
+        _rectTransform = GetComponent<RectTransform>();
         _itemCount = _items.Count;
+        _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
         foreach ( ItemData data in _items )
         {
             LoadItem( data );
         }
-        UpdateItemCounter();
+        UpdateInventoryLayout();
     }
 
     private void LoadItem( ItemData data )
@@ -46,6 +58,7 @@ public class InventoryManager : MonoBehaviour
         layout.MaxAmmo = 30;
         layout.CurrentAmmo = 20;
         newItem.Data = data;
+        newItem.transform.SetAsFirstSibling();
 
         DragObject drag = newItem.GetComponent<DragObject>();
         drag.Callback = layout.CallBack;
@@ -59,6 +72,7 @@ public class InventoryManager : MonoBehaviour
         ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemInfo>();
         InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
         newItem.Data = item.Data;
+        newItem.transform.SetAsFirstSibling();
         
         DragObject drag = newItem.GetComponent<DragObject>();
         drag.Callback = layout.CallBack;
@@ -66,8 +80,10 @@ public class InventoryManager : MonoBehaviour
         drag.TransferFromObj = newItem;
         drag.SourceObject = gameObject;
         
+        
+        
         _itemCount++;
-        UpdateItemCounter();
+        UpdateInventoryLayout();
     }
 
     public void ReOrderItem( DragObject drag, Vector2 position )
@@ -93,6 +109,16 @@ public class InventoryManager : MonoBehaviour
         drag.TransferFromObj.transform.SetSiblingIndex( _itemLayer.transform.childCount );
     }
 
+    public bool IsMatchingItemType( ItemInfo info )
+    {
+        foreach ( ItemType type in _itemTypeWhitelist )
+        {
+            if ( info.Data.ItemType == type )
+                return true;
+        }
+
+        return false;
+    }
 
     public void CollapseExpandInventory()
     {
@@ -101,25 +127,44 @@ public class InventoryManager : MonoBehaviour
         {
             _collapseButton.text = "+";
             _itemLayer.localScale = Vector3.zero;
+            _rectTransform.sizeDelta = new Vector2(_rectTransform.sizeDelta.x, _collapsedHeight);
+
         }
         else
         {
             _collapseButton.text = "-";
             _itemLayer.localScale = Vector3.one;
+            _rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30);
         }
 
         
     }
     
+    
     public void RemovedItem()
     {
         _itemCount--;
-        UpdateItemCounter();
+        
+        //_rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30); //works, but only if we delay update by a frame (becuase of deleting GO)
+        UpdateInventoryLayout();
     }
-    
-    public void UpdateItemCounter()
+
+    private Vector2 CalculateLayoutSize()
     {
-        _itemCounter.text = $"{_itemCount}/{_maxItems}";
+        Vector2 itemSize = _invItemPrefab.GetComponent<RectTransform>().rect.size;
+        
+        Vector2 layoutSize = new Vector2(_rectTransform.rect.width, _itemCount*itemSize.y);
+        layoutSize += new Vector2( 0, 30 + _spacing *(_itemCount+1) );
+        return layoutSize;
     }
-    
+
+    private void UpdateInventoryLayout()
+    {
+        //update item capacity
+        _itemCounter.text = $"{_itemCount}/{_maxItems}";
+        
+        //change layout to fit items
+        _rectTransform.sizeDelta = CalculateLayoutSize();
+    }
+
 }

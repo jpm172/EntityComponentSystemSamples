@@ -65,7 +65,9 @@ public class InventoryItemLayout : MonoBehaviour
         
         //update weapon sprite and move it into place
         _weaponImage.sprite = _item.Data.ItemSprite;
-        _weaponImage.SetNativeSize();
+        Vector2 spriteSize = _item.Data.ItemSprite.textureRect.size;
+        spriteSize *= ( _weaponImage.rectTransform.rect.height / spriteSize.y );
+        _weaponImage.rectTransform.sizeDelta = spriteSize;
         _weaponImage.rectTransform.anchoredPosition = new Vector2(finalSize.x + _padding, 0);
         
         //fit the container to hold the weapon sprite
@@ -78,10 +80,8 @@ public class InventoryItemLayout : MonoBehaviour
 
     public void CallBack()
     {
-        GetComponentInParent<InventoryManager>().RemovedItem();
+        GetComponentInParent<InventoryManager>().RemovedItem();;
         Destroy( gameObject );
-        
-        
     }
 
     public void SwapCallback()
