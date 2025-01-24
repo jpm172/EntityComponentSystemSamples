@@ -47,10 +47,6 @@ public class InventoryManager : MonoBehaviour
         _rectTransform = GetComponent<RectTransform>();
         _itemCount = _items.Count;
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
-        if ( !_hasCapacity )
-        {
-            _itemCounter.enabled = false;
-        }
         foreach ( ItemData data in _items )
         {
             LoadItem( data );
@@ -163,7 +159,7 @@ public class InventoryManager : MonoBehaviour
     {
         Vector2 itemSize = _invItemPrefab.GetComponent<RectTransform>().rect.size;
         
-        Vector2 layoutSize = new Vector2(_rectTransform.rect.width, _itemCount*itemSize.y);
+        Vector2 layoutSize = new Vector2(_rectTransform.rect.width, Math.Max(_itemCount, 1)*itemSize.y);
         layoutSize += new Vector2( 0, 30 + _spacing *(_itemCount+1) );
         return layoutSize;
     }
@@ -173,6 +169,8 @@ public class InventoryManager : MonoBehaviour
         //update item capacity
         if(_hasCapacity)
             _itemCounter.text = $"{_itemCount}/{_maxItems}";
+        else
+            _itemCounter.text = _itemCount.ToString();
         
         //change layout to fit items
         if(!_collapsed)
