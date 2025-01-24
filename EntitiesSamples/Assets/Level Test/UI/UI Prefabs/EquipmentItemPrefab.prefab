@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 9074950658382979565}
   - component: {fileID: 6246414745602033836}
   - component: {fileID: 5137358330533614371}
-  - component: {fileID: 7788339508114150082}
+  - component: {fileID: 3488911945109117279}
   m_Layer: 5
-  m_Name: InventoryItemPrefab
+  m_Name: EquipmentItemPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -35,7 +35,6 @@ RectTransform:
   m_Children:
   - {fileID: 8821077970494542048}
   - {fileID: 743057425594310314}
-  - {fileID: 8656819749987141427}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -108,7 +107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Data: {fileID: 11400000, guid: a12a7275d40a5c04785f55116ddeb838, type: 2}
---- !u!114 &7788339508114150082
+--- !u!114 &3488911945109117279
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -117,15 +116,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1397904607016216820}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 354fbb33fdf2d34448567f098fe5e736, type: 3}
+  m_Script: {fileID: 11500000, guid: 257e49fb8a16cb444af0f7fa7b175555, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _padding: 10
-  _maxAmmo: 30
-  _currentAmmo: 20
-  _weaponText: {fileID: 2284125475636175830}
-  _weaponImage: {fileID: 7707269183040563986}
-  _ammoCounter: {fileID: 4915430620289823217}
+  _itemText: {fileID: 2284125475636175830}
+  _itemImage: {fileID: 7707269183040563986}
 --- !u!1 &3466062407289446606
 GameObject:
   m_ObjectHideFlags: 0
@@ -138,7 +134,7 @@ GameObject:
   - component: {fileID: 7553791855640345775}
   - component: {fileID: 7707269183040563986}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Item Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -201,81 +197,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!1 &7323662187180369781
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8656819749987141427}
-  - component: {fileID: 1242969216192616375}
-  - component: {fileID: 4915430620289823217}
-  m_Layer: 5
-  m_Name: Ammo Counter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &8656819749987141427
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7323662187180369781}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7453999276982292207}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 10, y: -27.850021}
-  m_SizeDelta: {x: 47, y: 11}
-  m_Pivot: {x: 0, y: 0.5}
---- !u!222 &1242969216192616375
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7323662187180369781}
-  m_CullTransparentMesh: 1
---- !u!114 &4915430620289823217
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7323662187180369781}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 45cce5c6ec8d2eb42b7c4f20c331b7be, type: 3}
-  m_Type: 3
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 0
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &8701211743474329929
 GameObject:
   m_ObjectHideFlags: 0
@@ -288,7 +209,7 @@ GameObject:
   - component: {fileID: 6031302735259759167}
   - component: {fileID: 2284125475636175830}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Item Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -341,7 +262,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Weapon Name
+  m_text: Equip Name
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

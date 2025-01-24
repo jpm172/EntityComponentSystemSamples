@@ -13,14 +13,10 @@ public class DragManager : MonoBehaviour
     
     private DemoInputActions _inputActions;
     private InputAction _mouseInput;
-    
-    [SerializeField]
-    private RectTransform
-        _defaultLayer,
-        _dragLayer,
-        _invetoryLayer;
 
-    private InventoryManager _weaponInventory;
+    [SerializeField] private RectTransform
+        _defaultLayer,
+        _dragLayer;
 
     [SerializeField]
     private GameObject _itemPrefab;
@@ -29,6 +25,11 @@ public class DragManager : MonoBehaviour
 
     [SerializeField]
     private GameObject[] _weaponSlots;
+
+    [SerializeField]
+    private RectTransform[] _inventoryRects;
+    [SerializeField]
+    private InventoryManager[] _inventoryManagers;
 
     [SerializeField]
     private DragObject _currentDraggedObject;
@@ -40,7 +41,15 @@ public class DragManager : MonoBehaviour
 
     private void Awake()
     {
-        _weaponInventory = _invetoryLayer.GetComponent<InventoryManager>();
+        InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
+        _inventoryManagers = new InventoryManager[managers.Length];
+        _inventoryRects = new RectTransform[managers.Length];
+        for ( int i = 0; i < managers.Length; i++ )
+        {
+            _inventoryManagers[i] = managers[i];
+            _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
+        }
+        //_weaponInventory = _invetoryLayer.GetComponent<InventoryManager>();
         _inputActions = new DemoInputActions();
         _mouseInput = _inputActions.DemoMap.Shoot;
         _mouseInput.Enable();
@@ -101,19 +110,26 @@ public class DragManager : MonoBehaviour
             drag.Callback();
             return true;
         }
-        
-        Rect invRect = GetBoundingBoxRect( _invetoryLayer );
-        if ( invRect.Contains( position ) )
+
+        for ( int i = 0; i < _inventoryRects.Length; i++ )
         {
-            if ( drag.SourceObject == _invetoryLayer.gameObject )
+            Rect invRect = GetBoundingBoxRect( _inventoryRects[i] );
+            if ( invRect.Contains( position )  )
             {
-                _weaponInventory.ReOrderItem( drag, position );
+                if ( !_inventoryManagers[i].CanAddItem( drag.Item ) )
+                    return false;
+                
+                if ( drag.SourceObject == _inventoryRects[i].gameObject )
+                {
+                    _inventoryManagers[i].ReOrderItem( drag, position );
+                    return true;
+                }
+                _inventoryManagers[i].AddItem( drag.Item );
+                drag.Callback();
                 return true;
             }
-            _weaponInventory.AddItem( drag.GetComponent<ItemInfo>() );
-            drag.Callback();
-            return true;
         }
+        
         
         
         for(int i = 0; i < _weaponSlots.Length; i++)
@@ -125,7 +141,7 @@ public class DragManager : MonoBehaviour
                 if ( drag.SourceObject == _weaponSlots[i].gameObject )
                     return false;
                 
-                ItemInfo item = drag.GetComponent<ItemInfo>();
+                ItemInfo item = drag.Item;
                 InventorySlot slot = _weaponSlots[i].GetComponent<InventorySlot>();
                 
                 if ( !slot.IsMatchingItemType( item ) )

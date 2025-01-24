@@ -20,7 +20,9 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     
     public ItemInfo TransferFromObj;
     public GameObject SourceObject;
-    
+
+    public ItemInfo Item => _item;
+
     private void Start()
     {
         _item = GetComponent<ItemInfo>();

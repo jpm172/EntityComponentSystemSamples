@@ -9,8 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a5dc0259ddeaba44b9a13361eed968a0, type: 3}
-  m_Name: Shotgun
+  m_Script: {fileID: 11500000, guid: ac3e4f407d1778242b001665f32bdc87, type: 3}
+  m_Name: MP7
   m_EditorClassIdentifier: 
-  ItemName: Shotgun
-  ItemSprite: {fileID: 21300000, guid: 536fa0949560ca94ab145cc058f0d74c, type: 3}
+  ItemName: MP7
+  ItemType: 0
+  ItemSprite: {fileID: 21300000, guid: 8af569299973d744e99e6a6c92bf5ed4, type: 3}
+  MaxAmmo: 30

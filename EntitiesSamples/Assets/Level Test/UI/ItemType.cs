@@ -7,5 +7,6 @@ public enum ItemType : int
     Weapon = 0,
     Armor = 1,
     Helmet = 2,
-    Other = 3
+    Health = 4,
+    Other = 999
 }

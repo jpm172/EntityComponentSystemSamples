@@ -23,7 +23,10 @@ public class InventoryManager : MonoBehaviour
 
     [SerializeField]
     private TextMeshProUGUI _collapseButton;
-    
+
+    [SerializeField] 
+    private bool _hasCapacity;
+
     [SerializeField]
     private int _maxItems = 5;
 
@@ -44,6 +47,10 @@ public class InventoryManager : MonoBehaviour
         _rectTransform = GetComponent<RectTransform>();
         _itemCount = _items.Count;
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
+        if ( !_hasCapacity )
+        {
+            _itemCounter.enabled = false;
+        }
         foreach ( ItemData data in _items )
         {
             LoadItem( data );
@@ -55,8 +62,6 @@ public class InventoryManager : MonoBehaviour
     {
         ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemInfo>();
         InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
-        layout.MaxAmmo = 30;
-        layout.CurrentAmmo = 20;
         newItem.Data = data;
         newItem.transform.SetAsFirstSibling();
 
@@ -71,6 +76,9 @@ public class InventoryManager : MonoBehaviour
     {
         ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemInfo>();
         InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
+        
+        
+        
         newItem.Data = item.Data;
         newItem.transform.SetAsFirstSibling();
         
@@ -79,8 +87,6 @@ public class InventoryManager : MonoBehaviour
         drag.SwapCallback = layout.SwapCallback;
         drag.TransferFromObj = newItem;
         drag.SourceObject = gameObject;
-        
-        
         
         _itemCount++;
         UpdateInventoryLayout();
@@ -109,8 +115,12 @@ public class InventoryManager : MonoBehaviour
         drag.TransferFromObj.transform.SetSiblingIndex( _itemLayer.transform.childCount );
     }
 
-    public bool IsMatchingItemType( ItemInfo info )
+    public bool CanAddItem( ItemInfo info )
     {
+        if ( _hasCapacity && _itemCount >= _maxItems )
+            return false;
+        
+        
         foreach ( ItemType type in _itemTypeWhitelist )
         {
             if ( info.Data.ItemType == type )
@@ -161,10 +171,13 @@ public class InventoryManager : MonoBehaviour
     private void UpdateInventoryLayout()
     {
         //update item capacity
-        _itemCounter.text = $"{_itemCount}/{_maxItems}";
+        if(_hasCapacity)
+            _itemCounter.text = $"{_itemCount}/{_maxItems}";
         
         //change layout to fit items
-        _rectTransform.sizeDelta = CalculateLayoutSize();
+        if(!_collapsed)
+            _rectTransform.sizeDelta = CalculateLayoutSize();
     }
+    
 
 }
