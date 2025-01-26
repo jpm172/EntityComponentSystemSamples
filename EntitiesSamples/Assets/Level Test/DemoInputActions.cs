@@ -53,6 +53,33 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Inventory"",
+                    ""type"": ""Button"",
+                    ""id"": ""65d16dc9-1e93-46fe-8727-9cd429ae37b2"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Primary"",
+                    ""type"": ""Button"",
+                    ""id"": ""527a62b3-cc22-4ee9-b4e5-76fb2259e99a"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Secondary"",
+                    ""type"": ""Button"",
+                    ""id"": ""4a9f1f03-fb37-4088-8302-b1681c5f06bd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -132,6 +159,39 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Shoot"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e49a5f73-5c0b-4082-b922-13d311bf0a92"",
+                    ""path"": ""<Keyboard>/i"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Inventory"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""82480c74-ffde-491f-a4b1-4a69c8b0cffa"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Primary"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a22202f8-3865-4bda-8ed8-4b415fc8d322"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Secondary"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -143,6 +203,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         m_DemoMap_PlayerMovement = m_DemoMap.FindAction("PlayerMovement", throwIfNotFound: true);
         m_DemoMap_Interact = m_DemoMap.FindAction("Interact", throwIfNotFound: true);
         m_DemoMap_Shoot = m_DemoMap.FindAction("Shoot", throwIfNotFound: true);
+        m_DemoMap_Inventory = m_DemoMap.FindAction("Inventory", throwIfNotFound: true);
+        m_DemoMap_Primary = m_DemoMap.FindAction("Primary", throwIfNotFound: true);
+        m_DemoMap_Secondary = m_DemoMap.FindAction("Secondary", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -207,6 +270,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_DemoMap_PlayerMovement;
     private readonly InputAction m_DemoMap_Interact;
     private readonly InputAction m_DemoMap_Shoot;
+    private readonly InputAction m_DemoMap_Inventory;
+    private readonly InputAction m_DemoMap_Primary;
+    private readonly InputAction m_DemoMap_Secondary;
     public struct DemoMapActions
     {
         private @DemoInputActions m_Wrapper;
@@ -214,6 +280,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         public InputAction @PlayerMovement => m_Wrapper.m_DemoMap_PlayerMovement;
         public InputAction @Interact => m_Wrapper.m_DemoMap_Interact;
         public InputAction @Shoot => m_Wrapper.m_DemoMap_Shoot;
+        public InputAction @Inventory => m_Wrapper.m_DemoMap_Inventory;
+        public InputAction @Primary => m_Wrapper.m_DemoMap_Primary;
+        public InputAction @Secondary => m_Wrapper.m_DemoMap_Secondary;
         public InputActionMap Get() { return m_Wrapper.m_DemoMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -232,6 +301,15 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Shoot.started += instance.OnShoot;
             @Shoot.performed += instance.OnShoot;
             @Shoot.canceled += instance.OnShoot;
+            @Inventory.started += instance.OnInventory;
+            @Inventory.performed += instance.OnInventory;
+            @Inventory.canceled += instance.OnInventory;
+            @Primary.started += instance.OnPrimary;
+            @Primary.performed += instance.OnPrimary;
+            @Primary.canceled += instance.OnPrimary;
+            @Secondary.started += instance.OnSecondary;
+            @Secondary.performed += instance.OnSecondary;
+            @Secondary.canceled += instance.OnSecondary;
         }
 
         private void UnregisterCallbacks(IDemoMapActions instance)
@@ -245,6 +323,15 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Shoot.started -= instance.OnShoot;
             @Shoot.performed -= instance.OnShoot;
             @Shoot.canceled -= instance.OnShoot;
+            @Inventory.started -= instance.OnInventory;
+            @Inventory.performed -= instance.OnInventory;
+            @Inventory.canceled -= instance.OnInventory;
+            @Primary.started -= instance.OnPrimary;
+            @Primary.performed -= instance.OnPrimary;
+            @Primary.canceled -= instance.OnPrimary;
+            @Secondary.started -= instance.OnSecondary;
+            @Secondary.performed -= instance.OnSecondary;
+            @Secondary.canceled -= instance.OnSecondary;
         }
 
         public void RemoveCallbacks(IDemoMapActions instance)
@@ -267,5 +354,8 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         void OnPlayerMovement(InputAction.CallbackContext context);
         void OnInteract(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
+        void OnInventory(InputAction.CallbackContext context);
+        void OnPrimary(InputAction.CallbackContext context);
+        void OnSecondary(InputAction.CallbackContext context);
     }
 }

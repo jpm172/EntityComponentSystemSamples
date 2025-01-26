@@ -16,3 +16,8 @@ MonoBehaviour:
   ItemType: 0
   ItemSprite: {fileID: 21300000, guid: 536fa0949560ca94ab145cc058f0d74c, type: 3}
   MaxAmmo: 6
+  BulletsPerShot: 8
+  FireRate: 2
+  WeaponSpread: 12
+  Range: 10
+  Penetration: 10

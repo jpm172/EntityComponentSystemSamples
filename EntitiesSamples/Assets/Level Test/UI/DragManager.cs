@@ -92,18 +92,26 @@ public class DragManager : MonoBehaviour
     {
         DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
         newItem.GetComponent<ItemInfo>().Data = item;
+        newItem.Initialize();
 
-        if(_currentDraggedObject == null)
+        if(_currentDraggedObject != null)
         {
-            PickUpItem( newItem );
+            Destroy( _currentDraggedObject.gameObject );
+            _currentDraggedObject = null;
         }
-
+        PickUpItem( newItem );
         return newItem;
     }
     
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
-
+    
+        if ( drag.Item == null )
+        {
+            Debug.Log( "null item" );
+            return false;
+        }
+        
         if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
         {
             //TODO implement dropping items onto ground

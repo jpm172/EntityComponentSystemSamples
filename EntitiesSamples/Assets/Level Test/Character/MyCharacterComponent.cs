@@ -22,6 +22,9 @@ public struct PlayerInputs : IComponentData
     public float2 MoveInput;
     public float3 AimPosition;
     public bool Shoot;
+    public bool ToggleInventory;
+    public bool EquipPrimary;
+    public bool EquipSecondary;
     public float Debug;
 }
 

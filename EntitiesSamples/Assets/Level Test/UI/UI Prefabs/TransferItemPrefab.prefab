@@ -134,6 +134,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TransferFromObj: {fileID: 0}
+  SourceObject: {fileID: 0}
+  IsTransferItem: 1
 --- !u!114 &3977462888016713010
 MonoBehaviour:
   m_ObjectHideFlags: 0

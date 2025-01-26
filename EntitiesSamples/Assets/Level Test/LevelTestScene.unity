@@ -766,6 +766,7 @@ MonoBehaviour:
   _containerRect: {fileID: 710097619}
   _heldItem: {fileID: 0}
   _slotItemType: 1
+  _equipType: 2
 --- !u!1 &176441775
 GameObject:
   m_ObjectHideFlags: 0
@@ -1665,6 +1666,7 @@ MonoBehaviour:
   _containerRect: {fileID: 879537753}
   _heldItem: {fileID: 0}
   _slotItemType: 0
+  _equipType: 0
 --- !u!1 &385335498
 GameObject:
   m_ObjectHideFlags: 0
@@ -2184,7 +2186,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &557282773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2529,6 +2531,7 @@ MonoBehaviour:
   _containerRect: {fileID: 1993505774}
   _heldItem: {fileID: 0}
   _slotItemType: 0
+  _equipType: 1
 --- !u!114 &704505172
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3226,6 +3229,7 @@ MonoBehaviour:
   _containerRect: {fileID: 1853192364}
   _heldItem: {fileID: 0}
   _slotItemType: 2
+  _equipType: 3
 --- !u!1 &820041655
 GameObject:
   m_ObjectHideFlags: 3
@@ -3467,7 +3471,7 @@ GameObject:
   - component: {fileID: 993911225}
   m_Layer: 5
   m_Name: Canvas
-  m_TagString: Untagged
+  m_TagString: PlayerUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

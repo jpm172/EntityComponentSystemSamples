@@ -62,6 +62,7 @@ public class InventoryManager : MonoBehaviour
         newItem.transform.SetAsFirstSibling();
 
         DragObject drag = newItem.GetComponent<DragObject>();
+        drag.Initialize();
         drag.Callback = layout.CallBack;
         drag.SwapCallback = layout.SwapCallback;
         drag.TransferFromObj = newItem;
@@ -79,6 +80,7 @@ public class InventoryManager : MonoBehaviour
         newItem.transform.SetAsFirstSibling();
         
         DragObject drag = newItem.GetComponent<DragObject>();
+        drag.Initialize();
         drag.Callback = layout.CallBack;
         drag.SwapCallback = layout.SwapCallback;
         drag.TransferFromObj = newItem;
@@ -115,13 +117,14 @@ public class InventoryManager : MonoBehaviour
     {
         if ( _hasCapacity && _itemCount >= _maxItems )
             return false;
-        
-        
+
+
         foreach ( ItemType type in _itemTypeWhitelist )
         {
             if ( info.Data.ItemType == type )
                 return true;
         }
+
 
         return false;
     }

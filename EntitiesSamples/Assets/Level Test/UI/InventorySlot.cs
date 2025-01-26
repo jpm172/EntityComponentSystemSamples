@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -8,7 +10,8 @@ using UnityEngine.UI;
 public class InventorySlot : MonoBehaviour, IPointerDownHandler
 {
     private static readonly Vector2 _emptySize = new Vector2( 40, 40 );
-
+   
+    
     [SerializeField]
     private Image _displayImage;
 
@@ -24,6 +27,11 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     [SerializeField]
     private ItemType _slotItemType;
+
+    [SerializeField] 
+    private InventorySlotType _equipType;
+
+    private EntityManager _entityManager;
     
     private bool _hasItem;
 
@@ -31,6 +39,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void Awake()
     {
+        World world = World.DefaultGameObjectInjectionWorld;
+        _entityManager = world.EntityManager;
+        
         _hasItem = false;
         _dragManager = GetComponentInParent<DragManager>();
         _heldItem = GetComponent<ItemInfo>();
@@ -53,6 +64,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _heldItem.Data = item.Data;
         _hasItem = true;
         
+        EquipItem();
     }
 
     private void UpdateItem()
@@ -99,8 +111,63 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = null;
         _displayImage.gameObject.SetActive( false );
         _hasItem = false;
+        UnequipItem();
+    }
+
+    private void EquipItem()
+    {
+        if ( _equipType == InventorySlotType.Primary )
+        {
+            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
+            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
+            inv.PrimaryWeapon = ItemToWeapon();
+            _entityManager.SetComponentData( player, inv );
+        }
+        else if ( _equipType == InventorySlotType.Secondary )
+        {
+            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
+            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
+            inv.SecondaryWeapon = ItemToWeapon();
+            _entityManager.SetComponentData( player, inv );
+        }
+    }
+
+    private WeaponInfo ItemToWeapon()
+    {
+        
+        WeaponItemData data = (WeaponItemData)_heldItem.Data;
+        float fireRate = 1 / data.FireRate;
+        WeaponInfo newWeapon = new WeaponInfo
+        {
+            Type = WeaponType.Gun,
+            BulletsPerShot = data.BulletsPerShot,
+            MaxAmmo = data.MaxAmmo,
+            FireRate = fireRate,
+            WeaponSpread = data.WeaponSpread,
+            Penetration = data.Penetration,
+            Range = data.Range,
+        };
+        
+        return newWeapon;
     }
     
+    private void UnequipItem()
+    {
+        if ( _equipType == InventorySlotType.Primary )
+        {
+            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
+            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
+            inv.PrimaryWeapon = new WeaponInfo{Null = true};
+            _entityManager.SetComponentData( player, inv );
+        }
+        else if ( _equipType == InventorySlotType.Secondary )
+        {
+            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
+            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
+            inv.SecondaryWeapon = new WeaponInfo{Null = true};
+            _entityManager.SetComponentData( player, inv );
+        }
+    }
 
     public void OnPointerDown( PointerEventData eventData )
     {
@@ -116,4 +183,12 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     {
         UpdateItem();
     }
+}
+
+public enum InventorySlotType : int
+{
+    Primary = 0,
+    Secondary = 1,
+    Armor = 2,
+    Helmet = 3,
 }

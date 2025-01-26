@@ -28,6 +28,11 @@ public class PlayerAuthoring : MonoBehaviour
                 MovementSpeed = authoring.MoveSpeed
             });
             
+            AddComponent(entity, new CharacterInventory
+            {
+                Equipped = 1
+            });
+            /*
             AddComponent(entity, new WeaponInfo
             {
                 Type = authoring.WeaponType,
@@ -40,6 +45,7 @@ public class PlayerAuthoring : MonoBehaviour
                 BulletsPerShot = authoring.BulletsPerShot,
                 FireRate = authoring.FireRate
             });
+            */
             
             AddComponent<PlayerInputs>(entity);
             

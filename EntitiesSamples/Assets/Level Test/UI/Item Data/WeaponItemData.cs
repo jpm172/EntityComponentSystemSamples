@@ -7,8 +7,26 @@ public class WeaponItemData : ItemData
 {
 
     [Tooltip("Ammo Capacity")]
+    [Range(1, 1000)]
     public int MaxAmmo;
     
+    [Tooltip("Bullets Per Shot")]
+    [Range(1, 100)]
+    public int BulletsPerShot;
     
+    [Range(0.1f, 30)]
+    [Tooltip("Fire Rate (Rounds/Second)")]
+    
+    public float FireRate;
+    
+    [Tooltip("Spread")]
+    public float WeaponSpread;
+    
+    [Tooltip("Range")]
+    [Range(0.1f, 1000)]
+    public float Range;
+    
+    [Tooltip("Penetration")]
+    public float Penetration;
     
 }

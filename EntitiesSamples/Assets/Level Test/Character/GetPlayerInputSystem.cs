@@ -12,7 +12,7 @@ public partial class GetPlayerInputSystem : SystemBase
     private DemoInputActions _inputActions;
     private Camera _camera;
     private static float3 xy = new float3(1,1,0);
-
+    private GameObject _ui;
 
     protected override void OnCreate()
     {
@@ -22,6 +22,7 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnStartRunning()
     {
         _camera = Camera.main;
+        _ui = GameObject.FindWithTag( "PlayerUI" );
         _inputActions.Enable();
         _inputActions.DemoMap.Interact.performed += OnPlayerInteract;
     }
@@ -30,15 +31,35 @@ public partial class GetPlayerInputSystem : SystemBase
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
+        bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
+        bool equipPrimary = _inputActions.DemoMap.Primary.WasPerformedThisFrame();
+        bool equipSecondary = _inputActions.DemoMap.Secondary.WasPerformedThisFrame();
+        
         
         float3 mousePosition = _camera.ScreenToWorldPoint( Input.mousePosition ) * xy;
         
-        foreach (var playerInputs in SystemAPI.Query<RefRW<PlayerInputs>>())
+        foreach (var (playerInputs, playerInventory) in SystemAPI.Query<RefRW<PlayerInputs>, RefRW<CharacterInventory>>())
         {
+            if ( equipPrimary )
+            {
+                playerInventory.ValueRW.Equipped = 1;
+            }
+            else if ( equipSecondary )
+            {
+                playerInventory.ValueRW.Equipped = 2;
+            }
+
+            if ( inventory )
+            {
+                _ui.SetActive( !_ui.activeInHierarchy );
+            }
+            
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;
-            playerInputs.ValueRW.Debug = DebugClass.instance.Forward.x;
+            playerInputs.ValueRW.ToggleInventory = inventory;
+            playerInputs.ValueRW.EquipPrimary = equipPrimary;
+            playerInputs.ValueRW.EquipSecondary = equipSecondary;
         }
         
         //Debug.Log( mousePosition );

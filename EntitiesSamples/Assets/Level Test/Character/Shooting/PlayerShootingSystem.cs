@@ -184,6 +184,14 @@ public partial struct PlayerShootingSystem : ISystem
         LocalTransform pt = state.EntityManager.GetComponentData<LocalTransform>( entity );
         state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
+
+    private ref WeaponInfo GetEquippedWeapon(RefRW<CharacterInventory> inv)
+    {
+        if(inv.ValueRO.Equipped == 1)
+            return ref inv.ValueRW.PrimaryWeapon;
+        
+        return ref inv.ValueRW.SecondaryWeapon;
+    }
     
     public void OnUpdate( ref SystemState state )
     {
@@ -211,28 +219,36 @@ public partial struct PlayerShootingSystem : ISystem
             
         }
 
-        foreach ( var (transform, input, weapon, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<WeaponInfo>>().WithEntityAccess())
+        foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
-            weapon.ValueRW.Timer -= SystemAPI.Time.DeltaTime;
-            if ( !input.ValueRO.Shoot || weapon.ValueRW.Timer > 0 )
+            ref WeaponInfo weapon = ref GetEquippedWeapon( inventory );
+            if ( weapon.Null )
                 continue;
-            weapon.ValueRW.Timer = weapon.ValueRW.FireRate;
 
-            if ( weapon.ValueRO.Type == WeaponType.Throwable )
+            weapon.Timer -= SystemAPI.Time.DeltaTime;
+            
+            if ( !input.ValueRO.Shoot || weapon.Timer > 0 )
+                continue;
+            
+            weapon.Timer = weapon.FireRate;
+            weapon.CurrentAmmo--;
+
+            if ( weapon.Type == WeaponType.Throwable )
             {
-                ThrowProjectile(ref state, transform.ValueRO,  weapon.ValueRO, input.ValueRO);
+                ThrowProjectile(ref state, transform.ValueRO,  weapon, input.ValueRO);
                 return;
             }
             
             
             
             //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
-            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon.ValueRO);
+            //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon.ValueRO);
+            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon);
 
 
             if ( !entityHitMap.IsEmpty )
             {
-                NativeHashMap<Entity, int> modifiedEntities = ModifyHitStructures( entityHitMap, ref state, weapon.ValueRO );
+                NativeHashMap<Entity, int> modifiedEntities = ModifyHitStructures( entityHitMap, ref state, weapon );
                 
                 foreach ( Entity entity in modifiedEntities.GetKeyArray( Allocator.Temp ) )
                 {

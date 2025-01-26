@@ -23,15 +23,22 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
 
     public ItemInfo Item => _item;
 
-    private void Start()
+    public bool IsTransferItem;
+
+    //initialize when instansiating new item
+    public void Initialize()
     {
         _item = GetComponent<ItemInfo>();
         _manager = GetComponentInParent<DragManager>();
-        _centerPoint = (transform as RectTransform).rect.center;
+        //_centerPoint = (transform as RectTransform).rect.center;
+        _centerPoint = GetComponent<RectTransform>().rect.center;
     }
 
     public void OnPointerDown( PointerEventData eventData )
     {
+        if ( IsTransferItem )
+            return;
+        
         DragObject transfer = _manager.SpawnItem( _item.Data, GetComponent<RectTransform>().position );
         transfer.Callback = Callback;
         transfer.SwapCallback = SwapCallback;
