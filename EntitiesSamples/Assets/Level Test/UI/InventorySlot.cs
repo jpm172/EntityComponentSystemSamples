@@ -16,6 +16,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     private Image _displayImage;
 
     [SerializeField]
+    private Image _trasnferingImage;
+    
+    [SerializeField]
     private float _padding = 10;
     
     [SerializeField] 
@@ -116,16 +119,19 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     private void EquipItem()
     {
+        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+        
         if ( _equipType == InventorySlotType.Primary )
         {
-            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.PrimaryWeapon = ItemToWeapon();
             _entityManager.SetComponentData( player, inv );
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
-            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.SecondaryWeapon = ItemToWeapon();
             _entityManager.SetComponentData( player, inv );
@@ -153,16 +159,19 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     
     private void UnequipItem()
     {
+        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+        
         if ( _equipType == InventorySlotType.Primary )
         {
-            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.PrimaryWeapon = new WeaponInfo{Null = true};
             _entityManager.SetComponentData( player, inv );
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
-            Entity player = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) ).GetSingletonEntity();
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.SecondaryWeapon = new WeaponInfo{Null = true};
             _entityManager.SetComponentData( player, inv );

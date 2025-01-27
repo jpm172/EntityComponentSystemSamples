@@ -2,15 +2,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class InventoryManager : MonoBehaviour
 {
-
+    
     private const float _collapsedHeight = 30;
     
     private float _spacing;
+
+    private PlayerUIManager _manager;
     
     [SerializeField]
     private GameObject _invItemPrefab;
@@ -35,8 +38,8 @@ public class InventoryManager : MonoBehaviour
     [SerializeField]
     private List<ItemType> _itemTypeWhitelist;
     
-    [SerializeField]
-    private List<ItemData> _items;
+    //[SerializeField]
+    //private List<ItemData> _items;
 
     private bool _collapsed;
 
@@ -44,14 +47,44 @@ public class InventoryManager : MonoBehaviour
 
     private void Awake()
     {
+        _manager = GetComponentInParent<PlayerUIManager>();
         _rectTransform = GetComponent<RectTransform>();
-        _itemCount = _items.Count;
+        
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
-        foreach ( ItemData data in _items )
+
+        List<ItemData> items = FetchItems();
+        
+        _itemCount = items.Count;
+        foreach ( ItemData data in items )
         {
             LoadItem( data );
         }
+        
         UpdateInventoryLayout();
+        
+    }
+
+    private List<ItemData> FetchItems()
+    {
+        List<ItemData> items = new List<ItemData>();
+        foreach ( ItemType type in _itemTypeWhitelist )
+        {
+            if ( type == ItemType.Weapon )
+            {
+                items.AddRange( _manager.WeaponItems );
+            }
+            else if ( type == ItemType.Armor || type == ItemType.Helmet )
+            {
+                items.AddRange( _manager.EquipmentItems );
+                return items;
+            }
+            else if ( type == ItemType.Health )
+            {
+                items.AddRange( _manager.HealthItems );
+            }
+        }
+
+        return items;
     }
 
     private void LoadItem( ItemData data )
@@ -180,5 +213,4 @@ public class InventoryManager : MonoBehaviour
             _rectTransform.sizeDelta = CalculateLayoutSize();
     }
     
-
 }

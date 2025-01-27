@@ -102,16 +102,10 @@ public class DragManager : MonoBehaviour
         PickUpItem( newItem );
         return newItem;
     }
+
     
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
-    
-        if ( drag.Item == null )
-        {
-            Debug.Log( "null item" );
-            return false;
-        }
-        
         if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
         {
             //TODO implement dropping items onto ground
@@ -132,6 +126,7 @@ public class DragManager : MonoBehaviour
                     _inventoryManagers[i].ReOrderItem( drag, position );
                     return true;
                 }
+                
                 _inventoryManagers[i].AddItem( drag.Item );
                 drag.Callback();
                 return true;
@@ -155,6 +150,8 @@ public class DragManager : MonoBehaviour
                 if ( !slot.IsMatchingItemType( item ) )
                     return false;
                 
+                //StartCoroutine( DelayAddToSlot(slot, drag, item) );
+                
                 if ( slot.HasItem )
                 {
                     slot.SwapItem( drag );
@@ -164,6 +161,7 @@ public class DragManager : MonoBehaviour
                     slot.AddItem( item );
                     drag.Callback?.Invoke();
                 }
+                
 
                 return true;
             }
@@ -172,6 +170,22 @@ public class DragManager : MonoBehaviour
         return false;
     }
 
+    
+    private IEnumerator DelayAddToSlot(InventorySlot slot, DragObject drag, ItemInfo item)
+    {
+        yield return new WaitForSeconds( 1 );
+        if ( slot.HasItem )
+        {
+            slot.SwapItem( drag );
+        }
+        else
+        {
+            slot.AddItem( item );
+            drag.Callback?.Invoke();
+        }
+        
+    }
+    
     private Rect GetBoundingBoxRect(RectTransform rectTransform)
     {
         var corners = new Vector3[4];
