@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4692158429638348182}
   - component: {fileID: 8094301001521063584}
   - component: {fileID: 3628331465099319710}
-  - component: {fileID: 4449596936104353960}
+  - component: {fileID: 1519250900704356949}
   m_Layer: 5
   m_Name: ItemPrefab
   m_TagString: Untagged
@@ -89,7 +89,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2878e95aefc2304da3c3212c5cc7282, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &4449596936104353960
+  TransferFromObj:
+    Data: {fileID: 0}
+  SourceObject: {fileID: 0}
+  IsTransferItem: 0
+--- !u!114 &1519250900704356949
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -98,7 +102,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 6763600580921533132}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35f04a6d1263c314cabf35697b47529a, type: 3}
+  m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ItemSprite: {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
+  Item:
+    Data: {fileID: 0}

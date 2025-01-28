@@ -87,11 +87,25 @@ public class DragManager : MonoBehaviour
         _currentDraggedObject = null;
     }
     
+    public DragObject SpawnItem( ItemInfo item, Vector3 position )
+    {
+        DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
+        newItem.GetComponent<ItemContainer>().Item = item;
+        newItem.Initialize();
+
+        if(_currentDraggedObject != null)
+        {
+            Destroy( _currentDraggedObject.gameObject );
+            _currentDraggedObject = null;
+        }
+        PickUpItem( newItem );
+        return newItem;
+    }
 
     public DragObject SpawnItem( ItemData item, Vector3 position )
     {
         DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
-        newItem.GetComponent<ItemInfo>().Data = item;
+        newItem.GetComponent<ItemContainer>().Data = item;
         newItem.Initialize();
 
         if(_currentDraggedObject != null)
@@ -118,7 +132,7 @@ public class DragManager : MonoBehaviour
             Rect invRect = GetBoundingBoxRect( _inventoryRects[i] );
             if ( invRect.Contains( position )  )
             {
-                if ( !_inventoryManagers[i].CanAddItem( drag.Item ) )
+                if ( !_inventoryManagers[i].CanAddItem( drag.Container ) )
                     return false;
                 
                 if ( drag.SourceObject == _inventoryRects[i].gameObject )
@@ -127,7 +141,7 @@ public class DragManager : MonoBehaviour
                     return true;
                 }
                 
-                _inventoryManagers[i].AddItem( drag.Item );
+                _inventoryManagers[i].AddItem( drag.Container );
                 drag.Callback();
                 return true;
             }
@@ -144,10 +158,10 @@ public class DragManager : MonoBehaviour
                 if ( drag.SourceObject == _weaponSlots[i].gameObject )
                     return false;
                 
-                ItemInfo item = drag.Item;
+                ItemContainer container = drag.Container;
                 InventorySlot slot = _weaponSlots[i].GetComponent<InventorySlot>();
                 
-                if ( !slot.IsMatchingItemType( item ) )
+                if ( !slot.MatchesType( container ) )
                     return false;
                 
                 //StartCoroutine( DelayAddToSlot(slot, drag, item) );
@@ -158,7 +172,7 @@ public class DragManager : MonoBehaviour
                 }
                 else
                 {
-                    slot.AddItem( item );
+                    slot.AddItem( container );
                     drag.Callback?.Invoke();
                 }
                 

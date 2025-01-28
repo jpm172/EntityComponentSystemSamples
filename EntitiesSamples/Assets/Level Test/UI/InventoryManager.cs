@@ -52,6 +52,7 @@ public class InventoryManager : MonoBehaviour
         
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
 
+        /*
         List<ItemData> items = FetchItems();
         
         _itemCount = items.Count;
@@ -61,9 +62,33 @@ public class InventoryManager : MonoBehaviour
         }
         
         UpdateInventoryLayout();
-        
+        */
     }
 
+    private void Start()
+    {
+        LoadItems();
+        UpdateInventoryLayout();
+    }
+
+    private void LoadItems()
+    {
+        foreach ( ItemType type in _itemTypeWhitelist )
+        {
+            if ( type == ItemType.Weapon )
+            {
+                _itemCount = _manager.WeaponItems.Count;
+                foreach ( WeaponItemInfo item in _manager.WeaponItems )
+                {
+                    item.Weapon.CurrentAmmo = UnityEngine.Random.Range( 0, item.Weapon.MaxAmmo + 1 );
+                    LoadItem( item );
+                }
+                
+            }
+        }
+    }
+    
+    
     private List<ItemData> FetchItems()
     {
         List<ItemData> items = new List<ItemData>();
@@ -89,23 +114,26 @@ public class InventoryManager : MonoBehaviour
         return items;
     }
 
-    private void LoadItem( ItemData data )
+    private void LoadItem( ItemInfo data )
     {
-        ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemInfo>();
-        InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
-        newItem.Data = data;
-        newItem.transform.SetAsFirstSibling();
+        //Debug.Log( data.GetType() );
+        ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
+        InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
+        newContainer.Item = data;
+        newContainer.transform.SetAsFirstSibling();
 
-        DragObject drag = newItem.GetComponent<DragObject>();
+        DragObject drag = newContainer.GetComponent<DragObject>();
         drag.Initialize();
         drag.Callback = layout.CallBack;
         drag.SwapCallback = layout.SwapCallback;
-        drag.TransferFromObj = newItem;
+        drag.TransferFromContainer = newContainer;
         drag.SourceObject = gameObject;
+        
     }
     
     public void AddItem(ItemInfo item)
     {
+        /*
         ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemInfo>();
         InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
         
@@ -123,10 +151,34 @@ public class InventoryManager : MonoBehaviour
         
         _itemCount++;
         UpdateInventoryLayout();
+        */
     }
+    
+    public void AddItem(ItemContainer item)
+    {
+        
+        ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemContainer>();
+        InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
+        
+        newContainer.Item = item.Item;
+        newContainer.transform.SetAsFirstSibling();
+        
+        DragObject drag = newContainer.GetComponent<DragObject>();
+        drag.Initialize();
+        drag.Callback = layout.CallBack;
+        drag.SwapCallback = layout.SwapCallback;
+        drag.TransferFromContainer = newContainer;
+        drag.SourceObject = gameObject;
+        
+        _itemCount++;
+        UpdateInventoryLayout();
+        
+    }
+    
 
     public void ReOrderItem( DragObject drag, Vector2 position )
     {
+        /*
         for ( int i = 0; i < _itemLayer.transform.childCount; i++ )
         {
             Vector3 pos = _itemLayer.GetChild( i ).GetComponent<RectTransform>().position;
@@ -146,9 +198,10 @@ public class InventoryManager : MonoBehaviour
             }
         }
         drag.TransferFromObj.transform.SetSiblingIndex( _itemLayer.transform.childCount );
+        */
     }
 
-    public bool CanAddItem( ItemInfo info )
+    public bool CanAddItem( ItemContainer info )
     {
         if ( _hasCapacity && _itemCount >= _maxItems )
             return false;

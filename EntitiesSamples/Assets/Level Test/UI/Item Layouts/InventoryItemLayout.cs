@@ -12,7 +12,7 @@ public class InventoryItemLayout : MonoBehaviour
     [SerializeField]
     protected float _padding = 10;
 
-    protected ItemInfo _item;
+    protected ItemContainer _item;
 
     [SerializeField]
     protected TextMeshProUGUI _itemText;

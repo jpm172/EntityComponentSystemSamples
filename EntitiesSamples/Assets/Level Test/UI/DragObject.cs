@@ -9,7 +9,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     private DragManager _manager = null;
 
     private Vector2 _centerPoint;
-    private ItemInfo _item;
+    private ItemContainer _container;
     public Vector2 _worldCenterPoint => transform.TransformPoint(_centerPoint);
 
     public delegate void CallbackDelegate();
@@ -18,17 +18,17 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     public delegate void SwapCallbackDelegate();
     public SwapCallbackDelegate SwapCallback;
     
-    public ItemInfo TransferFromObj;
+    public ItemContainer TransferFromContainer;
     public GameObject SourceObject;
 
-    public ItemInfo Item => _item;
+    public ItemContainer Container => _container;
 
     public bool IsTransferItem;
 
     //initialize when instansiating new item
     public void Initialize()
     {
-        _item = GetComponent<ItemInfo>();
+        _container = GetComponent<ItemContainer>();
         _manager = GetComponentInParent<DragManager>();
         //_centerPoint = (transform as RectTransform).rect.center;
         _centerPoint = GetComponent<RectTransform>().rect.center;
@@ -39,10 +39,11 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         if ( IsTransferItem )
             return;
         
-        DragObject transfer = _manager.SpawnItem( _item.Data, GetComponent<RectTransform>().position );
+        //DragObject transfer = _manager.SpawnItem( _container.Item.Data, GetComponent<RectTransform>().position );
+        DragObject transfer = _manager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.Callback = Callback;
         transfer.SwapCallback = SwapCallback;
-        transfer.TransferFromObj = TransferFromObj;
+        transfer.TransferFromContainer = TransferFromContainer;
         transfer.SourceObject = SourceObject;
         //_manager.PickUpItem(this);
     }

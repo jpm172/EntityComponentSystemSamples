@@ -14,9 +14,11 @@ public class WeaponItemLayout : InventoryItemLayout
     private Image _ammoCounter;
     protected override void Initialize()
     {
-        _item = GetComponent<ItemInfo>();
-        _maxAmmo = ( (WeaponItemData) _item.Data ).MaxAmmo;
-        _currentAmmo = UnityEngine.Random.Range( 0, _maxAmmo + 1 );
+        _item = GetComponent<ItemContainer>();
+        //_maxAmmo = ( (WeaponItemData) _item.Data ).MaxAmmo;
+        _maxAmmo = ( (WeaponItemInfo) _item.Item ).Weapon.MaxAmmo;
+        //_currentAmmo = UnityEngine.Random.Range( 0, _maxAmmo + 1 );
+        _currentAmmo = ( (WeaponItemInfo) _item.Item ).Weapon.CurrentAmmo;
         
         //set the text and change rect to match its size
         _itemText.SetText( _item.Data.ItemName );

@@ -16,7 +16,7 @@ public class HealthItemLayout : InventoryItemLayout
     
     protected override void Initialize()
     {
-        _item = GetComponent<ItemInfo>();
+        _item = GetComponent<ItemContainer>();
         
         _maxDurability = ( (HealthItemData) _item.Data ).MaxDurability;
         _currentDurability = UnityEngine.Random.Range( 0, _maxDurability + 1 );

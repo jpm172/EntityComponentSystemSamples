@@ -26,7 +26,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     private DragManager _dragManager;
     [SerializeField]
-    private ItemInfo _heldItem;
+    private ItemContainer _container;
 
     [SerializeField]
     private ItemType _slotItemType;
@@ -47,11 +47,32 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         _hasItem = false;
         _dragManager = GetComponentInParent<DragManager>();
-        _heldItem = GetComponent<ItemInfo>();
+        _container = GetComponent<ItemContainer>();
         _displayImage.gameObject.SetActive( false );
     }
 
     public void AddItem( ItemInfo item )
+    {
+        /*
+        _displayImage.gameObject.SetActive( true );
+        
+        Vector2 spriteSize = item.Data.ItemSprite.textureRect.size;
+        float xScale = _containerRect.rect.width  / (spriteSize.x+ _padding*2);
+        float yScale = _containerRect.rect.height / (spriteSize.y+ _padding*2);
+        float scale = Math.Min( xScale, yScale );
+        //Debug.Log( xScale + ", " + yScale + " == " + scale );
+        
+        _displayImage.sprite = item.Data.ItemSprite;
+        _displayImage.rectTransform.sizeDelta = spriteSize * scale;
+
+        _container.Item.Data = item.Data;
+        _hasItem = true;
+        
+        EquipItem();
+        */
+    }
+    
+    public void AddItem( ItemContainer item )
     {
         _displayImage.gameObject.SetActive( true );
         
@@ -64,7 +85,10 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
 
-        _heldItem.Data = item.Data;
+        Debug.Log( item.Item.GetType() );
+        
+        //_container.Item.Data = item.Data;
+        _container.Item = item.Item;
         _hasItem = true;
         
         EquipItem();
@@ -72,29 +96,29 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     private void UpdateItem()
     {
-        Vector2 spriteSize = _heldItem.Data.ItemSprite.textureRect.size;
+        Vector2 spriteSize = _container.Data.ItemSprite.textureRect.size;
         float xScale = _containerRect.rect.width  / (spriteSize.x+ _padding*2);
         float yScale = _containerRect.rect.height / (spriteSize.y+ _padding*2);
         float scale = Math.Min( xScale, yScale );
         //Debug.Log( xScale + ", " + yScale + " == " + scale );
         
-        _displayImage.sprite = _heldItem.Data.ItemSprite;
+        _displayImage.sprite = _container.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
     }
     
 
     public void SwapItem(DragObject drag)
     {
-        ItemData swap = _heldItem.Data;
-        _heldItem.Data = drag.TransferFromObj.Data;
-        drag.TransferFromObj.Data = swap;
+        ItemData swap = _container.Item.Data;
+        _container.Item.Data = drag.TransferFromContainer.Data;
+        drag.TransferFromContainer.Data = swap;
         drag.SwapCallback();
-        AddItem( _heldItem );
+        AddItem( _container.Item );
     }
 
-    public bool IsMatchingItemType(ItemInfo info)
+    public bool MatchesType(ItemContainer container)
     {
-        return info.Data.ItemType == _slotItemType;
+        return container.Type == _slotItemType;
     }
 
     public void GetTransferItem()
@@ -102,10 +126,10 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         if ( !_hasItem )
             return;
         
-        DragObject transferItem = _dragManager.SpawnItem( _heldItem.Data, GetComponent<RectTransform>().position );
+        DragObject transferItem = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transferItem.Callback = Callback;
         transferItem.SwapCallback = SwapCallback;
-        transferItem.TransferFromObj = _heldItem;
+        transferItem.TransferFromContainer = _container;
         transferItem.SourceObject = gameObject;
     }
 
@@ -127,13 +151,15 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         if ( _equipType == InventorySlotType.Primary )
         {
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.PrimaryWeapon = ItemToWeapon();
+            //inv.PrimaryWeapon = ItemToWeapon();
+            inv.PrimaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
             _entityManager.SetComponentData( player, inv );
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.SecondaryWeapon = ItemToWeapon();
+            //inv.SecondaryWeapon = ItemToWeapon();
+            inv.SecondaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
             _entityManager.SetComponentData( player, inv );
         }
     }
@@ -141,7 +167,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     private WeaponInfo ItemToWeapon()
     {
         
-        WeaponItemData data = (WeaponItemData)_heldItem.Data;
+        WeaponItemData data = (WeaponItemData)_container.Item.Data;
         float fireRate = 1 / data.FireRate;
         WeaponInfo newWeapon = new WeaponInfo
         {

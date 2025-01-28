@@ -8,7 +8,7 @@ public class EquipmentItemLayout : InventoryItemLayout
     
     protected override void Initialize()
     {
-        _item = GetComponent<ItemInfo>();
+        _item = GetComponent<ItemContainer>();
         
         //set the text and change rect to match its size
         _itemText.SetText( _item.Data.ItemName );
