@@ -73,6 +73,7 @@ public class InventoryManager : MonoBehaviour
             {
                 items.AddRange( _manager.WeaponItems );
             }
+            /*
             else if ( type == ItemType.Armor || type == ItemType.Helmet )
             {
                 items.AddRange( _manager.EquipmentItems );
@@ -82,6 +83,7 @@ public class InventoryManager : MonoBehaviour
             {
                 items.AddRange( _manager.HealthItems );
             }
+            */
         }
 
         return items;
@@ -204,7 +206,7 @@ public class InventoryManager : MonoBehaviour
     {
         //update item capacity
         if(_hasCapacity)
-            _itemCounter.text = $"{_itemCount}/{_maxItems}";
+            _itemCounter.text = $"{_itemCount}|{_maxItems}";
         else
             _itemCounter.text = _itemCount.ToString();
         

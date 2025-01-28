@@ -11,5 +11,6 @@ public struct CharacterInventory : IComponentData
     //public WeaponInfo EquippedWeapon;
     public WeaponInfo PrimaryWeapon;
     public WeaponInfo SecondaryWeapon;
+    
 
 }

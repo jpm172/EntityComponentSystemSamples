@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class WeaponItemInfo : ItemInfo
 {
-    
+    public WeaponInfo Weapon;
 }
