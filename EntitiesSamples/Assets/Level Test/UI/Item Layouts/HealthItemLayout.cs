@@ -7,22 +7,22 @@ using UnityEngine.UI;
 public class HealthItemLayout : InventoryItemLayout
 {
 
-    private int _maxDurability;
-    private int _currentDurability;
+    private int _maxCharges;
+    private int _currentCharges;
 
     [SerializeField]
-    private Image _durabilityMeter;
+    private Image _chargeMeter;
     
     
     protected override void Initialize()
     {
         _item = GetComponent<ItemContainer>();
         
-        _maxDurability = ( (HealthItemData) _item.Data ).MaxDurability;
-        _currentDurability = UnityEngine.Random.Range( 0, _maxDurability + 1 );
+        _maxCharges = ( (HealthItemInfo) _item.Item ).HealthItem.MaxCharges;
+        _currentCharges = ( (HealthItemInfo) _item.Item ).HealthItem.CurrentCharges;
         
-        float durValue =  (float) _currentDurability / _maxDurability ;
-        _durabilityMeter.fillAmount = durValue;
+        float durValue =  (float) _currentCharges / _maxCharges ;
+        _chargeMeter.fillAmount = durValue;
         
         //set the text and change rect to match its size
         _itemText.SetText( _item.Data.ItemName );

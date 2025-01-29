@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a06a55c5907480a419f80b3ab99d4f16
+guid: 71ee866836be4484598bbf13142c91f0
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Pixel Digivolve
+  - Dogica
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0

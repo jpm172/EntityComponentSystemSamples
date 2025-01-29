@@ -7,5 +7,5 @@ using UnityEngine;
 public class ItemInfo
 {
     public ItemData Data;
-    
+    public int Key;
 }

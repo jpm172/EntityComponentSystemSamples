@@ -51,18 +51,6 @@ public class InventoryManager : MonoBehaviour
         _rectTransform = GetComponent<RectTransform>();
         
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
-
-        /*
-        List<ItemData> items = FetchItems();
-        
-        _itemCount = items.Count;
-        foreach ( ItemData data in items )
-        {
-            LoadItem( data );
-        }
-        
-        UpdateInventoryLayout();
-        */
     }
 
     private void Start()
@@ -78,12 +66,20 @@ public class InventoryManager : MonoBehaviour
             if ( type == ItemType.Weapon )
             {
                 _itemCount = _manager.WeaponItems.Count;
-                foreach ( WeaponItemInfo item in _manager.WeaponItems )
+                foreach ( WeaponItemInfo item in _manager.WeaponItems.Values )
                 {
                     item.Weapon.CurrentAmmo = UnityEngine.Random.Range( 0, item.Weapon.MaxAmmo + 1 );
                     LoadItem( item );
                 }
-                
+            }
+            else if ( type == ItemType.Health )
+            {
+                _itemCount = _manager.HealthItems.Count;
+                foreach ( HealthItemInfo item in _manager.HealthItems.Values )
+                {
+                    item.HealthItem.CurrentCharges = UnityEngine.Random.Range( 0, item.HealthItem.MaxCharges + 1 );
+                    LoadItem( item );
+                }
             }
         }
     }
@@ -233,8 +229,6 @@ public class InventoryManager : MonoBehaviour
             _itemLayer.localScale = Vector3.one;
             _rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30);
         }
-
-        
     }
     
     

@@ -51,27 +51,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.gameObject.SetActive( false );
     }
 
-    public void AddItem( ItemInfo item )
-    {
-        /*
-        _displayImage.gameObject.SetActive( true );
-        
-        Vector2 spriteSize = item.Data.ItemSprite.textureRect.size;
-        float xScale = _containerRect.rect.width  / (spriteSize.x+ _padding*2);
-        float yScale = _containerRect.rect.height / (spriteSize.y+ _padding*2);
-        float scale = Math.Min( xScale, yScale );
-        //Debug.Log( xScale + ", " + yScale + " == " + scale );
-        
-        _displayImage.sprite = item.Data.ItemSprite;
-        _displayImage.rectTransform.sizeDelta = spriteSize * scale;
-
-        _container.Item.Data = item.Data;
-        _hasItem = true;
-        
-        EquipItem();
-        */
-    }
-    
     public void AddItem( ItemContainer item )
     {
         _displayImage.gameObject.SetActive( true );
@@ -84,10 +63,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
-
-        Debug.Log( item.Item.GetType() );
         
-        //_container.Item.Data = item.Data;
         _container.Item = item.Item;
         _hasItem = true;
         
@@ -109,11 +85,18 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void SwapItem(DragObject drag)
     {
+        /*
         ItemData swap = _container.Item.Data;
         _container.Item.Data = drag.TransferFromContainer.Data;
         drag.TransferFromContainer.Data = swap;
         drag.SwapCallback();
-        AddItem( _container.Item );
+        AddItem( _container );
+        */
+        ItemInfo swap = _container.Item;
+        _container.Item = drag.TransferFromContainer.Item;
+        drag.TransferFromContainer.Item = swap;
+        drag.SwapCallback();
+        AddItem( _container );
     }
 
     public bool MatchesType(ItemContainer container)
@@ -164,25 +147,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         }
     }
 
-    private WeaponInfo ItemToWeapon()
-    {
-        
-        WeaponItemData data = (WeaponItemData)_container.Item.Data;
-        float fireRate = 1 / data.FireRate;
-        WeaponInfo newWeapon = new WeaponInfo
-        {
-            Type = WeaponType.Gun,
-            BulletsPerShot = data.BulletsPerShot,
-            MaxAmmo = data.MaxAmmo,
-            FireRate = fireRate,
-            WeaponSpread = data.WeaponSpread,
-            Penetration = data.Penetration,
-            Range = data.Range,
-        };
-        
-        return newWeapon;
-    }
-    
     private void UnequipItem()
     {
         bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
@@ -193,13 +157,13 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         if ( _equipType == InventorySlotType.Primary )
         {
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.PrimaryWeapon = new WeaponInfo{Null = true};
+            inv.PrimaryWeapon = new WeaponDesc{Null = true};
             _entityManager.SetComponentData( player, inv );
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.SecondaryWeapon = new WeaponInfo{Null = true};
+            inv.SecondaryWeapon = new WeaponDesc{Null = true};
             _entityManager.SetComponentData( player, inv );
         }
     }

@@ -168,8 +168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2878e95aefc2304da3c3212c5cc7282, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TransferFromObj:
-    Data: {fileID: 0}
+  TransferFromContainer: {fileID: 0}
   SourceObject: {fileID: 0}
   IsTransferItem: 0
 --- !u!114 &698362058734752054
@@ -188,7 +187,7 @@ MonoBehaviour:
   _itemText: {fileID: 2284125475636175830}
   _itemImage: {fileID: 7707269183040563986}
   _transferingImage: {fileID: 0}
-  _durabilityMeter: {fileID: 8682856018164819576}
+  _chargeMeter: {fileID: 8682856018164819576}
 --- !u!114 &9197634009898185511
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -457,8 +456,9 @@ MonoBehaviour:
       m_Calls: []
   m_text: Health Item
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b5c72b52a62f8ab40a37fcd8240feb74, type: 2}
+  m_sharedMaterial: {fileID: -1297102371332679698, guid: b5c72b52a62f8ab40a37fcd8240feb74,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -482,7 +482,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 13.45
+  m_fontSize: 11.45
   m_fontSizeBase: 12
   m_fontWeight: 400
   m_enableAutoSizing: 1

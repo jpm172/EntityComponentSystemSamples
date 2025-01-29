@@ -54,7 +54,7 @@ public partial struct PlayerShootingSystem : ISystem
         _colliderMap.Dispose();
     }
 
-    private NativeHashMap<Entity, int> ModifyHitStructures( NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap, ref SystemState state, WeaponInfo weapon )
+    private NativeHashMap<Entity, int> ModifyHitStructures( NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap, ref SystemState state, WeaponDesc weapon )
     {
         NativeHashMap<Entity, int> modifiedEntities = new NativeHashMap<Entity, int>( entityHitMap.Count(), Allocator.TempJob );
         NativeArray<ShootInfo> shootKeys = entityHitMap.GetKeyArray( Allocator.Temp );
@@ -120,7 +120,7 @@ public partial struct PlayerShootingSystem : ISystem
     }
 
 
-    private NativeParallelMultiHashMap<ShootInfo, Entity> FireWeapon(PhysicsWorldSingleton physicsWorld, LocalTransform transform, WeaponInfo weapon)
+    private NativeParallelMultiHashMap<ShootInfo, Entity> FireWeapon(PhysicsWorldSingleton physicsWorld, LocalTransform transform, WeaponDesc weapon)
     {
         NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>();
         //NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>(8*weapon.BulletsPerShot, Allocator.TempJob);
@@ -155,7 +155,7 @@ public partial struct PlayerShootingSystem : ISystem
         return entityHitMap;
     }
 
-    private void ThrowProjectile(ref SystemState state, LocalTransform transform, WeaponInfo weapon, PlayerInputs inputs)
+    private void ThrowProjectile(ref SystemState state, LocalTransform transform, WeaponDesc weapon, PlayerInputs inputs)
     {
         var config = SystemAPI.GetSingleton<GameConfig>();
         
@@ -185,7 +185,7 @@ public partial struct PlayerShootingSystem : ISystem
         state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
 
-    private ref WeaponInfo GetEquippedWeapon(RefRW<CharacterInventory> inv)
+    private ref WeaponDesc GetEquippedWeapon(RefRW<CharacterInventory> inv)
     {
         if(inv.ValueRO.Equipped == 1)
             return ref inv.ValueRW.PrimaryWeapon;
@@ -204,15 +204,15 @@ public partial struct PlayerShootingSystem : ISystem
 
             if ( fuze.ValueRW.Timer <= 0 )
             {
-                WeaponInfo weaponInfo = new WeaponInfo
+                WeaponDesc WeaponDesc = new WeaponDesc
                 {
                     ExplosionRadius = fuze.ValueRO.ExplosionRadius,
                     Penetration = fuze.ValueRO.Penetration,
                     IsExplosion = true
                 };
 
-                NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = FireWeapon( physicsWorld, transform.ValueRO, weaponInfo );
-                ProcessHits( entityHitMap, ref state, ecb, physicsWorld, weaponInfo );
+                NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = FireWeapon( physicsWorld, transform.ValueRO, WeaponDesc );
+                ProcessHits( entityHitMap, ref state, ecb, physicsWorld, WeaponDesc );
                 entityHitMap.Dispose();
                 ecb.DestroyEntity( entity );
             }
@@ -221,7 +221,7 @@ public partial struct PlayerShootingSystem : ISystem
 
         foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
-            ref WeaponInfo weapon = ref GetEquippedWeapon( inventory );
+            ref WeaponDesc weapon = ref GetEquippedWeapon( inventory );
             if ( weapon.Null )
                 continue;
 
@@ -347,7 +347,7 @@ public partial struct PlayerShootingSystem : ISystem
     }
 
 
-    private void ProcessHits(NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap, ref SystemState state, EntityCommandBuffer ecb, PhysicsWorldSingleton physicsWorld, WeaponInfo weapon)
+    private void ProcessHits(NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap, ref SystemState state, EntityCommandBuffer ecb, PhysicsWorldSingleton physicsWorld, WeaponDesc weapon)
     {
 
         NativeHashMap<Entity, int> modifiedEntities = ModifyHitStructures( entityHitMap, ref state, weapon );
@@ -690,7 +690,7 @@ public struct DestroyStructureJob : IJob
     public NativeReference<ShootInfo> Info;
     public NativeReference<bool> Modified;
 
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
     public float PPU;
     public int2 Dimensions;
     public void Execute( )
@@ -956,7 +956,7 @@ public partial struct PlayerShootJob : IJobEntity
     //public NativeList<ShootInfo>.ParallelWriter Hits;
     public Random RNG;
 
-    public NativeReference<WeaponInfo> FiredWeapon;
+    public NativeReference<WeaponDesc> FiredWeapon;
     public NativeParallelMultiHashMap<ShootInfo, Entity> EntityHitMap;
     
     private static readonly CollisionFilter CastFilter = new CollisionFilter
@@ -965,14 +965,14 @@ public partial struct PlayerShootJob : IJobEntity
         BelongsTo = ~(uint)( 1 << 6 )
     };
     
-    private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponInfo weapon )
+    private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponDesc weapon )
     {
         FiredWeapon.Value = weapon;
 
 
 
 
-        WeaponInfo newWeapon = weapon;
+        WeaponDesc newWeapon = weapon;
         newWeapon.Timer = weapon.FireRate;//
         FiredWeapon.Value = newWeapon;
         //NativeList<ShootInfo> allInfo = new NativeList<ShootInfo>(32, Allocator.Temp);
@@ -1086,7 +1086,7 @@ public struct ParallelPlayerShootJob : IJobParallelFor
     public uint RandomSeed;
     
     public LocalTransform Transform;
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
 
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 
@@ -1193,7 +1193,7 @@ public struct ExplosionJob : IJobParallelFor
     public uint RandomSeed;
 
     public LocalTransform Transform;
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
 
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 

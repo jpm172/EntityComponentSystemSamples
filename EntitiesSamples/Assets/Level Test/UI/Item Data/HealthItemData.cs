@@ -6,9 +6,9 @@ using UnityEngine;
 public class HealthItemData : ItemData
 {
 
-    [Tooltip("Durability")]
+    [Tooltip("Max Charges")]
     [Range(1, 10000)]
-    public int MaxDurability;
+    public int MaxCharges;
     
     
     

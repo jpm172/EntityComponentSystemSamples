@@ -6,19 +6,20 @@ using UnityEngine;
 [Serializable]
 public class WeaponItemInfo : ItemInfo
 {
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
 
-    public WeaponItemInfo( WeaponItemData data )
+    public WeaponItemInfo( WeaponItemData data, int key )
     {
         Data = data;
+        Key = key;
         Weapon = ItemToWeapon( data );
     }
     
-    private WeaponInfo ItemToWeapon(WeaponItemData data)
+    private WeaponDesc ItemToWeapon(WeaponItemData data)
     {
         
         float fireRate = 1 / data.FireRate;
-        WeaponInfo newWeapon = new WeaponInfo
+        WeaponDesc newWeapon = new WeaponDesc
         {
             Type = WeaponType.Gun,
             BulletsPerShot = data.BulletsPerShot,

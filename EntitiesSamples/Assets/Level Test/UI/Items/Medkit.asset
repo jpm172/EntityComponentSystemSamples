@@ -15,4 +15,4 @@ MonoBehaviour:
   ItemName: Medkit
   ItemType: 4
   ItemSprite: {fileID: 21300000, guid: f3bace51eae884049921097e6d24710a, type: 3}
-  MaxDurability: 100
+  MaxCharges: 100

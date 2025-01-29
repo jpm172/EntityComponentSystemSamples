@@ -6,7 +6,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [Serializable]
-public struct WeaponInfo : IComponentData
+public struct WeaponDesc : IComponentData
 {
     public WeaponType Type;
     public bool Null;

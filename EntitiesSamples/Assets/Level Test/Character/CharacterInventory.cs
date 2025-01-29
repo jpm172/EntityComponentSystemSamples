@@ -9,8 +9,8 @@ public struct CharacterInventory : IComponentData
 {
     public int Equipped;
     //public WeaponInfo EquippedWeapon;
-    public WeaponInfo PrimaryWeapon;
-    public WeaponInfo SecondaryWeapon;
+    public WeaponDesc PrimaryWeapon;
+    public WeaponDesc SecondaryWeapon;
     
 
 }

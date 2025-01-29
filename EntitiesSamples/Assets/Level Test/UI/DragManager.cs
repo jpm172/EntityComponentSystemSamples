@@ -185,7 +185,7 @@ public class DragManager : MonoBehaviour
     }
 
     
-    private IEnumerator DelayAddToSlot(InventorySlot slot, DragObject drag, ItemInfo item)
+    private IEnumerator DelayAddToSlot(InventorySlot slot, DragObject drag, ItemContainer item)
     {
         yield return new WaitForSeconds( 1 );
         if ( slot.HasItem )

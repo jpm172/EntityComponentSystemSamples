@@ -38,6 +38,13 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     {
         if ( IsTransferItem )
             return;
+
+        if ( eventData.button == PointerEventData.InputButton.Right )
+        {
+            Debug.Log( "right click" );
+            //TODO: implement options menu
+            return;
+        }
         
         //DragObject transfer = _manager.SpawnItem( _container.Item.Data, GetComponent<RectTransform>().position );
         DragObject transfer = _manager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
