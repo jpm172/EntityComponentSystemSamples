@@ -12,7 +12,7 @@ public class WeaponItemLayout : InventoryItemLayout
     
     [SerializeField]
     private Image _ammoCounter;
-    protected override void Initialize()
+    public override void Initialize()
     {
         _item = GetComponent<ItemContainer>();
         //_maxAmmo = ( (WeaponItemData) _item.Data ).MaxAmmo;

@@ -13,17 +13,19 @@ public class HealthItemInfo : ItemInfo
         Data = data;
         HealthItem = ItemToHealthDesc( data );
         Key = key;
+        Quantity = 1;
     }
     
     private HealthItemDesc ItemToHealthDesc(HealthItemData data)
     {
         
-        HealthItemDesc newWeapon = new HealthItemDesc
+        HealthItemDesc newHealthItem = new HealthItemDesc
         {
-            MaxCharges = data.MaxCharges
+            MaxCharges = data.MaxCharges,
+            
         };
         
-        return newWeapon;
+        return newHealthItem;
     }
     
 }

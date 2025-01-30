@@ -68,17 +68,15 @@ public class InventoryManager : MonoBehaviour
                 _itemCount = _manager.WeaponItems.Count;
                 foreach ( WeaponItemInfo item in _manager.WeaponItems.Values )
                 {
-                    item.Weapon.CurrentAmmo = UnityEngine.Random.Range( 0, item.Weapon.MaxAmmo + 1 );
                     LoadItem( item );
                 }
             }
             else if ( type == ItemType.Health )
             {
-                _itemCount = _manager.HealthItems.Count;
-                foreach ( HealthItemInfo item in _manager.HealthItems.Values )
+                _itemCount = _manager.HealthItemKeys.Count;
+                foreach ( int itemKey in _manager.HealthItemKeys )
                 {
-                    item.HealthItem.CurrentCharges = UnityEngine.Random.Range( 0, item.HealthItem.MaxCharges + 1 );
-                    LoadItem( item );
+                    LoadItem( _manager.AllItems[itemKey] );
                 }
             }
         }
@@ -112,11 +110,12 @@ public class InventoryManager : MonoBehaviour
 
     private void LoadItem( ItemInfo data )
     {
-        //Debug.Log( data.GetType() );
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
-        newContainer.Item = data;
+
+        newContainer.ItemKey = data.Key;
         newContainer.transform.SetAsFirstSibling();
+        newContainer.transform.SetSiblingIndex( data.Order );
 
         DragObject drag = newContainer.GetComponent<DragObject>();
         drag.Initialize();
@@ -156,7 +155,8 @@ public class InventoryManager : MonoBehaviour
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
         
-        newContainer.Item = item.Item;
+        //newContainer.Item = item.Item;
+        newContainer.ItemKey = item.ItemKey;
         newContainer.transform.SetAsFirstSibling();
         
         DragObject drag = newContainer.GetComponent<DragObject>();
@@ -174,13 +174,13 @@ public class InventoryManager : MonoBehaviour
 
     public void ReOrderItem( DragObject drag, Vector2 position )
     {
-        /*
-        for ( int i = 0; i < _itemLayer.transform.childCount; i++ )
+        int childCount = _itemLayer.transform.childCount;
+        for ( int i = 0; i < childCount; i++ )
         {
             Vector3 pos = _itemLayer.GetChild( i ).GetComponent<RectTransform>().position;
             if ( pos.y <= position.y )
             {
-                int index = drag.TransferFromObj.transform.GetSiblingIndex();
+                int index = drag.TransferFromContainer.transform.GetSiblingIndex();
                 if ( index <= i )
                 {
                     index = Math.Max( i - 1, 0 );
@@ -189,12 +189,29 @@ public class InventoryManager : MonoBehaviour
                 {
                     index = i;
                 }
-                drag.TransferFromObj.transform.SetSiblingIndex( index );
+
+                //PlayerUIManager.Instance.ReorderItem( drag.Container.ItemKey, index );
+                drag.Container.Item.Order = index;
+                drag.TransferFromContainer.transform.SetSiblingIndex( index );
+                UpdateItemOrders();
                 return;
             }
         }
-        drag.TransferFromObj.transform.SetSiblingIndex( _itemLayer.transform.childCount );
-        */
+        //PlayerUIManager.Instance.ReorderItem( drag.Container.ItemKey, childCount );
+        drag.Container.Item.Order = childCount;
+        drag.TransferFromContainer.transform.SetSiblingIndex( childCount );
+        UpdateItemOrders();
+    }
+
+    private void UpdateItemOrders()
+    {
+        int childCount = _itemLayer.transform.childCount;
+        for ( int i = 0; i < childCount; i++ )
+        {
+           ItemContainer item = _itemLayer.GetChild( i ).GetComponent<ItemContainer>();
+           item.Item.Order = i;
+        }
+        
     }
 
     public bool CanAddItem( ItemContainer info )

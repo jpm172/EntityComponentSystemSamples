@@ -22,18 +22,43 @@ public class InventoryItemLayout : MonoBehaviour
     [SerializeField]
     protected Image _transferingImage;
 
+    private bool _initialized = false;
+    
     private void Start()
     {
         Initialize();
+        _initialized = true;
     }
 
-    protected virtual void Initialize()
+    private void OnEnable()
+    {
+        if(_initialized)
+            ReloadItem();
+        
+    }
+
+    public virtual void Initialize()
     {
     }
 
+    public void ReloadItem()
+    {
+        
+        if ( !PlayerUIManager.Instance.AllItems.ContainsKey( _item.ItemKey ) )
+        {
+            GetComponentInParent<InventoryManager>().RemovedItem();
+            Destroy( gameObject );
+        }
+        else
+        {
+            transform.SetSiblingIndex( PlayerUIManager.Instance.AllItems[_item.ItemKey].Order );
+        }
+    }
+    
     public void CallBack()
     {
         GetComponentInParent<InventoryManager>().RemovedItem();
+        PlayerUIManager.Instance.RemoveItem( _item.ItemKey );
         Destroy( gameObject );
     }
 

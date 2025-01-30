@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: Shotgun
   m_EditorClassIdentifier: 
   ItemName: Shotgun
+  ItemID: 6
   ItemType: 0
   ItemSprite: {fileID: 21300000, guid: 536fa0949560ca94ab145cc058f0d74c, type: 3}
+  Stackable: 0
+  EquipTime: 0
+  HolsterTime: 0
   MaxAmmo: 6
   BulletsPerShot: 8
   FireRate: 2

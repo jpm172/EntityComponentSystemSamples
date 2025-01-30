@@ -10,9 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aabbb0d1787c2df4c98a7ba5c40cfd87, type: 3}
-  m_Name: Medkit
+  m_Name: Tourniquet
   m_EditorClassIdentifier: 
-  ItemName: Medkit
+  ItemName: Tourniquet
+  ItemID: 7
   ItemType: 4
-  ItemSprite: {fileID: 21300000, guid: f3bace51eae884049921097e6d24710a, type: 3}
-  MaxCharges: 100
+  ItemSprite: {fileID: 21300000, guid: bc93aef1e05a9524399e3b5ec05a2290, type: 3}
+  Stackable: 1
+  MaxCharges: 1

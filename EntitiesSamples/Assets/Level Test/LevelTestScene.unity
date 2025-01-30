@@ -768,8 +768,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Item:
-    Data: {fileID: 0}
+  ItemKey: 0
 --- !u!1 &176441775
 GameObject:
   m_ObjectHideFlags: 0
@@ -1800,8 +1799,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Item:
-    Data: {fileID: 0}
+  ItemKey: 0
 --- !u!1 &385335498
 GameObject:
   m_ObjectHideFlags: 0
@@ -2756,8 +2754,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Item:
-    Data: {fileID: 0}
+  ItemKey: 0
 --- !u!1 &710097618
 GameObject:
   m_ObjectHideFlags: 0
@@ -3578,8 +3575,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Item:
-    Data: {fileID: 0}
+  ItemKey: 0
 --- !u!1 &820041655
 GameObject:
   m_ObjectHideFlags: 3
@@ -4162,17 +4158,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _gearLayer: {fileID: 781753421}
   _healthLayer: {fileID: 1690316803}
-  _loadWeapons:
-  - {fileID: 11400000, guid: 2573d80a9b8b77745998b016cfcc0743, type: 2}
-  - {fileID: 11400000, guid: 7b784e7617dd5d742bfed617f4c12c3d, type: 2}
+  _loadWeapons: []
   _loadHealthItems:
   - {fileID: 11400000, guid: db659c004b43eaf48a7fb556383d279c, type: 2}
-  _weaponItems: []
-  _healthItems:
-  - Data: {fileID: 0}
-  _equipmentItems:
-  - {fileID: 11400000, guid: 9404829d54483994e96e98e7349dc735, type: 2}
-  - {fileID: 11400000, guid: 129b576b41a764847be92b80e603d23f, type: 2}
+  - {fileID: 11400000, guid: ac47af88907ff444b98d5e912057dd20, type: 2}
+  - {fileID: 11400000, guid: 4a3e2ac7b863bfc459becd88d59808ad, type: 2}
+  _equipmentItems: []
+  _serializedItems: []
 --- !u!1 &1008065458
 GameObject:
   m_ObjectHideFlags: 0

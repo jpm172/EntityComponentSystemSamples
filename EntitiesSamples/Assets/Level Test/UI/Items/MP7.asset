@@ -13,8 +13,12 @@ MonoBehaviour:
   m_Name: MP7
   m_EditorClassIdentifier: 
   ItemName: MP7
+  ItemID: 5
   ItemType: 0
   ItemSprite: {fileID: 21300000, guid: 8af569299973d744e99e6a6c92bf5ed4, type: 3}
+  Stackable: 0
+  EquipTime: 0
+  HolsterTime: 0
   MaxAmmo: 30
   BulletsPerShot: 1
   FireRate: 15.8

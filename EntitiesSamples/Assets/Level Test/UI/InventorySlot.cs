@@ -64,7 +64,8 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
-        _container.Item = item.Item;
+        //_container.Item = item.Item;
+        _container.ItemKey = item.ItemKey;
         _hasItem = true;
         
         EquipItem();
@@ -92,9 +93,12 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         drag.SwapCallback();
         AddItem( _container );
         */
-        ItemInfo swap = _container.Item;
-        _container.Item = drag.TransferFromContainer.Item;
-        drag.TransferFromContainer.Item = swap;
+        //ItemInfo swap = _container.Item;
+        int swap = _container.ItemKey;
+        //_container.Item = drag.TransferFromContainer.Item;
+        _container.ItemKey = drag.TransferFromContainer.ItemKey;
+        //drag.TransferFromContainer.Item = swap;
+        drag.TransferFromContainer.ItemKey = swap;
         drag.SwapCallback();
         AddItem( _container );
     }

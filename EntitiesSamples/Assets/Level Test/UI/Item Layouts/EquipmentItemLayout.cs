@@ -6,7 +6,7 @@ using UnityEngine;
 public class EquipmentItemLayout : InventoryItemLayout
 {
     
-    protected override void Initialize()
+    public override void Initialize()
     {
         _item = GetComponent<ItemContainer>();
         

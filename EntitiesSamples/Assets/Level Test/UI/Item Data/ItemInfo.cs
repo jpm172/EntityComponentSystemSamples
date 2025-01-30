@@ -8,4 +8,6 @@ public class ItemInfo
 {
     public ItemData Data;
     public int Key;
+    public int Order;
+    public int Quantity;
 }

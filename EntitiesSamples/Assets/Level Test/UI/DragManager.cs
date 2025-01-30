@@ -90,7 +90,8 @@ public class DragManager : MonoBehaviour
     public DragObject SpawnItem( ItemInfo item, Vector3 position )
     {
         DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
-        newItem.GetComponent<ItemContainer>().Item = item;
+        newItem.GetComponent<ItemContainer>().ItemKey = item.Key;
+        //newItem.GetComponent<ItemContainer>().Item = item;
         newItem.Initialize();
 
         if(_currentDraggedObject != null)
@@ -102,22 +103,7 @@ public class DragManager : MonoBehaviour
         return newItem;
     }
 
-    public DragObject SpawnItem( ItemData item, Vector3 position )
-    {
-        DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
-        newItem.GetComponent<ItemContainer>().Data = item;
-        newItem.Initialize();
 
-        if(_currentDraggedObject != null)
-        {
-            Destroy( _currentDraggedObject.gameObject );
-            _currentDraggedObject = null;
-        }
-        PickUpItem( newItem );
-        return newItem;
-    }
-
-    
     private bool TryPutIntoSlot(DragObject drag, Vector2 position)
     {
         if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
