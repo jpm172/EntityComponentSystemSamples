@@ -7,6 +7,8 @@ using Unity.Mathematics;
 public struct MyCharacterComponent : IComponentData
 {
     public float MovementSpeed;
+    public float Health;
+    public float Blood;
 
 }
 

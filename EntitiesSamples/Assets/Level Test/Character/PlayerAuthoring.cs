@@ -8,6 +8,9 @@ public class PlayerAuthoring : MonoBehaviour
 {
 
     public float MoveSpeed;
+    public float Health = 350;
+    public float Blood = 5000;
+    
     public WeaponType WeaponType;
     public float ExplosionRadius = 2;
     public float ThrowForce;

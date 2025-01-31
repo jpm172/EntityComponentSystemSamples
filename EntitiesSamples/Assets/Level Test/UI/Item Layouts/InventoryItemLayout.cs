@@ -52,14 +52,22 @@ public class InventoryItemLayout : MonoBehaviour
         else
         {
             transform.SetSiblingIndex( PlayerUIManager.Instance.AllItems[_item.ItemKey].Order );
+            Initialize();
         }
     }
     
     public void CallBack()
     {
-        GetComponentInParent<InventoryManager>().RemovedItem();
-        PlayerUIManager.Instance.RemoveItem( _item.ItemKey );
-        Destroy( gameObject );
+        _item.Item.Quantity--;
+        if ( _item.Item.Quantity <= 0 )
+        {
+            GetComponentInParent<InventoryManager>().RemovedItem();
+            PlayerUIManager.Instance.RemoveItem( _item.ItemKey );
+            Destroy( gameObject );
+            return;
+        }
+        Initialize();
+        
     }
 
     public void SwapCallback()

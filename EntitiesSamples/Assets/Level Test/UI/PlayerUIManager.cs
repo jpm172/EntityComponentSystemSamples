@@ -14,6 +14,8 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField]
     private GameObject _healthLayer;
 
+    public BodyHealthManager _bodyManager;
+    
     [SerializeField]
     private List<WeaponItemData> _loadWeapons;
     
@@ -50,6 +52,11 @@ public class PlayerUIManager : MonoBehaviour
     {
         _serializedItems = new ItemInfo[_allItemsDict.Values.Count];
         _allItemsDict.Values.CopyTo( _serializedItems, 0 );
+    }
+
+    public void AddWound()
+    {
+        _bodyManager.AddWound();
     }
     
     private void Awake()

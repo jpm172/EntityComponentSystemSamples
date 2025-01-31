@@ -4162,7 +4162,9 @@ MonoBehaviour:
   _loadHealthItems:
   - {fileID: 11400000, guid: db659c004b43eaf48a7fb556383d279c, type: 2}
   - {fileID: 11400000, guid: ac47af88907ff444b98d5e912057dd20, type: 2}
-  - {fileID: 11400000, guid: 4a3e2ac7b863bfc459becd88d59808ad, type: 2}
+  - {fileID: 11400000, guid: 0e5344d45af7d6c4aabab498670c22ae, type: 2}
+  - {fileID: 11400000, guid: 0e5344d45af7d6c4aabab498670c22ae, type: 2}
+  - {fileID: 11400000, guid: 0e5344d45af7d6c4aabab498670c22ae, type: 2}
   _equipmentItems: []
   _serializedItems: []
 --- !u!1 &1008065458

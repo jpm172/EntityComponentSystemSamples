@@ -19,6 +19,11 @@ public class UIEditor : Editor
         {
             manager.SerializeItems();
         }
+        
+        if ( GUILayout.Button( "Wound Player" ) )
+        {
+            manager.AddWound();
+        }
     }
 }
 

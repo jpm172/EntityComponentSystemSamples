@@ -22,7 +22,8 @@ public class HealthItemLayout : InventoryItemLayout
     
     public override void Initialize()
     {
-        _item = GetComponent<ItemContainer>();
+        if(_item == null)
+            _item = GetComponent<ItemContainer>();
         
         if ( _item.Item.Data.Stackable )
         { 
