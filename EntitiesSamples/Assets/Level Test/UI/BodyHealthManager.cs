@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.Physics;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,34 +15,53 @@ public class BodyHealthManager : MonoBehaviour
         _leftLeg,
         _rightLeg;
 
+    [SerializeField]
+    private TMP_Dropdown _healingDropdown;
+    
     public Sprite[] WoundSprites;
 
     public GameObject WoundPrefab;
-    
+
+    private int _woundCount;
+
+    private Image[] bodyParts;
     // Start is called before the first frame update
     void Start()
     {
-        
+        bodyParts = new[] {_head, _chest, _leftArm, _rightArm, _leftLeg, _rightLeg};
     }
 
     public void AddWound()
     {
-        ushort[] tris = _leftArm.sprite.triangles;
-        int randomIndex = Random.Range( 0, tris.Length / 3 );
-        /*//
-        Vector2 pos = _leftArm.sprite.vertices[randomIndex];
-        pos += _leftArm.sprite.vertices[randomIndex+1];
-        pos += _leftArm.sprite.vertices[randomIndex+2];
-        pos /= 3;
-        pos *= 100;
-        */
+        int bodyPart = Random.Range( 0, bodyParts.Length );
+        AddRandomWound( bodyParts[bodyPart] );
         
+        _woundCount++;
+
+
+    }
+
+    public void HealWounds( )
+    {
+        Debug.Log( _healingDropdown.options[_healingDropdown.value].text );
+    }
+
+
+    private void AddRandomWound( Image bodyPart )
+    {
+        
+        ushort[] tris = bodyPart.sprite.triangles;
+        Vector2[] verts = bodyPart.sprite.vertices;
+        float ppu = bodyPart.sprite.pixelsPerUnit; 
+        
+        int randomIndex = Random.Range( 0, tris.Length / 3 );//select a random tri from the body part's mesh
+
         for ( int i = 0; i <  tris.Length / 3; i++ )
         {
             int index = i * 3;
-            Vector3 a = _leftArm.sprite.vertices[tris[index]]*100;
-            Vector3 b = _leftArm.sprite.vertices[tris[index+1]]*100;
-            Vector3 c = _leftArm.sprite.vertices[tris[index+2]]*100;
+            Vector3 a = verts[tris[index]]*ppu;
+            Vector3 b = verts[tris[index+1]]*ppu;
+            Vector3 c = verts[tris[index+2]]*ppu;
 
             if ( randomIndex == i )
             {
@@ -59,29 +79,23 @@ public class BodyHealthManager : MonoBehaviour
         }
 
         randomIndex *= 3;
-        
-        
-        //Vector2 randomPos = RandomWithinTriangle( _leftArm.sprite.vertices[randomIndex], _leftArm.sprite.vertices[randomIndex + 1], _leftArm.sprite.vertices[randomIndex + 2] );
-        Vector2 randomPos = RandomWithinTriangle( _leftArm.sprite.vertices[tris[randomIndex]], 
-            _leftArm.sprite.vertices[tris[randomIndex + 1]], 
-            _leftArm.sprite.vertices[tris[randomIndex + 2]] );
-        
-        //Debug.Log( $"A: {_leftArm.sprite.vertices[randomIndex]}, B: {_leftArm.sprite.vertices[randomIndex+1]}, C: {_leftArm.sprite.vertices[randomIndex+2]} = {randomPos}" );
 
-        randomPos *= 100;
+        Vector2 randomPos = RandomWithinTriangle( verts[tris[randomIndex]], verts[tris[randomIndex + 1]], verts[tris[randomIndex + 2]] );
+        
+        randomPos *= ppu;
         
         Debug.DrawLine( randomPos, randomPos + (Vector2.up*30), Color.red, 1  );
         Debug.DrawLine( randomPos, randomPos + (Vector2.down*30), Color.red, 1  );
         Debug.DrawLine( randomPos, randomPos + (Vector2.left*30), Color.red, 1  );
         Debug.DrawLine( randomPos, randomPos + (Vector2.right*30), Color.red, 1  );
         
-        GameObject newWound = Instantiate( WoundPrefab, _leftArm.transform );
-        //newWound.GetComponent<RectTransform>().localPosition = pos;
+        GameObject newWound = Instantiate( WoundPrefab, bodyPart.transform );
+        
         newWound.GetComponent<RectTransform>().localPosition = randomPos;
         newWound.GetComponent<RectTransform>().rotation = Quaternion.Euler( 0,0,Random.Range( -360, 360 ) );
         newWound.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
     }
-
+    
     
     private Vector2 RandomWithinTriangle(Vector2 pointA, Vector2 pointB, Vector2 pointC)
     {
@@ -91,13 +105,6 @@ public class BodyHealthManager : MonoBehaviour
         var m2 = r1 * (1 - r2);
         var m3 = r2 * r1;
 
-        /*
-        var p1 = t.GetVertex(0).ToVector2();
-        var p2 = t.GetVertex(1).ToVector2();
-        var p3 = t.GetVertex(2).ToVector2();
-        */
-        
-        //return (m1 * p1) + (m2 * p2) + (m3 * p3);
         return (m1 * pointA) + (m2 * pointB) + (m3 * pointC);
     }
     
