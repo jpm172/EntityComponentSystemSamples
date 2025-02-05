@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Physics;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class BodyHealthManager : MonoBehaviour
 {
@@ -16,7 +18,7 @@ public class BodyHealthManager : MonoBehaviour
         _rightLeg;
 
     [SerializeField]
-    private TMP_Dropdown _healingDropdown;
+    public SubMenu _healingMenu;
     
     public Sprite[] WoundSprites;
 
@@ -25,30 +27,53 @@ public class BodyHealthManager : MonoBehaviour
     private int _woundCount;
 
     private Image[] bodyParts;
+
+    [SerializeField]
+    private List<Wound> _wounds;
+    
     // Start is called before the first frame update
     void Start()
     {
         bodyParts = new[] {_head, _chest, _leftArm, _rightArm, _leftLeg, _rightLeg};
+        _wounds = new List<Wound>();
+        _healingMenu.OnSelected += HealWounds;
     }
 
     public void AddWound()
     {
         int bodyPart = Random.Range( 0, bodyParts.Length );
-        AddRandomWound( bodyParts[bodyPart] );
+        AddRandomWound( bodyPart );
         
         _woundCount++;
-
-
+        
     }
 
-    public void HealWounds( )
+    public void HealWounds( int value )
     {
-        Debug.Log( _healingDropdown.options[_healingDropdown.value].text );
+        PlayerUIManager manager = PlayerUIManager.Instance;
+        if ( value == 0 )
+        {
+
+            foreach ( int key in manager.HealthItemKeys )
+            {
+                ItemInfo item = manager.AllItems[key];
+                
+            }
+            
+            foreach ( Wound w in _wounds )
+            {
+                Destroy( w.WoundObj );
+            }
+            _wounds.Clear();
+        }
     }
+    
 
 
-    private void AddRandomWound( Image bodyPart )
+    private void AddRandomWound( int partIndex )
     {
+
+        Image bodyPart = bodyParts[partIndex];
         
         ushort[] tris = bodyPart.sprite.triangles;
         Vector2[] verts = bodyPart.sprite.vertices;
@@ -89,11 +114,14 @@ public class BodyHealthManager : MonoBehaviour
         Debug.DrawLine( randomPos, randomPos + (Vector2.left*30), Color.red, 1  );
         Debug.DrawLine( randomPos, randomPos + (Vector2.right*30), Color.red, 1  );
         
-        GameObject newWound = Instantiate( WoundPrefab, bodyPart.transform );
+        GameObject newWoundObj = Instantiate( WoundPrefab, bodyPart.transform );
         
-        newWound.GetComponent<RectTransform>().localPosition = randomPos;
-        newWound.GetComponent<RectTransform>().rotation = Quaternion.Euler( 0,0,Random.Range( -360, 360 ) );
-        newWound.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
+        newWoundObj.GetComponent<RectTransform>().localPosition = randomPos;
+        newWoundObj.GetComponent<RectTransform>().rotation = Quaternion.Euler( 0,0,Random.Range( -360, 360 ) );
+        newWoundObj.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
+        
+        Wound newWound = new Wound( WoundType.Moderate, (BodyPart)partIndex, newWoundObj );
+        _wounds.Add( newWound );
     }
     
     
@@ -125,5 +153,61 @@ public class BodyHealthManager : MonoBehaviour
         
         return result;
     }
+}
+
+[Serializable]
+public class Wound
+{
+    [SerializeField]
+    private WoundType _type;
+    [SerializeField]
+    private BodyPart _affectedPart;
+
+    private int _healingNeeded;
     
+    
+    private GameObject _woundObj;
+
+    public GameObject WoundObj => _woundObj;
+
+    public Wound( WoundType type, BodyPart part, GameObject woundObj )
+    {
+        _type = type;
+        _affectedPart = part;
+        _woundObj = woundObj;
+
+        if ( type == WoundType.Minor )
+        {
+            _healingNeeded = 1;
+        }
+        else if ( type == WoundType.Moderate )
+        {
+            _healingNeeded = 3;
+        }
+        else if ( type == WoundType.Severe )
+        {
+            _healingNeeded = 5;
+        }
+        
+        
+    }
+
+}
+
+public enum BodyPart: int
+{
+    Head = 0,
+    Chest = 1,
+    LeftArm = 2,
+    RightArm = 3,
+    LeftLeg = 4,
+    RightLeg = 5
+}
+
+public enum WoundType : int
+{
+    Minor = 0,
+    Moderate = 1,
+    Severe = 2,
+    Etched = 3
 }

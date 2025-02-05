@@ -41,7 +41,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
 
         if ( eventData.button == PointerEventData.InputButton.Right )
         {
-            //Debug.Log( "right click" );
+            Debug.Log( "right click" );
             //TODO: implement options menu
             return;
         }
