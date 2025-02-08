@@ -32,9 +32,14 @@ public class InventoryItemLayout : MonoBehaviour
 
     private void OnEnable()
     {
+        PlayerUIManager.Instance.ItemUpdateEvent.AddListener( ReloadItem );
         if(_initialized)
             ReloadItem();
-        
+    }
+
+    private void OnDisable()
+    {
+        PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
     }
 
     public virtual void Initialize()
@@ -47,6 +52,7 @@ public class InventoryItemLayout : MonoBehaviour
         if ( !PlayerUIManager.Instance.AllItems.ContainsKey( _item.ItemKey ) )
         {
             GetComponentInParent<InventoryManager>().RemovedItem();
+            PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
             Destroy( gameObject );
         }
         else
@@ -55,19 +61,28 @@ public class InventoryItemLayout : MonoBehaviour
             Initialize();
         }
     }
+
+    public virtual void UpdateCallBack()
+    {
+        Initialize();
+    }
     
     public void CallBack()
     {
         _item.Item.Quantity--;
         if ( _item.Item.Quantity <= 0 )
         {
-            GetComponentInParent<InventoryManager>().RemovedItem();
-            PlayerUIManager.Instance.RemoveItem( _item.ItemKey );
-            Destroy( gameObject );
+            RemoveItem();
             return;
         }
         Initialize();
-        
+    }
+
+    protected void RemoveItem()
+    {
+        GetComponentInParent<InventoryManager>().RemovedItem();
+        PlayerUIManager.Instance.RemoveItem( _item.ItemKey, false );
+        Destroy( gameObject );
     }
 
     public void SwapCallback()

@@ -12,6 +12,9 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     private ItemContainer _container;
     public Vector2 _worldCenterPoint => transform.TransformPoint(_centerPoint);
 
+    public delegate void UpdateCallbackDelegate();
+    public UpdateCallbackDelegate UpdateCallback;
+    
     public delegate void CallbackDelegate();
     public CallbackDelegate Callback;
 
@@ -49,6 +52,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         //DragObject transfer = _manager.SpawnItem( _container.Item.Data, GetComponent<RectTransform>().position );
         DragObject transfer = _manager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.Callback = Callback;
+        transfer.UpdateCallback = UpdateCallback;
         transfer.SwapCallback = SwapCallback;
         transfer.TransferFromContainer = TransferFromContainer;
         transfer.SourceObject = SourceObject;

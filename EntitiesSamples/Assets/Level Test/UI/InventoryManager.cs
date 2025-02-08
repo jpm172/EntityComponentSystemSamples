@@ -120,6 +120,7 @@ public class InventoryManager : MonoBehaviour
         DragObject drag = newContainer.GetComponent<DragObject>();
         drag.Initialize();
         drag.Callback = layout.CallBack;
+        drag.UpdateCallback = layout.UpdateCallBack;
         drag.SwapCallback = layout.SwapCallback;
         drag.TransferFromContainer = newContainer;
         drag.SourceObject = gameObject;

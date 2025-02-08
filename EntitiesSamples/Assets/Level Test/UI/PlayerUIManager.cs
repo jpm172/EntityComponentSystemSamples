@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PlayerUIManager : MonoBehaviour
 {
@@ -47,6 +48,9 @@ public class PlayerUIManager : MonoBehaviour
 
     public List<ItemData> EquipmentItems => _equipmentItems;
     //public List<HealthItemInfo> HealthItems => _healthItems;
+
+    
+    public UnityEvent ItemUpdateEvent;
 
     public void SerializeItems()
     {
@@ -119,7 +123,9 @@ public class PlayerUIManager : MonoBehaviour
             {
                 //_healthItems.Add( new HealthItemInfo( _loadHealthItems[i], _itemKey ) );
                 HealthItemInfo newHealth = new HealthItemInfo( _loadHealthItems[i], _itemKey );
-                newHealth.HealthItem.CurrentCharges =  UnityEngine.Random.Range( 0, newHealth.HealthItem.MaxCharges + 1 );
+                //newHealth.HealthItem.CurrentCharges =  UnityEngine.Random.Range( 0, newHealth.HealthItem.MaxCharges + 1 );
+                newHealth.HealthItem.CurrentCharges =  newHealth.HealthItem.MaxCharges;
+                //newHealth.HealthItem.CurrentCharges =  5;
                 newHealth.Order = i;
             
                 //_healthItemDict.Add( _itemKey, newHealth );
@@ -130,8 +136,11 @@ public class PlayerUIManager : MonoBehaviour
         }
         
     }
-
-    public void RemoveItem(int key)
+    
+    //set update == true whenever using them internally (like the Heal All action) so that
+    //all items are properly updated, but when using items directly (drag and drop), 
+    //it will be handled by the DragObject, and there is no need to update all the other items
+    public void RemoveItem(int key, bool update)
     {
         ItemInfo removedItem = _allItemsDict[key];
         if ( removedItem.GetType() == typeof(HealthItemInfo) )
@@ -140,8 +149,10 @@ public class PlayerUIManager : MonoBehaviour
             _healthItemKeys.Remove( removedItem.Key );
             _allItemsDict.Remove( removedItem.Key );
         }
+        
+        if(update)
+            ItemUpdateEvent.Invoke();
     }
-    
 
     public void OpenGear()
     {

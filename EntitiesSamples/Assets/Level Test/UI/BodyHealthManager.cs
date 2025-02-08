@@ -2,9 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Mathematics;
 using Unity.Physics;
 using UnityEngine;
 using UnityEngine.UI;
+using Math = System.Math;
 using Random = UnityEngine.Random;
 
 public class BodyHealthManager : MonoBehaviour
@@ -18,6 +20,9 @@ public class BodyHealthManager : MonoBehaviour
         _rightLeg;
 
     [SerializeField]
+    private LimbStatusMeter[] _meters;
+
+    [SerializeField]
     public SubMenu _healingMenu;
     
     public Sprite[] WoundSprites;
@@ -26,7 +31,17 @@ public class BodyHealthManager : MonoBehaviour
 
     private int _woundCount;
 
-    private Image[] bodyParts;
+    private Dictionary<BodyPart, Limb> _bodyParts;
+
+    private readonly BodyPart[] _bodyPartLabels =
+    {
+        BodyPart.Head,
+        BodyPart.Chest,
+        BodyPart.LeftArm,
+        BodyPart.RightArm,
+        BodyPart.LeftLeg,
+        BodyPart.RightLeg
+    };
 
     [SerializeField]
     private List<Wound> _wounds;
@@ -34,15 +49,29 @@ public class BodyHealthManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        bodyParts = new[] {_head, _chest, _leftArm, _rightArm, _leftLeg, _rightLeg};
+        InitializeLimbs();
         _wounds = new List<Wound>();
         _healingMenu.OnSelected += HealWounds;
     }
 
+    private void InitializeLimbs()
+    {
+        _bodyParts = new Dictionary<BodyPart, Limb>(6);
+        
+        _bodyParts.Add( BodyPart.Head, new Limb( BodyPart.Head, _head, _meters[0], 50 ) );
+        _bodyParts.Add( BodyPart.Chest, new Limb( BodyPart.Chest, _chest, _meters[1], 50 )  );
+        _bodyParts.Add( BodyPart.LeftArm, new Limb( BodyPart.LeftArm, _leftArm, _meters[2], 50 ) );
+        _bodyParts.Add( BodyPart.RightArm, new Limb( BodyPart.RightArm, _rightArm, _meters[3], 50 ) );
+        _bodyParts.Add( BodyPart.LeftLeg, new Limb( BodyPart.LeftLeg, _leftLeg, _meters[4], 50 ) );
+        _bodyParts.Add( BodyPart.RightLeg, new Limb( BodyPart.RightLeg, _rightLeg, _meters[5], 50 ) );
+    }
+
     public void AddWound()
     {
-        int bodyPart = Random.Range( 0, bodyParts.Length );
-        AddRandomWound( bodyPart );
+        int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
+        bodyPartIndex = 2;
+        //AddRandomWound( _bodyPartLabels[bodyPartIndex], Random.Range( 2, 30 ) );
+        AddRandomWound( _bodyPartLabels[bodyPartIndex], 10 );
         
         _woundCount++;
         
@@ -50,30 +79,126 @@ public class BodyHealthManager : MonoBehaviour
 
     public void HealWounds( int value )
     {
+
+        if ( _wounds.Count == 0 )
+            return;
+        
         PlayerUIManager manager = PlayerUIManager.Instance;
         if ( value == 0 )
         {
+            while ( _wounds.Count > 0 && GetBestHealingItem( out HealthItemInfo bestItem ) )
+            {
+                bool removed = false;
+                foreach ( BodyPart part in _bodyPartLabels )
+                {
+                    HealBodyPart( part, bestItem );
+                    if ( ((HealthItemInfo)manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
+                    {
+                        removed = true;
+                        manager.RemoveItem( bestItem.Key, true );
+                        break;
+                    }
+                }
 
-            foreach ( int key in manager.HealthItemKeys )
-            {
-                ItemInfo item = manager.AllItems[key];
-                
+                if ( !removed )
+                    manager.ItemUpdateEvent.Invoke();
             }
-            
-            foreach ( Wound w in _wounds )
-            {
-                Destroy( w.WoundObj );
-            }
-            _wounds.Clear();
         }
     }
     
+    
 
+    private bool GetBestHealingItem(out HealthItemInfo bestItem)
+    {
+        PlayerUIManager manager = PlayerUIManager.Instance;
+        bestItem = null;
+        
+        foreach ( int key in manager.HealthItemKeys )
+        {
+            HealthItemInfo item = (HealthItemInfo)manager.AllItems[key];
+            
+            if(item.Data.Stackable)
+                continue;
+            
+            if ( bestItem == null || item.HealthItem.CurrentCharges > bestItem.HealthItem.CurrentCharges )
+            {
+                bestItem = item;
+            }
+        }
 
-    private void AddRandomWound( int partIndex )
+        if ( bestItem == null )
+            return false;
+        
+        return true;
+    }
+
+    public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
+    {
+        PlayerUIManager manager = PlayerUIManager.Instance;
+        //Debug.Log( usedItem.HealthItem.CurrentCharges );
+        for ( int i = _wounds.Count - 1; i >= 0; i-- )
+        {
+            Wound w = _wounds[i];
+            if ( w.AffectedPart == bodyPart )
+            {
+                int healAmount = Math.Min( w.HealingNeeded, usedItem.HealthItem.CurrentCharges );
+                usedItem.HealthItem.CurrentCharges -= healAmount;
+                w.HealingNeeded -= healAmount;
+
+                _bodyParts[w.AffectedPart].Heal( healAmount );
+                
+                if ( w.HealingNeeded <= 0 )
+                {
+                    Destroy( w.WoundObj );
+                    _wounds.RemoveAt( i );
+                }
+                
+                if(usedItem.HealthItem.CurrentCharges <= 0)
+                    break;
+            }
+        }
+
+        manager.AllItems[usedItem.Key] = usedItem;
+        
+        //Debug.Log( ((HealthItemInfo)manager.AllItems[usedItem.Key] ).HealthItem.CurrentCharges);
+        
+        
+    }
+
+    private void AddRandomWound( BodyPart woundedBodyPart, int damage )
     {
 
-        Image bodyPart = bodyParts[partIndex];
+        Image bodyPart = _bodyParts[woundedBodyPart].Image;
+        
+        ushort[] tris = bodyPart.sprite.triangles;
+        Vector2[] verts = bodyPart.sprite.vertices;
+        float ppu = bodyPart.sprite.pixelsPerUnit; 
+        
+        int randomIndex = Random.Range( 0, tris.Length / 3 ) * 3;//select a random tri from the body part's mesh
+
+        Vector2 randomPos = RandomWithinTriangle( verts[tris[randomIndex]], verts[tris[randomIndex + 1]], verts[tris[randomIndex + 2]] );
+        randomPos *= ppu;
+
+        GameObject newWoundObj = Instantiate( WoundPrefab, bodyPart.transform );
+        
+        newWoundObj.GetComponent<RectTransform>().localPosition = randomPos;
+        newWoundObj.GetComponent<RectTransform>().rotation = Quaternion.Euler( 0,0,Random.Range( -360, 360 ) );
+        newWoundObj.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
+
+        if ( _bodyParts[woundedBodyPart].CurrentHealth >= damage )
+        {
+            Wound newWound = new Wound( damage, woundedBodyPart, newWoundObj );
+            _bodyParts[woundedBodyPart].Damage( newWound.HealingNeeded );
+            _wounds.Add( newWound );
+        }
+
+
+    }
+
+    private void AddRandomWoundDebug( BodyPart woundedBodyPart, int damage )
+    {
+
+        Image bodyPart = _bodyParts[woundedBodyPart].Image;
         
         ushort[] tris = bodyPart.sprite.triangles;
         Vector2[] verts = bodyPart.sprite.vertices;
@@ -120,7 +245,9 @@ public class BodyHealthManager : MonoBehaviour
         newWoundObj.GetComponent<RectTransform>().rotation = Quaternion.Euler( 0,0,Random.Range( -360, 360 ) );
         newWoundObj.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
         
-        Wound newWound = new Wound( WoundType.Moderate, (BodyPart)partIndex, newWoundObj );
+        
+        Wound newWound = new Wound( WoundType.Severe, woundedBodyPart, newWoundObj );
+        _bodyParts[woundedBodyPart].Damage( newWound.HealingNeeded );
         _wounds.Add( newWound );
     }
     
@@ -170,6 +297,37 @@ public class Wound
 
     public GameObject WoundObj => _woundObj;
 
+    public BodyPart AffectedPart => _affectedPart;
+
+    public int HealingNeeded
+    {
+        get => _healingNeeded;
+        set => _healingNeeded = value;
+    }
+
+    
+    public Wound( int damage, BodyPart part, GameObject woundObj )
+    {
+        
+        _affectedPart = part;
+        _woundObj = woundObj;
+        _healingNeeded = damage;
+
+        if ( damage <= 5 )
+        {
+            _type = WoundType.Minor;
+        }
+        else if ( damage <= 15 )
+        {
+            _type = WoundType.Moderate;
+        }
+        else
+        {
+            _type = WoundType.Severe;
+        }
+        
+    }
+    
     public Wound( WoundType type, BodyPart part, GameObject woundObj )
     {
         _type = type;
@@ -188,10 +346,52 @@ public class Wound
         {
             _healingNeeded = 5;
         }
-        
-        
     }
 
+}
+
+
+public class Limb
+{
+    private BodyPart _bodyPart;
+    private Image _image;
+    private int _maxHealth;
+    private int _currentHealth;
+    private LimbStatusMeter _meter;
+
+    public Image Image => _image;
+
+    public BodyPart BodyPart => _bodyPart;
+
+    public int CurrentHealth => _currentHealth;
+
+    public int MaxHealth => _maxHealth;
+
+    
+    
+    public Limb( BodyPart bodyPart, Image img, LimbStatusMeter meter, int maxHealth )
+    {
+        _bodyPart = bodyPart;
+        _image = img;
+        _maxHealth = maxHealth;
+        _currentHealth = maxHealth;
+        _meter = meter;
+    }
+
+    public void Damage( int damage )
+    {
+        _currentHealth = Math.Max( 0, _currentHealth - damage );
+        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );   
+        _meter.UpdateStatus( this );
+    }
+
+    public void Heal( int amount )
+    {
+        _currentHealth = Math.Min( _maxHealth, _currentHealth + amount );
+        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );
+        _meter.UpdateStatus( this );
+    }
+    
 }
 
 public enum BodyPart: int

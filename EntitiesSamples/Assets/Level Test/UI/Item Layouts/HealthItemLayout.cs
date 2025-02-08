@@ -22,6 +22,7 @@ public class HealthItemLayout : InventoryItemLayout
     
     public override void Initialize()
     {
+        
         if(_item == null)
             _item = GetComponent<ItemContainer>();
         
@@ -53,7 +54,16 @@ public class HealthItemLayout : InventoryItemLayout
         _itemImage.rectTransform.sizeDelta = spriteSize;
         _itemImage.rectTransform.anchoredPosition = new Vector2(finalSize.x + _padding, 0);
         */
-
+    }
+    
+    public override void UpdateCallBack()
+    {
+        if ( ( (HealthItemInfo) _item.Item ).HealthItem.CurrentCharges <= 0 )
+        {
+            RemoveItem();
+            return;
+        }
         
+        Initialize();
     }
 }
