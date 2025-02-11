@@ -16,6 +16,13 @@ public class PlayerUIManager : MonoBehaviour
     private GameObject _healthLayer;
 
     public BodyHealthManager _bodyManager;
+
+    [SerializeField]
+    private int _playerMaxHealth;
+    [SerializeField]
+    private int _playerCurrentHealth;
+
+    private float _playerBleedRate;
     
     [SerializeField]
     private List<WeaponItemData> _loadWeapons;
@@ -49,7 +56,24 @@ public class PlayerUIManager : MonoBehaviour
     public List<ItemData> EquipmentItems => _equipmentItems;
     //public List<HealthItemInfo> HealthItems => _healthItems;
 
-    
+    public int PlayerCurrentHealth
+    {
+        get => _playerCurrentHealth;
+        set => _playerCurrentHealth = value;
+    }
+
+    public int PlayerMaxHealth
+    {
+        get => _playerMaxHealth;
+        set => _playerMaxHealth = value;
+    }
+
+    public float PlayerBleedRate
+    {
+        get => _playerBleedRate;
+        set => _playerBleedRate = value;
+    }
+
     public UnityEvent ItemUpdateEvent;
 
     public void SerializeItems()
@@ -73,6 +97,10 @@ public class PlayerUIManager : MonoBehaviour
         {
             Destroy( Instance );
         }
+
+        _playerMaxHealth = 300;
+        _playerCurrentHealth = _playerMaxHealth;
+        
         
         _allItemsDict = new Dictionary<int, ItemInfo>();
 

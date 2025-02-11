@@ -7,7 +7,12 @@ using UnityEngine.UI;
 public class LimbStatusMeter : MonoBehaviour
 {
     [SerializeField]
-    private TextMeshProUGUI _text;
+    private TextMeshProUGUI _healthText;
+    [SerializeField]
+    private TextMeshProUGUI _bleedText;
+
+    [SerializeField]
+    private CanvasGroup _canvasGroup;
 
     [SerializeField]
     private Image _meterImage;
@@ -16,9 +21,21 @@ public class LimbStatusMeter : MonoBehaviour
     private Image _destroyedImage;
 
 
+    
+    
     public void UpdateStatus(Limb limb)
     {
-        _text.text = $"{limb.CurrentHealth}|{limb.MaxHealth}";
+        _healthText.text = $"{limb.CurrentHealth}|{limb.MaxHealth}";
+        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
+        if ( limb.Bleed <= Mathf.Epsilon )
+        {
+            _canvasGroup.alpha = 0.5f;
+        }
+        else
+        {
+            _canvasGroup.alpha = 1;
+        }
+
         _meterImage.fillAmount = (float)limb.CurrentHealth / limb.MaxHealth;
 
         if ( limb.CurrentHealth <= 0 )
