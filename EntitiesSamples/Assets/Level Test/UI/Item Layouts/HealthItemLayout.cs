@@ -33,9 +33,11 @@ public class HealthItemLayout : InventoryItemLayout
         }
         else
         {
-            _quantityText.transform.gameObject.SetActive( false );
+            //_quantityText.transform.gameObject.SetActive( false );
             _maxCharges = ( (HealthItemInfo) _item.Item ).HealthItem.MaxCharges;
             _currentCharges = ( (HealthItemInfo) _item.Item ).HealthItem.CurrentCharges;
+            
+            _quantityText.text = $"{_currentCharges}";
         
             float durValue =  (float) _currentCharges / _maxCharges ;
             _chargeMeter.fillAmount = durValue;

@@ -52,19 +52,19 @@ public class TotalStatusTracker : MonoBehaviour
         {
             return BleedCategory.None;
         }
-        else if ( bleedRate <= 5 )
+        else if ( bleedRate <= 1 )
         {
             return BleedCategory.Trickle;
         }
-        else if ( bleedRate <= 15 )
+        else if ( bleedRate <= 5 )
         {
             return BleedCategory.SlowBleed;
         }
-        else if ( bleedRate <= 35 )
+        else if ( bleedRate <= 15 )
         {
             return BleedCategory.HeavyBleed;
         }
-        else if ( bleedRate <= 65 )
+        else if ( bleedRate <= 30 )
         {
             return BleedCategory.Hemorrhage;
         }
