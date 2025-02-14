@@ -17,6 +17,7 @@ public partial class LevelGenerator : MonoBehaviour
 {
 
     [SerializeField] private int seed;
+    [SerializeField] private int bigRooms;
 
     [SerializeField]
     private int2 dimensions;//dimensions of level in terms of pixels
