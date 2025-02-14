@@ -47,6 +47,8 @@ public class BodyHealthManager : MonoBehaviour
         BodyPart.RightLeg
     };
 
+    public Dictionary<BodyPart, Limb> BodyParts => _bodyParts;
+
     //[SerializeField]
     //private List<Wound> _wounds;
 
@@ -64,6 +66,7 @@ public class BodyHealthManager : MonoBehaviour
 
     private void FixedUpdate()
     {
+        return;
         foreach ( Limb limb in _bodyParts.Values )
         {
             limb.CumulativeDamage += limb.Bleed * Time.fixedDeltaTime;
@@ -88,22 +91,22 @@ public class BodyHealthManager : MonoBehaviour
     {
         _bodyParts = new Dictionary<BodyPart, Limb>(6);
         
-        _bodyParts.Add( BodyPart.Head, new Limb( BodyPart.Head, _head, _meters[0], 50 ) );
-        _bodyParts.Add( BodyPart.Chest, new Limb( BodyPart.Chest, _chest, _meters[1], 50 )  );
-        _bodyParts.Add( BodyPart.LeftArm, new Limb( BodyPart.LeftArm, _leftArm, _meters[2], 50 ) );
-        _bodyParts.Add( BodyPart.RightArm, new Limb( BodyPart.RightArm, _rightArm, _meters[3], 50 ) );
-        _bodyParts.Add( BodyPart.LeftLeg, new Limb( BodyPart.LeftLeg, _leftLeg, _meters[4], 50 ) );
-        _bodyParts.Add( BodyPart.RightLeg, new Limb( BodyPart.RightLeg, _rightLeg, _meters[5], 50 ) );
+        _bodyParts.Add( BodyPart.Head, new Limb( BodyPart.Head, _head, _meters[0], this, 50 ) );
+        _bodyParts.Add( BodyPart.Chest, new Chest( BodyPart.Chest, _chest, _meters[1], this, 300 )  );
+        _bodyParts.Add( BodyPart.LeftArm, new Limb( BodyPart.LeftArm, _leftArm, _meters[2], this, 50 ) );
+        _bodyParts.Add( BodyPart.RightArm, new Limb( BodyPart.RightArm, _rightArm, _meters[3], this, 50 ) );
+        _bodyParts.Add( BodyPart.LeftLeg, new Limb( BodyPart.LeftLeg, _leftLeg, _meters[4], this, 50 ) );
+        _bodyParts.Add( BodyPart.RightLeg, new Limb( BodyPart.RightLeg, _rightLeg, _meters[5], this, 50 ) );
     }
 
     public void AddWound()
     {
         int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
-        bodyPartIndex = 2;
+        //bodyPartIndex = 1;
         //AddRandomWound( _bodyPartLabels[bodyPartIndex], Random.Range( 2, 30 ) );
-        
-        int damage = 10;
-        float bleed = 5f;
+
+        int damage = Random.Range( 2, 30 );//10;
+        float bleed = Random.Range( 0f, 12f );
         WoundInfo info = new WoundInfo(damage, bleed);
         
         AddRandomWound( _bodyPartLabels[bodyPartIndex], info );
@@ -113,57 +116,187 @@ public class BodyHealthManager : MonoBehaviour
 
     public void HealWounds( int value )
     {
-        if ( value == 0 )
+        if ( value == 0 )//heal all
         {
-            foreach ( BodyPart part in _bodyPartLabels )
-            {
-                if ( _bodyParts[part].Wounds.Count == 0 && _bodyParts[part].Healthy )
-                    continue;
-
-
-                while ( _bodyParts[part].Wounds.Count > 0 && GetBestHealingItem( out HealthItemInfo bestItem ) )
-                {
-                    bool removed = false;
-                    HealBodyPart( part, bestItem );
-                    if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
-                    {
-                        removed = true;
-                        _manager.RemoveItem( bestItem.Key, true );
-                        break;
-                    }
-                    
-                    if ( !removed )
-                        _manager.ItemUpdateEvent.Invoke();
-                }
-
-            }
-
-            /*
-            while ( _wounds.Count > 0 && GetBestHealingItem( out HealthItemInfo bestItem ) )
-            {
-                bool removed = false;
-                foreach ( BodyPart part in _bodyPartLabels )
-                {
-                    HealBodyPart( part, bestItem );
-                    if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
-                    {
-                        removed = true;
-                        _manager.RemoveItem( bestItem.Key, true );
-                        break;
-                    }
-                }
-
-                if ( !removed )
-                    _manager.ItemUpdateEvent.Invoke();
-            }
-            */
+            HealBody();
         }
+        else if ( value == 1 )
+        {
+            HealBody(WoundType.Severe);
+        }
+        else if ( value == 2 )
+        {
+            HealBody(WoundType.Moderate);
+        }
+        else if ( value == 3 )
+        {
+            HealBody(WoundType.Minor);
+        }
+        
         
         
         _manager.PlayerBleedRate = GetTotalBleedRate();
     }
+
+    private void HealBody()
+    {
+        bool hasItem = GetBestHealingItem( out HealthItemInfo bestItem );
+            
+        foreach ( BodyPart part in _bodyPartLabels )
+        {
+            if ( _bodyParts[part].Wounds.Count == 0 && _bodyParts[part].Healthy )
+                continue;
+                
+                
+            while ( _bodyParts[part].Wounds.Count > 0 && hasItem )
+            {
+                HealBodyPart( part, bestItem );
+                if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
+                {
+                    _manager.RemoveItem( bestItem.Key, true );
+                    hasItem = GetBestHealingItem( out bestItem ); 
+                    continue;
+                }
+                    
+                    
+                _manager.ItemUpdateEvent.Invoke();
+            }
+
+        }
+    }
+
+    private void HealBody( WoundType targetWound )
+    {
+        bool hasItem = GetBestHealingItem( out HealthItemInfo bestItem );
+            
+        foreach ( BodyPart part in _bodyPartLabels )
+        {
+            if ( _bodyParts[part].Wounds.Count == 0 && _bodyParts[part].Healthy )
+                continue;
+                
+                
+            while ( _bodyParts[part].Wounds.Count > 0 && hasItem && HealBodyPart( part, targetWound, bestItem ) )
+            {
+                if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
+                {
+                    _manager.RemoveItem( bestItem.Key, true );
+                    hasItem = GetBestHealingItem( out bestItem ); 
+                    continue;
+                }
+                    
+                    
+                _manager.ItemUpdateEvent.Invoke();
+            }
+
+        }
+    }
     
+
+    public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
+    {
+        Limb limb = _bodyParts[bodyPart];
+        
+        for ( int i = limb.Wounds.Count - 1; i >= 0; i-- )
+        {
+            Wound w = limb.Wounds[i];
+            
+            int healAmount = Math.Min( w.HealingNeeded, usedItem.HealthItem.CurrentCharges );
+            usedItem.HealthItem.CurrentCharges -= healAmount;
+            w.HealingNeeded -= healAmount;
+
+            float newBleed = w.MaxBleed * w.HealProgress;
+            float bleedingHealed = w.Bleed - newBleed;
+            w.Bleed = newBleed;
+
+            _bodyParts[bodyPart].Heal( healAmount, bleedingHealed );
+            
+            if ( w.HealingNeeded <= 0 )
+            {
+                Destroy( w.WoundObj );
+                limb.Wounds.RemoveAt( i );
+            }
+            
+            if(usedItem.HealthItem.CurrentCharges <= 0)
+                break;
+        }
+
+        if ( limb.Wounds.Count == 0 && !limb.Healthy )
+        {
+            int healAmount =  Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
+            usedItem.HealthItem.CurrentCharges -= healAmount;
+            limb.Heal( healAmount );
+        }
+        
+        _manager.PlayerBleedRate = GetTotalBleedRate();
+        _manager.AllItems[usedItem.Key] = usedItem;
+    }
     
+    public bool HealBodyPart( BodyPart bodyPart, WoundType targetWound, HealthItemInfo usedItem )
+    {
+        Limb limb = _bodyParts[bodyPart];
+        bool healed = false;
+        
+        for ( int i = limb.Wounds.Count - 1; i >= 0; i-- )
+        {
+            Wound w = limb.Wounds[i];
+            
+            if(w.Type != targetWound)
+                continue;
+            healed = true;
+
+            int healAmount = Math.Min( w.HealingNeeded, usedItem.HealthItem.CurrentCharges );
+            usedItem.HealthItem.CurrentCharges -= healAmount;
+            w.HealingNeeded -= healAmount;
+
+            float newBleed = w.MaxBleed * w.HealProgress;
+            float bleedingHealed = w.Bleed - newBleed;
+            w.Bleed = newBleed;
+
+            _bodyParts[bodyPart].Heal( healAmount, bleedingHealed );
+            
+            if ( w.HealingNeeded <= 0 )
+            {
+                Destroy( w.WoundObj );
+                limb.Wounds.RemoveAt( i );
+            }
+            
+            if(usedItem.HealthItem.CurrentCharges <= 0)
+                break;
+        }
+
+        if ( limb.Wounds.Count == 0 && !limb.Healthy )
+        {
+            int healAmount =  Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
+            usedItem.HealthItem.CurrentCharges -= healAmount;
+            limb.Heal( healAmount );
+        }
+        
+
+
+        _manager.PlayerBleedRate = GetTotalBleedRate();
+        _manager.AllItems[usedItem.Key] = usedItem;
+
+        return healed;
+    }
+
+    private Limb GetMostBleedingLimb(bool ignoreChest)
+    {
+        Limb result = null;
+        float highest = 0;
+        foreach ( Limb limb in _bodyParts.Values )
+        {
+            if(ignoreChest && limb.BodyPart == BodyPart.Chest)
+                continue;
+
+            if ( limb.Bleed > highest )
+            {
+                highest = limb.Bleed;
+                result = limb;
+            }
+        }
+
+        return result;
+    }
 
     private bool GetBestHealingItem(out HealthItemInfo bestItem)
     {
@@ -188,63 +321,17 @@ public class BodyHealthManager : MonoBehaviour
         return true;
     }
 
-    public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
-    {
-        Limb limb = _bodyParts[bodyPart];
-        
-        //Debug.Log( usedItem.HealthItem.CurrentCharges );
-        for ( int i = limb.Wounds.Count - 1; i >= 0; i-- )
-        {
-            Wound w = limb.Wounds[i];
-            
-            int healAmount = Math.Min( w.HealingNeeded, usedItem.HealthItem.CurrentCharges );
-            usedItem.HealthItem.CurrentCharges -= healAmount;
-            w.HealingNeeded -= healAmount;
-
-            float newBleed = w.MaxBleed * w.HealProgress;
-            float bleedingHealed = w.Bleed - newBleed;
-            w.Bleed = w.MaxBleed * w.HealProgress;
-
-            _bodyParts[bodyPart].Heal( healAmount, bleedingHealed );
-            
-            if ( w.HealingNeeded <= 0 )
-            {
-                Destroy( w.WoundObj );
-                limb.Wounds.RemoveAt( i );
-            }
-            
-            if(usedItem.HealthItem.CurrentCharges <= 0)
-                break;
-        }
-
-        if ( limb.Wounds.Count == 0 && !limb.Healthy )
-        {
-            int healAmount =  Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
-            usedItem.HealthItem.CurrentCharges -= healAmount;
-            limb.Heal( healAmount );
-        }
-        
-        
-        _manager.PlayerBleedRate = GetTotalBleedRate();
-        _manager.AllItems[usedItem.Key] = usedItem;
-        
-        //Debug.Log( ((HealthItemInfo)_manager.AllItems[usedItem.Key] ).HealthItem.CurrentCharges);
-        
-        
-    }
-
     private void AddRandomWound( BodyPart woundedBodyPart, WoundInfo info )
     {
-
-        if ( _bodyParts[woundedBodyPart].CurrentHealth < info.Damage )
+        
+        if ( _bodyParts[woundedBodyPart].ShouldSpreadDamage(info.Damage) )
         {
             SpreadDamage( woundedBodyPart, info );
-            
-            if ( _bodyParts[woundedBodyPart].Destroyed )
-                return;
-            
             info.Damage = _bodyParts[woundedBodyPart].CurrentHealth;
         }
+        
+        if ( _bodyParts[woundedBodyPart].Destroyed )
+            return;
 
         GameObject newWoundObj = InstansiateWound( woundedBodyPart );
 
@@ -286,6 +373,8 @@ public class BodyHealthManager : MonoBehaviour
                 
             }
         }
+        _manager.PlayerBleedRate = GetTotalBleedRate();
+        
     }
     
     private GameObject InstansiateWound(BodyPart bodyPart)
@@ -402,6 +491,8 @@ public class Wound
 
     public BodyPart AffectedPart => _affectedPart;
 
+    public WoundType Type => GetWoundType();
+    
     public int HealingNeeded
     {
         get => _healingNeeded;
@@ -465,7 +556,22 @@ public class Wound
         {
             _type = WoundType.Severe;
         }
-        
+    }
+
+    public WoundType GetWoundType()
+    {
+        if ( _healingNeeded >= 25 || _bleed >= 10 )
+        {
+            return WoundType.Severe;
+        }
+        else if ( _healingNeeded >= 15 || _bleed >= 5 )
+        {
+            return WoundType.Moderate;
+        }
+        else
+        {
+            return WoundType.Minor;
+        }
     }
     
     public Wound( WoundType type, BodyPart part, GameObject woundObj )
@@ -501,99 +607,6 @@ public struct WoundInfo
     }
 }
 
-[Serializable]
-public class Limb
-{
-    private BodyPart _bodyPart;
-    private Image _image;
-    private int _maxHealth;
-    private int _currentHealth;
-
-    [SerializeField]
-    private List<Wound> _wounds;
-    
-    private float _bleed;
-    private LimbStatusMeter _meter;
-    private PlayerUIManager _manager;
-    [SerializeField]
-    private float _cumulativeDamage;
-
-    public Image Image => _image;
-
-    public BodyPart BodyPart => _bodyPart;
-
-    public int CurrentHealth => _currentHealth;
-
-    public int MaxHealth => _maxHealth;
-
-    public int MissingHealth => _maxHealth - _currentHealth;
-
-    public float Bleed => _bleed;
-
-    public bool Destroyed => _currentHealth <= 0;
-
-    public bool Healthy => _currentHealth >= _maxHealth;
-
-    public List<Wound> Wounds => _wounds;
-
-    public float CumulativeDamage
-    {
-        get => _cumulativeDamage;
-        set => _cumulativeDamage = math.max(0, value);
-    }
-
-    public Limb( BodyPart bodyPart, Image img, LimbStatusMeter meter, int maxHealth )
-    {
-        _wounds = new List<Wound>();
-        _manager = PlayerUIManager.Instance;
-        _bleed = 0;
-        _bodyPart = bodyPart;
-        _image = img;
-        _maxHealth = maxHealth;
-        _currentHealth = maxHealth;
-        _meter = meter;
-        meter.Initialize( this );
-    }
-
-    
-    public void Damage( WoundInfo info )
-    {
-        int clampedDamage = Math.Min( info.Damage, _currentHealth );
-        _manager.PlayerCurrentHealth -=clampedDamage;
-        _currentHealth -= clampedDamage;
-        _bleed += info.Bleed;
-        
-        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );   
-        _meter.UpdateStatus( this );
-    }
-    
-    public void Damage( int damage )
-    {
-        int clampedDamage = Math.Min( damage, _currentHealth );
-        _manager.PlayerCurrentHealth -= clampedDamage;
-        _currentHealth -= clampedDamage;
-        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );   
-        _meter.UpdateStatus( this );
-    }
-
-    public void Heal( int amount )
-    {
-        _manager.PlayerCurrentHealth += amount;
-        _currentHealth += amount;
-        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );
-        _meter.UpdateStatus( this );
-    }
-    
-    public void Heal( int healAmount, float bleedHealAmount)
-    {
-        _manager.PlayerCurrentHealth += healAmount;
-        _currentHealth += healAmount;
-        _bleed = math.max( 0, _bleed - bleedHealAmount );
-        _image.color = Color.Lerp( Color.black, Color.white, (float)_currentHealth/_maxHealth );
-        _meter.UpdateStatus( this );
-    }
-    
-}
 
 public enum BodyPart: int
 {
@@ -611,4 +624,16 @@ public enum WoundType : int
     Moderate = 1,
     Severe = 2,
     Etched = 3
+}
+
+public enum BleedCategory : int
+{
+    None = 0,
+    Trickle = 1,
+    SlowBleed = 2,
+    SteadyBleed = 3,
+    HeavyBleed = 4,
+    Hemorrhage = 5,
+    Exodus = 6
+    
 }

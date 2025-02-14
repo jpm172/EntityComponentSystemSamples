@@ -59,7 +59,7 @@ public class PlayerUIManager : MonoBehaviour
     public int PlayerCurrentHealth
     {
         get => _playerCurrentHealth;
-        set => _playerCurrentHealth = value;
+        set => _playerCurrentHealth = Math.Max(0,value);
     }
 
     public int PlayerMaxHealth
@@ -71,7 +71,7 @@ public class PlayerUIManager : MonoBehaviour
     public float PlayerBleedRate
     {
         get => _playerBleedRate;
-        set => _playerBleedRate = value;
+        set => _playerBleedRate = Math.Max(0, value);
     }
 
     public UnityEvent ItemUpdateEvent;

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class LimbStatusMeter : MonoBehaviour
 {
-    
+
     private static Color _green = new Color(0.03921569f, 0.8352941f, 0.03921569f);
     private static Color _red = new Color(0.8352941f, 0.07843138f, 0.03529412f);
     
@@ -39,6 +39,7 @@ public class LimbStatusMeter : MonoBehaviour
         if ( limb.BodyPart == BodyPart.Chest )
         {
             UpdateChestStatus( limb );
+            return;
         }
         _healthText.text = $"{limb.CurrentHealth}|{limb.MaxHealth}";
         _bleedText.text = $"{limb.Bleed:0.0}\nSec";
@@ -65,7 +66,7 @@ public class LimbStatusMeter : MonoBehaviour
 
     private void UpdateChestStatus( Limb limb )
     {
-        _healthText.text = $"{limb.CurrentHealth}|{limb.MaxHealth}";
+        _healthText.text = $"{Mathf.Abs(limb.CurrentHealth)}";
         _bleedText.text = $"{limb.Bleed:0.0}\nSec";
         if ( limb.Bleed <= Mathf.Epsilon )
         {

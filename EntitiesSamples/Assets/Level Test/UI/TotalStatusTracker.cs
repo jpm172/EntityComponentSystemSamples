@@ -73,16 +73,6 @@ public class TotalStatusTracker : MonoBehaviour
     }
 }
 
-public enum BleedCategory : int
-{
-    None = 0,
-    Trickle = 1,
-    SlowBleed = 2,
-    SteadyBleed = 3,
-    HeavyBleed = 4,
-    Hemorrhage = 5,
-    Exodus = 6
-    
-}
+
 
 
