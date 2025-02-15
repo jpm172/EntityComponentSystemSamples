@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+[Serializable]
 public class LevelRoom 
 {
     private static readonly int2 Int2One = new int2(1,1);
@@ -12,11 +14,15 @@ public class LevelRoom
     private LevelMaterial _material;
     private LevelGrowthType _growthType; 
     
+    [SerializeField]
     private int _id;
+    [SerializeField]
     private int _wallId;
     private Color _debugColor;
+    [SerializeField]
     private int4 _bounds;
     private int2 _sizeRatio;
+    [SerializeField]
     private int2 _graphPosition;
 
     private List<int2> _xGrowthDirections;
@@ -82,6 +88,35 @@ public class LevelRoom
         _xGrowthDirections = new List<int2>();
         _yGrowthDirections = new List<int2>();
         
+        _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
+    }
+    
+    public LevelRoom( LevelRoom initialRoom, int id, int wallId, LevelMaterial mat, LevelGrowthType growthType, int2 sizeRatio, int weight )
+    {
+        _id = id;
+        _wallId = wallId; 
+        _material = mat;
+        _growthType = growthType;
+        _graphPosition = initialRoom.GraphPosition;
+        _bounds = initialRoom.Bounds;
+        _sizeRatio = sizeRatio;
+        _wallThickness = initialRoom.WallThickness;
+        _weight = weight;
+        
+        _xGrowthDirections = new List<int2>();
+        _yGrowthDirections = new List<int2>();
+        
+        
+        _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
+    }
+    
+    
+    public LevelRoom( int2 graphPosition, int2 origin, int2 size, int wallThickness )
+    {
+        _graphPosition = graphPosition;
+        _bounds = new int4(origin, origin+size - Int2One);
+        _wallThickness = wallThickness;
+
         _debugColor = new Color(Random.Range( 0,1f ),Random.Range( 0,1f ),Random.Range( 0,1f ), 1);
     }
 
