@@ -888,9 +888,9 @@ RectTransform:
   - {fileID: 1201318543}
   m_Father: {fileID: 1715162738}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 97.47626, y: -132.21574}
   m_SizeDelta: {x: 194.95251, y: 264.4315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &221220712
@@ -1065,7 +1065,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0.023986816, y: -30}
-  m_SizeDelta: {x: 193.9525, y: 0}
+  m_SizeDelta: {x: 193.9525, y: 20}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &233147346
 MonoBehaviour:
@@ -1703,7 +1703,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0.023986816, y: -30}
-  m_SizeDelta: {x: 193.9525, y: 0}
+  m_SizeDelta: {x: 193.9525, y: 10}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &385335500
 MonoBehaviour:
@@ -1834,9 +1834,9 @@ RectTransform:
   - {fileID: 2146843996}
   m_Father: {fileID: 1715162738}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 97.47625, y: -396.64722}
   m_SizeDelta: {x: 194.9525, y: 264.4315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &427333290
@@ -2182,7 +2182,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &557282773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3707,7 +3707,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &993911221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4194,7 +4194,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0.023979187, y: -30}
-  m_SizeDelta: {x: 193.9525, y: 0}
+  m_SizeDelta: {x: 193.9525, y: 20}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1091231149
 MonoBehaviour:
@@ -4589,9 +4589,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 879537753}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 75, y: -25}
   m_SizeDelta: {x: 140, y: 22.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1176368770
@@ -5035,9 +5035,9 @@ RectTransform:
   - {fileID: 1872747585}
   m_Father: {fileID: 1715162738}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 97.47625, y: -661.07874}
   m_SizeDelta: {x: 194.9525, y: 264.4315}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1221338216
@@ -5227,7 +5227,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1289639035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5240,7 +5240,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2d2b27e012ffb4699bb5d2b121571b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  seed: 10
+  seed: 217
+  bigRooms: 1
   dimensions:
     x: 0
     y: 0
@@ -5250,7 +5251,6 @@ MonoBehaviour:
   fogOfWarCamera: {fileID: 2115140062}
   fogOfWarObj: {fileID: 202867446}
   floorMaterials:
-  - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
   - {fileID: 2100000, guid: ed260cb326f56454cabea2688a415c79, type: 2}
   - {fileID: 2100000, guid: bd2bd65ddb71c284bb3834fe0b8ee006, type: 2}
@@ -5263,6 +5263,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
   dynamicWallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
   staticWallMaterial: {fileID: 2100000, guid: e148d9c713eebb542bbb5882dea2f44a, type: 2}
+  _rooms: []
   FoWTexture: {fileID: 0}
   useSeed: 1
   _minWallThickness: 6
@@ -5271,14 +5272,14 @@ MonoBehaviour:
   _maxRoomSeedSize: 60
   _seedBuffer: 20
   maxEdgeWeight: 10
-  UseGizmos: 0
+  UseGizmos: 1
   ShowBins: 0
   UseMeshes: 0
   ShowFloorMesh: 0
-  HideFloors: 1
+  HideFloors: 0
   ShowWallMesh: 0
   UseWireMeshes: 0
-  UseConnections: 0
+  UseConnections: 1
   CreateOnStart: 1
   StepWiseGrow: 0
   GrowSteps: 1
@@ -6813,9 +6814,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1993505774}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 75, y: -25}
   m_SizeDelta: {x: 140, y: 22.8}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1655020753

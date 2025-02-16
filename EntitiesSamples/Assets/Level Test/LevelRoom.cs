@@ -111,8 +111,9 @@ public class LevelRoom
     }
     
     
-    public LevelRoom( int2 graphPosition, int2 origin, int2 size, int wallThickness )
+    public LevelRoom( int id, int2 graphPosition, int2 origin, int2 size, int wallThickness )
     {
+        _id = id;
         _graphPosition = graphPosition;
         _bounds = new int4(origin, origin+size - Int2One);
         _wallThickness = wallThickness;

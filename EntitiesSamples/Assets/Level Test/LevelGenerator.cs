@@ -335,6 +335,8 @@ public partial class LevelGenerator : MonoBehaviour
             if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
             {
                 //use the bounds of the connection to solve race condition
+                //MIGHT NOT WORK IF THERE ARE MULTIPLE DOORS THAT HAVE SAME SIZE
+                //Maybe use origin to solve instead as a backup
                 if ( result == null || largest < cnct.Hash )
                 {
                     largest = cnct.Hash;
@@ -342,6 +344,11 @@ public partial class LevelGenerator : MonoBehaviour
                     index = i;
                 }
             }
+        }
+
+        if ( key.Equals( new int2( 4, 5 ) ) )
+        {
+            
         }
         
         PlaceDoorAtConnection( result, out List<LevelConnectionManager> cncts);
@@ -549,7 +556,7 @@ public partial class LevelGenerator : MonoBehaviour
                 int2 graphPosition = new int2(x,y);
                 int2 roomOrigin = GetRandomAlignedRoomOrigin( initialRooms, x, y, xOffset , yOffset, wallThickness, roomSize );
 
-                LevelRoom room = new LevelRoom( graphPosition, roomOrigin, roomSize, wallThickness);
+                LevelRoom room = new LevelRoom( index + 1, graphPosition, roomOrigin, roomSize, wallThickness);
                 initialRooms[index] = room;
                 yOffset += adjustedMaxSize + (adjustedBuffer*2) ;
             }
@@ -560,8 +567,10 @@ public partial class LevelGenerator : MonoBehaviour
         List<int> mergedRooms = new List<int>();
         for ( int i = 0; i < bigRooms; i++ )
         {
-            int mergeIndex = 1;
-            LevelRoom bigRoom = initialRooms[0];
+            int bigIndex = Random.Range( 0, initialRooms.Length );
+            LevelRoom bigRoom = initialRooms[bigIndex];
+            int mergeIndex = GetRandomNeighborIndex( bigRoom );
+            
 
             LevelRoom mergeRoom = initialRooms[mergeIndex];
             mergedRooms.Add( mergeIndex );
@@ -615,6 +624,51 @@ public partial class LevelGenerator : MonoBehaviour
             DrawRoomSeed( room );
         }
         CheckInitialConnectionsBR();
+    }
+
+    private int GetRandomNeighborIndex(LevelRoom room)
+    {
+        bool vertical = Random.Range( 0, 2 ) == 1;
+
+        if ( vertical )
+        {
+            
+            if ( room.GraphPosition.y == 0 )
+            {
+                return room.Index + layoutDimensions.x;
+            }
+            if ( room.GraphPosition.y == layoutDimensions.y - 1 )
+            {
+                return room.Index - layoutDimensions.x;
+            }
+            
+            bool above = Random.Range( 0, 2 ) == 1;
+
+            if ( above )
+            {
+                return room.Index + layoutDimensions.x;
+            }
+            return room.Index - layoutDimensions.x;
+        }
+        else
+        {
+            if ( room.GraphPosition.x == 0 )
+            {
+                return room.Index + 1;
+            }
+            if ( room.GraphPosition.x == layoutDimensions.x - 1 )
+            {
+                return room.Index - 1;
+            }
+            
+            bool right = Random.Range( 0, 2 ) == 1;
+
+            if ( right )
+            {
+                return room.Index + 1;
+            }
+            return room.Index - 1;
+        }
     }
     
     private void InitializeLevelBigRoomsSimple()
@@ -962,17 +1016,22 @@ public partial class LevelGenerator : MonoBehaviour
                 bool alreadyConnected = connectionsMade.Contains( new int2( math.min( room.Id, checkRoom.Id ),
                     math.max( room.Id, checkRoom.Id ) ) );
 
+                //Connections = new int2(math.min( room1, room2 ), math.max( room1, room2 ));
+                
                 if ( sharesAxis && !alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ) )
                 {
+                    LevelRoom parentRoom = _rooms[math.max( room.Id, checkRoom.Id ) - 1];
+                    LevelRoom childRoom = _rooms[math.min( room.Id, checkRoom.Id ) - 1];
+                        
+                        
                     connectionsMade.Add( new int2(math.min(room.Id, checkRoom.Id), math.max(room.Id, checkRoom.Id)) );
-                    int2 dir = math.sign(room.GraphPosition - checkRoom.GraphPosition);
-                    //Debug.Log( dir );
+                    int2 dir = math.sign(parentRoom.GraphPosition - childRoom.GraphPosition);
 
                     //calculate the overlap between the two room's floors
-                    int4 thicknessVector = new int4( room.WallThickness, room.WallThickness, -room.WallThickness, -room.WallThickness);
-                    int4 leftThicknessVector = new int4( checkRoom.WallThickness, checkRoom.WallThickness, -checkRoom.WallThickness, -checkRoom.WallThickness);
-                    int4 room1 = room.Bounds + thicknessVector;
-                    int4 room2 = checkRoom.Bounds + leftThicknessVector;
+                    int4 thicknessVector = new int4( parentRoom.WallThickness, parentRoom.WallThickness, -parentRoom.WallThickness, -parentRoom.WallThickness);
+                    int4 leftThicknessVector = new int4( childRoom.WallThickness, childRoom.WallThickness, -childRoom.WallThickness, -childRoom.WallThickness);
+                    int4 room1 = parentRoom.Bounds + thicknessVector;
+                    int4 room2 = childRoom.Bounds + leftThicknessVector;
 
                     if ( sharesX )
                     {
@@ -987,8 +1046,8 @@ public partial class LevelGenerator : MonoBehaviour
                         room2.z = swap;
                     }
 
-                    LevelConnectionInfo cnct = new LevelConnectionInfo(room.Id, checkRoom.Id, room1.Boolean( room2 ), dir);
-                    AddConnection( cnct, room );
+                    LevelConnectionInfo cnct = new LevelConnectionInfo(parentRoom.Id, childRoom.Id, room1.Boolean( room2 ), dir);
+                    AddConnection( cnct, parentRoom );
                 }
 
             }
