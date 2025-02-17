@@ -351,11 +351,7 @@ public partial class LevelGenerator : MonoBehaviour
                 }
             }
         }
-
-        if ( key.Equals( new int2( 5, 6 ) ) )
-        {
-            
-        }
+        
         
         PlaceDoorAtConnection( result, out List<LevelConnectionManager> cncts);
         _roomConnections[key].RemoveAt( index );
@@ -1046,9 +1042,9 @@ public partial class LevelGenerator : MonoBehaviour
                 //if ( sharesAxis && !alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ) )
                 if(!alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ))
                 {
+                    int2 primaryDir = GetPrimaryDirection( room, checkRoom );
                     LevelRoom parentRoom = _rooms[math.max( room.Id, checkRoom.Id ) - 1];
                     LevelRoom childRoom = _rooms[math.min( room.Id, checkRoom.Id ) - 1];
-                    int2 primaryDir = GetPrimaryDirection( parentRoom, childRoom );
 
                     connectionsMade.Add( potentialConnection );
                     //calculate the overlap between the two room's floors
@@ -1060,15 +1056,33 @@ public partial class LevelGenerator : MonoBehaviour
                     //if ( sharesX )
                     if(primaryDir.y != 0)
                     {
-                        int swap = room1.y;
-                        room1.y = room2.w;
-                        room2.w = swap;
+                        if ( room1.y > room2.y )
+                        {
+                            int swap = room1.y;
+                            room1.y = room2.w;
+                            room2.w = swap;
+                        }
+                        else
+                        {
+                            int swap = room2.y;
+                            room2.y = room1.w;
+                            room1.w = swap;
+                        }
                     }
                     else
                     {
-                        int swap = room1.x;
-                        room1.x = room2.z;
-                        room2.z = swap;
+                        if ( room1.x > room2.x )
+                        {
+                            int swap = room1.x;
+                            room1.x = room2.z;
+                            room2.z = swap;
+                        }
+                        else
+                        {
+                            int swap = room2.x;
+                            room2.x = room1.z;
+                            room1.z = swap;
+                        }
                     }
 
                     LevelConnectionInfo cnct = new LevelConnectionInfo(parentRoom.Id, childRoom.Id, room1.Boolean( room2 ), primaryDir);
