@@ -27,7 +27,33 @@ public class LevelConnectionManager
    public LevelConnectionManager(int4 startingPiece, int2 direction)
    {
       _pieces = new List<int4>();
-      _pieces.Add( startingPiece );
+      int2 size = startingPiece.Size();
+      
+      if ( direction.x != 0 && size.y > 1 )
+      {
+         int4 split = new int4( startingPiece.x, startingPiece.y, startingPiece.z, startingPiece.y );
+         for ( int i = 0; i < size.y; i++ )
+         {
+            _pieces.Add( split );
+            split.yw += new int2(1,1);
+         }
+      }
+      else if ( direction.y != 0 && size.x > 1 )
+      {
+         int4 split = new int4( startingPiece.x, startingPiece.y, startingPiece.x, startingPiece.w );
+         for ( int i = 0; i < size.x; i++ )
+         {
+            _pieces.Add( split );
+            split.xz += new int2(1,1);
+         }
+      }
+      else
+      {
+         _pieces.Add( startingPiece );
+      }
+      
+      
+      
       _bounds = startingPiece;
       _axis = math.abs(direction);
       UpdateOffset( startingPiece, direction );

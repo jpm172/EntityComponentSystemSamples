@@ -5240,6 +5240,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2d2b27e012ffb4699bb5d2b121571b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  state:
+    s0: -694862123
+    s1: -210694466
+    s2: 1061122751
+    s3: -655783779
   seed: 217
   bigRooms: 1
   dimensions:
@@ -5270,7 +5275,7 @@ MonoBehaviour:
   _maxWallThickness: 6
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
-  _seedBuffer: 20
+  _seedBuffer: 0
   maxEdgeWeight: 10
   UseGizmos: 1
   ShowBins: 0
@@ -5281,7 +5286,7 @@ MonoBehaviour:
   UseWireMeshes: 0
   UseConnections: 1
   CreateOnStart: 1
-  StepWiseGrow: 0
+  StepWiseGrow: 1
   GrowSteps: 1
 --- !u!4 &1289639036
 Transform:

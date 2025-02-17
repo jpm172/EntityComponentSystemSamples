@@ -16,6 +16,8 @@ using Random = UnityEngine.Random;
 public partial class LevelGenerator : MonoBehaviour
 {
 
+    public Random.State state;
+    
     [SerializeField] private int seed;
     [SerializeField] private int bigRooms;
 
@@ -217,7 +219,8 @@ public partial class LevelGenerator : MonoBehaviour
                     size = new Vector3( cellSize.x, cellSize.y ) / GameSettings.PixelsPerUnit;
                     if ( cnct.GetLargestDimension() >= _minRoomSeedSize )
                     {
-                        Gizmos.DrawCube( pos, size );
+                        // Gizmos.DrawCube( pos, size );
+                        Gizmos.DrawWireCube( pos, size );
                     }
                     else
                     {
@@ -271,10 +274,13 @@ public partial class LevelGenerator : MonoBehaviour
         if ( useSeed )
         {
             Random.InitState( seed );
+            Random.state = state;
             //Random.seed = seed;
         }
-            
 
+        //state = Random.state;
+        
+        
         CreateTextureDictionary();
         //InitializeLevel();
         InitializeLevelBigRooms();
@@ -346,7 +352,7 @@ public partial class LevelGenerator : MonoBehaviour
             }
         }
 
-        if ( key.Equals( new int2( 4, 5 ) ) )
+        if ( key.Equals( new int2( 5, 6 ) ) )
         {
             
         }
@@ -994,6 +1000,22 @@ public partial class LevelGenerator : MonoBehaviour
         return new int2(xResult, yResult) ;
     }
 
+    private int2 GetPrimaryDirection(LevelRoom room1, LevelRoom room2)
+    {
+        int4 bounds1 = room1.Bounds;
+        int4 bounds2 = room2.Bounds;
+        
+        int4 expandX = new int4(-1,0,1,0);
+
+        if ( ( bounds1 + expandX ).Overlaps( bounds2 ) )
+        {
+            return new int2( 1, 0 );
+        }
+            
+
+        return new int2( 0, 1 );
+    }
+    
     private void CheckInitialConnectionsBR()
     {
 
@@ -1009,31 +1031,34 @@ public partial class LevelGenerator : MonoBehaviour
 
                 LevelRoom checkRoom = _rooms[j];
 
+                /*
                 bool sharesX = room.GraphPosition.x == checkRoom.GraphPosition.x;
                 bool sharesY = room.GraphPosition.y == checkRoom.GraphPosition.y;
                 bool sharesAxis = sharesX || sharesY;
+                */
 
-                bool alreadyConnected = connectionsMade.Contains( new int2( math.min( room.Id, checkRoom.Id ),
-                    math.max( room.Id, checkRoom.Id ) ) );
+                int2 potentialConnection = new int2( math.min( room.Id, checkRoom.Id ),
+                    math.max( room.Id, checkRoom.Id ) );
+                bool alreadyConnected = connectionsMade.Contains( potentialConnection );
 
                 //Connections = new int2(math.min( room1, room2 ), math.max( room1, room2 ));
                 
-                if ( sharesAxis && !alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ) )
+                //if ( sharesAxis && !alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ) )
+                if(!alreadyConnected && room.Bounds.Borders( checkRoom.Bounds ))
                 {
                     LevelRoom parentRoom = _rooms[math.max( room.Id, checkRoom.Id ) - 1];
                     LevelRoom childRoom = _rooms[math.min( room.Id, checkRoom.Id ) - 1];
-                        
-                        
-                    connectionsMade.Add( new int2(math.min(room.Id, checkRoom.Id), math.max(room.Id, checkRoom.Id)) );
-                    int2 dir = math.sign(parentRoom.GraphPosition - childRoom.GraphPosition);
+                    int2 primaryDir = GetPrimaryDirection( parentRoom, childRoom );
 
+                    connectionsMade.Add( potentialConnection );
                     //calculate the overlap between the two room's floors
                     int4 thicknessVector = new int4( parentRoom.WallThickness, parentRoom.WallThickness, -parentRoom.WallThickness, -parentRoom.WallThickness);
                     int4 leftThicknessVector = new int4( childRoom.WallThickness, childRoom.WallThickness, -childRoom.WallThickness, -childRoom.WallThickness);
                     int4 room1 = parentRoom.Bounds + thicknessVector;
                     int4 room2 = childRoom.Bounds + leftThicknessVector;
 
-                    if ( sharesX )
+                    //if ( sharesX )
+                    if(primaryDir.y != 0)
                     {
                         int swap = room1.y;
                         room1.y = room2.w;
@@ -1046,7 +1071,7 @@ public partial class LevelGenerator : MonoBehaviour
                         room2.z = swap;
                     }
 
-                    LevelConnectionInfo cnct = new LevelConnectionInfo(parentRoom.Id, childRoom.Id, room1.Boolean( room2 ), dir);
+                    LevelConnectionInfo cnct = new LevelConnectionInfo(parentRoom.Id, childRoom.Id, room1.Boolean( room2 ), primaryDir);
                     AddConnection( cnct, parentRoom );
                 }
 
