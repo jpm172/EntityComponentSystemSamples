@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -566,23 +567,38 @@ public partial class LevelGenerator : MonoBehaviour
             xOffset += adjustedMaxSize + (adjustedBuffer*2) ;
         }
 
+        List<int> availableRooms = new List<int>();
+
+        for ( int i = 0; i < initialRooms.Length; i++ )
+        {
+            availableRooms.Add( i );
+        }
+        
+        
         List<int> mergedRooms = new List<int>();
         for ( int i = 0; i < bigRooms; i++ )
         {
-            int bigIndex = Random.Range( 0, initialRooms.Length );
+            if(availableRooms.Count < 2)
+                break;
+            //int bigIndex = Random.Range( 0, initialRooms.Length );
+            int bigIndex = availableRooms[Random.Range( 0, availableRooms.Count )];
             LevelRoom bigRoom = initialRooms[bigIndex];
-            int mergeIndex = GetRandomNeighborIndex( bigRoom );
+            //int mergeIndex = GetRandomNeighborIndex( bigRoom );
             
+            if ( GetRandomNeighborIndex( bigRoom, availableRooms, out int mergeIndex ) )
+            {
+                LevelRoom mergeRoom = initialRooms[mergeIndex];
+                mergedRooms.Add( mergeIndex );
+                availableRooms.Remove( bigIndex );
+                availableRooms.Remove( mergeIndex );
 
-            LevelRoom mergeRoom = initialRooms[mergeIndex];
-            mergedRooms.Add( mergeIndex );
+                int4 newBounds = bigRoom.Bounds;
 
-            int4 newBounds = bigRoom.Bounds;
+                newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
+                newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
 
-            newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
-            newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
-
-            bigRoom.Bounds = newBounds;
+                bigRoom.Bounds = newBounds;
+            }//
         }
 
         int counter = 0;
@@ -628,6 +644,37 @@ public partial class LevelGenerator : MonoBehaviour
         CheckInitialConnectionsBR();
     }
 
+    private bool GetRandomNeighborIndex(LevelRoom room, List<int> availableRooms, out int neighborIndex)
+    {
+        List<int> neighbors = new List<int>();
+        neighborIndex = -1;
+        
+        if ( availableRooms.Contains( room.Index + layoutDimensions.x )  )
+        {
+            neighbors.Add( room.Index + layoutDimensions.x );
+        }
+        if ( availableRooms.Contains( room.Index - layoutDimensions.x ) )
+        {
+            neighbors.Add( room.Index - layoutDimensions.x );
+        }
+        if ( room.GraphPosition.x < layoutDimensions.x - 1 && availableRooms.Contains( room.Index + 1 ) )
+        {
+            neighbors.Add( room.Index + 1 );
+        }
+        if ( room.GraphPosition.x > 0 && availableRooms.Contains( room.Index - 1 ) )
+        {
+            neighbors.Add( room.Index-1 );
+        }
+
+        if ( neighbors.Count == 0 )
+            return false;
+
+
+        neighborIndex = neighbors[Random.Range( 0, neighbors.Count )];
+
+        return true;
+    }
+    
     private int GetRandomNeighborIndex(LevelRoom room)
     {
         bool vertical = Random.Range( 0, 2 ) == 1;
