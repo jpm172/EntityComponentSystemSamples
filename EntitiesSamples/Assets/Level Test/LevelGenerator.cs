@@ -519,22 +519,21 @@ public partial class LevelGenerator : MonoBehaviour
     
     private void InitializeLevelBigRooms()
     {
-        int count = (layoutDimensions.x * layoutDimensions.y) - bigRooms;
+        int count = layoutDimensions.x * layoutDimensions.y;
         CleanUp(false);
         
         _floors = new List<LevelFloor>();
         _walls = new List<LevelWall>();
-        _rooms = new LevelRoom[count];
+        
         _edgeDictionary = new Dictionary<int, Dictionary<int,int>>();
-        _roomInfo = new NativeArray<RoomInfo>(count, Allocator.Persistent);
+        
         _roomConnections = new Dictionary<int2, List<LevelConnectionManager>>();
-        _adjacencyMatrix = new NativeArray<int>(count*count, Allocator.Persistent);
         _matertialsUsed = new List<LevelMaterial>();
         _collidersMade = new List<BlobAssetReference<Collider>>();
         
         _matertialsUsed.Add( LevelMaterial.Indestructible );
         
-        LevelRoom[] initialRooms = new LevelRoom[count + bigRooms];
+        LevelRoom[] initialRooms = new LevelRoom[count];
 
         int adjustedMaxSize = _maxRoomSeedSize + ( 2 * _maxWallThickness );
         int adjustedBuffer = _seedBuffer + _maxWallThickness;
@@ -600,6 +599,11 @@ public partial class LevelGenerator : MonoBehaviour
                 bigRoom.Bounds = newBounds;
             }//
         }
+
+        int finalCount = count - mergedRooms.Count;
+        _rooms = new LevelRoom[finalCount];
+        _roomInfo = new NativeArray<RoomInfo>(finalCount, Allocator.Persistent);
+        _adjacencyMatrix = new NativeArray<int>(finalCount*finalCount, Allocator.Persistent);
 
         int counter = 0;
         for ( int i = 0; i < initialRooms.Length; i++ )
