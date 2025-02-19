@@ -54,7 +54,7 @@ public partial class LevelGenerator
     private void MainGrow()
     {
         _totalSteps = 0;
-        _uniqueConnections = 0;
+        //_uniqueConnections = 0;
         bool hasPath = false;
         
         while ( !hasPath  )
@@ -289,6 +289,7 @@ public partial class LevelGenerator
         if ( !_roomConnections.ContainsKey( cnct.Connections ) )
         {
             _roomConnections[cnct.Connections] = new List<LevelConnectionManager>();
+            _uniqueConnections++;
         }
         
         LevelConnectionManager newConnection = new LevelConnectionManager( cnct.Bounds, cnct.Direction );
