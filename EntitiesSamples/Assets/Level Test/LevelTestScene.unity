@@ -5246,7 +5246,9 @@ MonoBehaviour:
     s2: 1061122751
     s3: -655783779
   seed: 217
-  bigRooms: 1
+  bigRooms: 0
+  holes: 0
+  hallways: 5
   dimensions:
     x: 0
     y: 0

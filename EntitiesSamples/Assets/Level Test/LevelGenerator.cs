@@ -288,8 +288,7 @@ public partial class LevelGenerator : MonoBehaviour
         CreateTextureDictionary();
         //InitializeLevel();
         InitializeLevelBigRooms();
-        //InitializeLevelBigRoomsSimple();
-        
+
 
         if ( !StepWiseGrow )
         {
@@ -634,34 +633,18 @@ public partial class LevelGenerator : MonoBehaviour
 
         for ( int i = 0; i < hallways; i++ )
         {
-            int colIndex = Random.Range( 0, layoutDimensions.x );
-            
-            if(!availableRooms.Contains( colIndex ))
-                continue;
-
-            bool madeHallway = false;
-            LevelRoom hallwayRoom = initialRooms[colIndex];
-            for ( int j = 1; j < layoutDimensions.y; j++ )
+            bool vertical = Random.Range( 0, 2 ) == 1;
+            if ( vertical )
             {
-                int mergeIndex = colIndex + layoutDimensions.x * j;
-                if ( !availableRooms.Contains( mergeIndex ) )
-                    break;
-
-                madeHallway = true;
-                LevelRoom mergeRoom = initialRooms[mergeIndex];
-                removedRooms.Add( mergeIndex );
-                availableRooms.Remove( mergeIndex );
-
-                int4 newBounds = hallwayRoom.Bounds;
-
-                newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
-                newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
-
-                hallwayRoom.Bounds = newBounds;
+                MakeVerticalHallway( initialRooms, availableRooms, removedRooms );
             }
-            
-            if(madeHallway)
-                availableRooms.Remove( colIndex );
+            else
+            {
+                MakeHorizontalHallway( initialRooms, availableRooms, removedRooms );
+            }
+
+            if ( availableRooms.Count == 0 )
+                return removedRooms;
         }
         
         holes = math.min(holes, initialRooms.Length / 4);
@@ -675,6 +658,9 @@ public partial class LevelGenerator : MonoBehaviour
             removedRooms.Add( holeIndex );
             availableRooms.Remove( holeIndex );
             holeRoom.Bounds = new int4(0,0,0,0);
+            
+            if ( availableRooms.Count == 0 )
+                return removedRooms;
         }
         
         for ( int i = 0; i < bigRooms; i++ )
@@ -704,6 +690,103 @@ public partial class LevelGenerator : MonoBehaviour
         return removedRooms;
     }
 
+
+    private void MakeVerticalHallway(LevelRoom[] initialRooms, List<int> availableRooms, List<int> removedRooms)
+    {
+        int randIndex = availableRooms[Random.Range( 0, availableRooms.Count )];
+
+        bool madeHallway = false;
+        LevelRoom hallwayRoom = initialRooms[randIndex];
+        for ( int j = hallwayRoom.GraphPosition.y + 1; j < layoutDimensions.y; j++ )
+        {
+            int mergeIndex = randIndex + layoutDimensions.x * (j-hallwayRoom.GraphPosition.y);
+            if ( !availableRooms.Contains( mergeIndex ) )
+                break;
+
+            madeHallway = true;
+            LevelRoom mergeRoom = initialRooms[mergeIndex];
+            removedRooms.Add( mergeIndex );
+            availableRooms.Remove( mergeIndex );
+
+            int4 newBounds = hallwayRoom.Bounds;
+
+            newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
+            newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
+
+            hallwayRoom.Bounds = newBounds;
+        }
+        
+        for ( int j = hallwayRoom.GraphPosition.y -1; j >= 0; j-- )
+        {
+            int mergeIndex = randIndex - layoutDimensions.x * (hallwayRoom.GraphPosition.y - j);//
+            if ( !availableRooms.Contains( mergeIndex ) )
+                break;
+
+            madeHallway = true;
+            LevelRoom mergeRoom = initialRooms[mergeIndex];
+            removedRooms.Add( mergeIndex );
+            availableRooms.Remove( mergeIndex );
+
+            int4 newBounds = hallwayRoom.Bounds;
+
+            newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
+            newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
+
+            hallwayRoom.Bounds = newBounds;
+        }
+            
+        if(madeHallway)
+            availableRooms.Remove( randIndex );
+    }
+    
+    private void MakeHorizontalHallway(LevelRoom[] initialRooms, List<int> availableRooms, List<int> removedRooms)
+    {
+        int randIndex = availableRooms[Random.Range( 0, availableRooms.Count )];
+
+        bool madeHallway = false;
+        LevelRoom hallwayRoom = initialRooms[randIndex];
+        for ( int j = hallwayRoom.GraphPosition.x +1; j < layoutDimensions.x; j++ )
+        {
+            int mergeIndex = randIndex + (j-hallwayRoom.GraphPosition.x);
+            if ( !availableRooms.Contains( mergeIndex ) )
+                break;
+
+            madeHallway = true;
+            LevelRoom mergeRoom = initialRooms[mergeIndex];
+            removedRooms.Add( mergeIndex );
+            availableRooms.Remove( mergeIndex );
+
+            int4 newBounds = hallwayRoom.Bounds;
+
+            newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
+            newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
+
+            hallwayRoom.Bounds = newBounds;
+        }
+        
+        for ( int j = hallwayRoom.GraphPosition.x -1; j >= 0; j-- )
+        {
+            int mergeIndex = randIndex - (hallwayRoom.GraphPosition.x - j);
+            if ( !availableRooms.Contains( mergeIndex ) )
+                break;
+
+            madeHallway = true;
+            LevelRoom mergeRoom = initialRooms[mergeIndex];
+            removedRooms.Add( mergeIndex );
+            availableRooms.Remove( mergeIndex );
+
+            int4 newBounds = hallwayRoom.Bounds;
+
+            newBounds.xy = math.min( newBounds.xy, mergeRoom.Bounds.xy );
+            newBounds.zw = math.max( newBounds.zw, mergeRoom.Bounds.zw );
+
+            hallwayRoom.Bounds = newBounds;//
+        }
+            
+        if(madeHallway)
+            availableRooms.Remove( randIndex );
+    }
+    
     private bool GetRandomNeighborIndex(LevelRoom room, List<int> availableRooms, out int neighborIndex)
     {
         List<int> neighbors = new List<int>();
