@@ -17,29 +17,22 @@ public class TotalStatusTracker : MonoBehaviour
 
     private PlayerUIManager _manager;
     
-    
-    private int _health;
 
     private void Start()
     {
         _manager = PlayerUIManager.Instance;
-        _health = _manager.PlayerCurrentHealth;
         UpdateText();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if ( _health != _manager.PlayerCurrentHealth )
-        {
-            _health = _manager.PlayerCurrentHealth;
-            UpdateText();
-        }
+        UpdateText();
     }
 
     private void UpdateText()
     {
-        _healthText.text = $"{_health}|{_manager.PlayerMaxHealth}";
+        _healthText.text = $"{_manager.PlayerCurrentHealth}|{_manager.PlayerMaxHealth}";
         
         float bleedRate = _manager.PlayerBleedRate;
         _bleedRateText.text = $"{bleedRate:0.00}";

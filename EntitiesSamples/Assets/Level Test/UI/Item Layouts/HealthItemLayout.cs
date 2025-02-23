@@ -60,7 +60,17 @@ public class HealthItemLayout : InventoryItemLayout
     
     public override void UpdateCallBack()
     {
-        if ( ( (HealthItemInfo) _item.Item ).HealthItem.CurrentCharges <= 0 )
+        HealthItemInfo healthItem =  (HealthItemInfo) _item.Item ;
+
+        if ( healthItem.Data.Stackable  )
+        {
+            if ( healthItem.Quantity <= 0 )
+            {
+                RemoveItem();
+                return;
+            }
+        }
+        else if ( healthItem.HealthItem.CurrentCharges <= 0 )
         {
             RemoveItem();
             return;

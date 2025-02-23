@@ -194,8 +194,15 @@ public class BodyHealthManager : MonoBehaviour
 
     public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
     {
-        Limb limb = _bodyParts[bodyPart];
         
+
+        if ( usedItem.Data.Stackable )
+        {
+            UseSpecialHealingItem( bodyPart, usedItem );
+            return;
+        }
+        
+        Limb limb = _bodyParts[bodyPart];
         for ( int i = limb.Wounds.Count - 1; i >= 0; i-- )
         {
             Wound w = limb.Wounds[i];
@@ -298,6 +305,33 @@ public class BodyHealthManager : MonoBehaviour
         return result;
     }
 
+    private void UseSpecialHealingItem(BodyPart bodyPart, HealthItemInfo usedItem)
+    {
+        Limb limb = _bodyParts[bodyPart];
+        if ( usedItem.Data.ItemName.Equals( "Tourniquet" )  )
+        {
+            if ( bodyPart == BodyPart.Chest || bodyPart == BodyPart.Head )
+                return;
+            
+            foreach ( Wound wound in limb.Wounds )
+            {
+                wound.Bleed = 0;
+            }
+            limb.HealBleed( limb.Bleed );
+
+            usedItem.HealthItem.CurrentCharges--;
+
+            if ( usedItem.HealthItem.CurrentCharges <= 0 )
+            {
+                usedItem.Quantity--;
+                usedItem.HealthItem.CurrentCharges = usedItem.HealthItem.MaxCharges;
+            }
+                
+            _manager.PlayerBleedRate = GetTotalBleedRate();
+            _manager.AllItems[usedItem.Key] = usedItem;
+        }
+    }
+    
     private bool GetBestHealingItem(out HealthItemInfo bestItem)
     {
         bestItem = null;

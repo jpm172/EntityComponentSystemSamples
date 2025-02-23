@@ -133,6 +133,12 @@ public class Limb
         _meter.UpdateStatus( this );
     }
 
+    public void HealBleed( float bleedHealAmount )
+    {
+        _bleed = Math.Max( 0, _bleed - bleedHealAmount );
+        _meter.UpdateStatus( this );
+    }
+
     public virtual bool ShouldSpreadDamage( int damage )
     {
         return damage > _currentHealth;
