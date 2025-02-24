@@ -24,6 +24,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     [SerializeField] 
     private RectTransform _containerRect;
 
+    [SerializeField]
+    private HotbarManager _hotBar;
+
     private DragManager _dragManager;
     [SerializeField]
     private ItemContainer _container;
@@ -64,9 +67,11 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
-        //_container.Item = item.Item;
         _container.ItemKey = item.ItemKey;
         _hasItem = true;
+
+        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
+        _hotBar.AddToHotBar( item, slotIndex );
         
         EquipItem();
     }
@@ -81,23 +86,17 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         _displayImage.sprite = _container.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
+        
+        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
+        _hotBar.AddToHotBar( _container, slotIndex );
+        
     }
     
 
     public void SwapItem(DragObject drag)
     {
-        /*
-        ItemData swap = _container.Item.Data;
-        _container.Item.Data = drag.TransferFromContainer.Data;
-        drag.TransferFromContainer.Data = swap;
-        drag.SwapCallback();
-        AddItem( _container );
-        */
-        //ItemInfo swap = _container.Item;
         int swap = _container.ItemKey;
-        //_container.Item = drag.TransferFromContainer.Item;
         _container.ItemKey = drag.TransferFromContainer.ItemKey;
-        //drag.TransferFromContainer.Item = swap;
         drag.TransferFromContainer.ItemKey = swap;
         drag.SwapCallback();
         AddItem( _container );
@@ -125,6 +124,10 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = null;
         _displayImage.gameObject.SetActive( false );
         _hasItem = false;
+        
+        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
+        _hotBar.RemoveFromHotBar( slotIndex );
+        
         UnequipItem();
     }
 

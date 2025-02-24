@@ -7,6 +7,10 @@ using UnityEngine.UI;
 [Serializable]
 public class Limb
 {
+
+    protected const float MIN_BLEED = 0.001f;
+    
+    [SerializeField]
     protected BodyPart _bodyPart;
     protected Image _image;
     protected int _maxHealth;
@@ -17,6 +21,7 @@ public class Limb
     [SerializeField]
     protected List<Wound> _wounds;
     
+    [SerializeField]
     protected float _bleed;
     protected LimbStatusMeter _meter;
     protected PlayerUIManager _manager;
@@ -75,7 +80,7 @@ public class Limb
         return _currentHealth >= _maxHealth;
     }
 
-    protected virtual int GetMissingHealth()
+    protected virtual int GetMissingHealth()//
     {
         return _maxHealth - _currentHealth;
     }
@@ -125,6 +130,9 @@ public class Limb
         _manager.PlayerCurrentHealth += healAmount;
         _currentHealth += healAmount;
         _bleed = Math.Max( 0, _bleed - bleedHealAmount );
+
+        if ( _bleed <= MIN_BLEED )
+            _bleed = 0;
         
         if(_destroyed && _currentHealth > 0)
             ReviveLimb();
@@ -136,6 +144,10 @@ public class Limb
     public void HealBleed( float bleedHealAmount )
     {
         _bleed = Math.Max( 0, _bleed - bleedHealAmount );
+        
+        if ( _bleed <= MIN_BLEED )
+            _bleed = 0;
+        
         _meter.UpdateStatus( this );
     }
 

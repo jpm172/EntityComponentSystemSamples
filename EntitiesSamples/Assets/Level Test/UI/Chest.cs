@@ -91,6 +91,9 @@ public class Chest : Limb
         _currentHealth += healAmount;
         _bleed = Math.Max( 0, _bleed - bleedHealAmount );
         
+        if ( _bleed <= MIN_BLEED )
+            _bleed = 0;
+        
         if(_destroyed && _manager.PlayerCurrentHealth > 0)
             ReviveLimb();
         

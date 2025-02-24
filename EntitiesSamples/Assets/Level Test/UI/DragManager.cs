@@ -21,12 +21,18 @@ public class DragManager : MonoBehaviour
     [SerializeField]
     protected GameObject _transferItemPrefab;
     
+    
 
     [SerializeField]
     protected RectTransform[] _inventoryRects;
     [SerializeField]
     protected InventoryManager[] _inventoryManagers;
 
+    [SerializeField]
+    private RectTransform _hotBarRect;
+
+    private HotbarManager _hotBar;
+    
     [SerializeField]
     protected DragObject _currentDraggedObject;
     public DragObject CurrentDraggedObject => _currentDraggedObject;
@@ -36,7 +42,7 @@ public class DragManager : MonoBehaviour
 
     protected virtual void Awake()
     {
-        
+        _hotBar = _hotBarRect.GetComponent<HotbarManager>();
         InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
         _inventoryManagers = new InventoryManager[managers.Length];
         _inventoryRects = new RectTransform[managers.Length];
@@ -76,7 +82,9 @@ public class DragManager : MonoBehaviour
     public void DropItem()
     {
         DragObject drag = _currentDraggedObject.GetComponent<DragObject>();
-        TryPutIntoSlot( drag, drag._worldCenterPoint );
+        
+        if(!TryPutIntoHotbar( drag, drag._worldCenterPoint ))
+            TryPutIntoSlot( drag, drag._worldCenterPoint );
 
         Destroy( _currentDraggedObject.gameObject );
         _currentDraggedObject = null;
@@ -84,9 +92,20 @@ public class DragManager : MonoBehaviour
 
     protected virtual void TryPutIntoSlot( DragObject drag, Vector2 position )
     {
-
+        
     }
 
+
+    private bool TryPutIntoHotbar(DragObject drag, Vector2 position)
+    {
+        if ( GetBoundingBoxRect( _hotBarRect ).Contains( position ) )
+        {
+            _hotBar.TryAddToHotBar( drag, position );
+            return true;
+        }
+
+        return false;
+    }
 
     public DragObject SpawnItem( ItemInfo item, Vector3 position )
     {

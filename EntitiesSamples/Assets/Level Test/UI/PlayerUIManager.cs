@@ -22,6 +22,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField]
     private int _playerCurrentHealth;
 
+    [SerializeField]
     private float _playerBleedRate;
     
     [SerializeField]

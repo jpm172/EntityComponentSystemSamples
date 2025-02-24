@@ -41,7 +41,7 @@ public class TotalStatusTracker : MonoBehaviour
 
     private BleedCategory GetBleedCategory( float bleedRate )
     {
-        if ( bleedRate <= Mathf.Epsilon )
+        if ( bleedRate <= Mathf.Epsilon)
         {
             return BleedCategory.None;
         }

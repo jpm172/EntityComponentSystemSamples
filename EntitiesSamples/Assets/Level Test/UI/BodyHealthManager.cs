@@ -102,11 +102,11 @@ public class BodyHealthManager : MonoBehaviour
     public void AddWound()
     {
         int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
-        //bodyPartIndex = 1;
-        //AddRandomWound( _bodyPartLabels[bodyPartIndex], Random.Range( 2, 30 ) );
 
-        int damage = Random.Range( 2, 30 );//10;
+        //int damage = Random.Range( 2, 30 );
+        int damage = 10;
         float bleed = Random.Range( 0f, 12f );
+        //float bleed = 0.5f;
         WoundInfo info = new WoundInfo(damage, bleed);
         
         AddRandomWound( _bodyPartLabels[bodyPartIndex], info );
