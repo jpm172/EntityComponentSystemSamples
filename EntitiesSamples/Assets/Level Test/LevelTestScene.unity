@@ -5246,15 +5246,15 @@ MonoBehaviour:
     s2: 1061122751
     s3: -655783779
   seed: 217
-  bigRooms: 0
+  bigRooms: 2
   holes: 0
-  hallways: 5
+  hallways: 0
   dimensions:
     x: 0
     y: 0
   layoutDimensions:
     x: 3
-    y: 10
+    y: 3
   fogOfWarCamera: {fileID: 2115140062}
   fogOfWarObj: {fileID: 202867446}
   floorMaterials:
@@ -5272,14 +5272,14 @@ MonoBehaviour:
   staticWallMaterial: {fileID: 2100000, guid: e148d9c713eebb542bbb5882dea2f44a, type: 2}
   _rooms: []
   FoWTexture: {fileID: 0}
-  useSeed: 1
+  useSeed: 0
   _minWallThickness: 6
   _maxWallThickness: 6
   _minRoomSeedSize: 20
   _maxRoomSeedSize: 60
   _seedBuffer: 0
   maxEdgeWeight: 10
-  UseGizmos: 1
+  UseGizmos: 0
   ShowBins: 0
   UseMeshes: 0
   ShowFloorMesh: 0
@@ -5288,7 +5288,7 @@ MonoBehaviour:
   UseWireMeshes: 0
   UseConnections: 1
   CreateOnStart: 1
-  StepWiseGrow: 1
+  StepWiseGrow: 0
   GrowSteps: 1
 --- !u!4 &1289639036
 Transform:
