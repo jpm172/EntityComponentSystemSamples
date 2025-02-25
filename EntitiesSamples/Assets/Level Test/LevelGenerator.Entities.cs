@@ -36,11 +36,6 @@ public partial class LevelGenerator
         {
             if(!entityManager.HasComponent( e, typeof(ClearOnNewLevelTag) ))
                 continue;
-            
-            if ( entityManager.HasComponent( e, typeof( BufferData ) ) )
-            {
-                entityManager.GetComponentData<BufferData>(e).Dispose();
-            }
 
             entityManager.DestroyEntity( e );
             

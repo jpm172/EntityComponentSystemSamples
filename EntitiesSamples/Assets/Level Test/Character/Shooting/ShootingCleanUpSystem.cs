@@ -63,8 +63,12 @@ public partial struct ShootingCleanUpSystem : ISystem
         var destroyed = destroyedQuery.ToEntityArray( Allocator.Temp );
         foreach ( Entity e in destroyed )
         {
-            state.EntityManager.GetComponentData<BufferData>( e ).Buffer.Dispose();
-            state.EntityManager.RemoveComponent<BufferData>( e );
+            if ( state.EntityManager.HasComponent<BufferData>( e ) )
+            {
+                state.EntityManager.GetComponentData<BufferData>( e ).Buffer.Dispose();//
+                state.EntityManager.RemoveComponent<BufferData>( e );
+            }
+            
             state.EntityManager.GetComponentData<DestructibleCleanUp>(e).Value.Value.Dispose();
             state.EntityManager.RemoveComponent<DestructibleCleanUp>( e );
         }
