@@ -51,7 +51,8 @@ public partial class GetPlayerInputSystem : SystemBase
 
             if ( inventory )
             {
-                _ui.SetActive( !_ui.activeInHierarchy );
+                //_ui.SetActive( !_ui.activeInHierarchy );
+                PlayerUIManager.Instance.ToggleInventory();
             }
             
             playerInputs.ValueRW.MoveInput = moveInput;

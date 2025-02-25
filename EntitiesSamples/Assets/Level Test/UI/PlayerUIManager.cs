@@ -14,6 +14,11 @@ public class PlayerUIManager : MonoBehaviour
     private GameObject _gearLayer;
     [SerializeField]
     private GameObject _healthLayer;
+    [SerializeField]
+    private HotbarManager _hotBar;
+
+    [SerializeField]
+    private GameObject _panelsParent;
 
     public BodyHealthManager _bodyManager;
 
@@ -183,6 +188,13 @@ public class PlayerUIManager : MonoBehaviour
             ItemUpdateEvent.Invoke();
     }
 
+    public void ToggleInventory()
+    {
+        bool value = !_panelsParent.activeInHierarchy;
+        _panelsParent.SetActive( value );
+        _hotBar.HoldOpen = value;
+    }
+    
     public void OpenGear()
     {
         _gearLayer.SetActive( true );

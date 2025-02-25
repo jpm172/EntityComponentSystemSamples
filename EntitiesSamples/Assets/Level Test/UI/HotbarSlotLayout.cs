@@ -82,6 +82,6 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown( PointerEventData eventData )
     {
-        
+        ClearSlot();
     }
 }

@@ -11,12 +11,27 @@ public class HotbarManager : MonoBehaviour
     private DemoInputActions _inputActions;
     private InputAction _slot1;
     
+    private Vector3 _openPosition = new Vector3(0,-237, 0);
+    private Vector3 _closePosition = new Vector3(0,-300, 0);
+    private RectTransform _rect;
+    
     [SerializeField]
     private HotbarSlotLayout[] _slots;
-    // Start is called before the first frame update
+
+    private bool _open;
+    private bool _holdOpen;
+    private float _openTimer;
+
+    public bool HoldOpen
+    {
+        get => _holdOpen;
+        set => _holdOpen = SetHoldOpen(value);
+    }
+
     void Start()
     {
         _slots = GetComponentsInChildren<HotbarSlotLayout>();
+        _rect = GetComponent<RectTransform>();
         _inputActions = new DemoInputActions();
         
         _inputActions.Enable();
@@ -29,9 +44,64 @@ public class HotbarManager : MonoBehaviour
         _inputActions.DemoMap.Hotbar7.performed += EquipSlot7;
         _inputActions.DemoMap.Hotbar8.performed += EquipSlot8;
         _inputActions.DemoMap.Hotbar9.performed += EquipSlot9;
-
+        _open = true;
     }
 
+
+    private void FixedUpdate()
+    {
+
+        if ( _open && !_holdOpen )
+        {
+            _openTimer += Time.fixedDeltaTime;
+            if(_openTimer >= 2)
+                HideHotBar();
+        }
+        else
+        {
+            _openTimer = 0;
+        }
+    }
+
+    private bool SetHoldOpen( bool value )
+    {
+        if(value && !_open)
+            RevealHotBar();
+        
+        if(!value && _open)
+            HideHotBar();
+        
+        return value;
+    }
+    
+    private void HideHotBar()
+    {
+        _open = false;
+        StartCoroutine( HotBarTransition( _openPosition, _closePosition ) );
+    }
+
+    private void RevealHotBar()
+    {
+        _open = true;
+        StartCoroutine( HotBarTransition( _closePosition, _openPosition ) );
+    }
+
+    private IEnumerator HotBarTransition(Vector3 a, Vector3 b)
+    {
+        float remaining = 0;
+        float timer = 0.2f;
+
+        while ( remaining <= timer )
+        {
+            remaining += Time.deltaTime;
+            
+            _rect.localPosition = Vector3.Lerp( a, b, remaining / timer );
+            yield return null;
+        }
+
+        _rect.localPosition = b;
+    }
+    
     public void TryAddToHotBar(DragObject drag, Vector2 position)
     {
         for ( int i = 0; i < _slots.Length; i++ )
@@ -86,6 +156,10 @@ public class HotbarManager : MonoBehaviour
     {
         EquipHighlight.transform.parent = _slots[slotIndex].transform;
         EquipHighlight.transform.localPosition = Vector3.zero;
+        
+        if(!_open)
+            RevealHotBar();
+        _openTimer = 0;
     }
 
     private void ClearSlot( int slotIndex )
