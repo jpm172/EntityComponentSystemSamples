@@ -32,6 +32,7 @@ public partial class GetPlayerInputSystem : SystemBase
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
+        bool altFire = _inputActions.DemoMap.AlternateFire.IsPressed();
         bool equipPrimary = _inputActions.DemoMap.Primary.WasPerformedThisFrame();
         bool equipSecondary = _inputActions.DemoMap.Secondary.WasPerformedThisFrame();
         
@@ -40,14 +41,6 @@ public partial class GetPlayerInputSystem : SystemBase
         
         foreach (var (playerInputs, playerInventory) in SystemAPI.Query<RefRW<PlayerInputs>, RefRW<CharacterInventory>>())
         {
-            if ( equipPrimary )
-            {
-                playerInventory.ValueRW.Equipped = 1;
-            }
-            else if ( equipSecondary )
-            {
-                playerInventory.ValueRW.Equipped = 2;
-            }
 
             if ( inventory )
             {
@@ -58,9 +51,7 @@ public partial class GetPlayerInputSystem : SystemBase
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;
-            playerInputs.ValueRW.ToggleInventory = inventory;
-            playerInputs.ValueRW.EquipPrimary = equipPrimary;
-            playerInputs.ValueRW.EquipSecondary = equipSecondary;
+            playerInputs.ValueRW.AltFire = altFire;
         }
         
         //Debug.Log( mousePosition );

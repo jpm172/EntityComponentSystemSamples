@@ -45,6 +45,7 @@ public class HotbarManager : MonoBehaviour
         _inputActions.DemoMap.Hotbar8.performed += EquipSlot8;
         _inputActions.DemoMap.Hotbar9.performed += EquipSlot9;
         _open = true;
+        _holdOpen = true;
     }
 
 
@@ -156,6 +157,7 @@ public class HotbarManager : MonoBehaviour
     {
         EquipHighlight.transform.parent = _slots[slotIndex].transform;
         EquipHighlight.transform.localPosition = Vector3.zero;
+        PlayerUIManager.Instance.EquipSlot( slotIndex );
         
         if(!_open)
             RevealHotBar();

@@ -140,17 +140,22 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         if ( _equipType == InventorySlotType.Primary )
         {
+            PlayerUIManager.Instance.AddItemEntity( _container.Item, 0);
+            
+            /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            //inv.PrimaryWeapon = ItemToWeapon();
             inv.PrimaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
             _entityManager.SetComponentData( player, inv );
+            */
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
+            PlayerUIManager.Instance.AddItemEntity( _container.Item,1 );
+            /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            //inv.SecondaryWeapon = ItemToWeapon();
             inv.SecondaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
             _entityManager.SetComponentData( player, inv );
+            */
         }
     }
 
@@ -163,15 +168,19 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         if ( _equipType == InventorySlotType.Primary )
         {
+            /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.PrimaryWeapon = new WeaponDesc{Null = true};
             _entityManager.SetComponentData( player, inv );
+            */
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
+            /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.SecondaryWeapon = new WeaponDesc{Null = true};
             _entityManager.SetComponentData( player, inv );
+            */
         }
     }
 

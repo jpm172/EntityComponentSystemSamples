@@ -33,6 +33,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Alternate Fire",
+                    "type": "Button",
+                    "id": "a5afe0e3-a51a-419a-ba31-d99c949cec48",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Inventory",
                     "type": "Button",
                     "id": "65d16dc9-1e93-46fe-8727-9cd429ae37b2",
@@ -308,6 +317,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Hotbar 9",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1ae9846c-5739-44c2-8f5d-a700a0925ada",
+                    "path": "<Keyboard>/leftAlt",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Alternate Fire",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

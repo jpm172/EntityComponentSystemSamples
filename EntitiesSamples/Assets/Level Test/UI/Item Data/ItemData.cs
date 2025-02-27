@@ -19,5 +19,6 @@ public class ItemData : ScriptableObject
     
     [Tooltip( "Stackable" )] 
     public bool Stackable;
+    
 
 }

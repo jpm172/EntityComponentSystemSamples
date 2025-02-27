@@ -10,16 +10,6 @@ public class PlayerAuthoring : MonoBehaviour
     public float MoveSpeed;
     public float Health = 350;
     public float Blood = 5000;
-    
-    public WeaponType WeaponType;
-    public float ExplosionRadius = 2;
-    public float ThrowForce;
-    public float WeaponRange = 20;
-    public float Penetration = 10;
-    public int BulletsPerShot = 1;
-    public float FireRate = 0.5f;
-    public float WeaponSpread;
-    public bool IsExplosion;
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
@@ -30,10 +20,18 @@ public class PlayerAuthoring : MonoBehaviour
             {
                 MovementSpeed = authoring.MoveSpeed
             });
+
+            DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
+
+            for ( int i = 0; i < 9; i++ )
+            {
+                invBuffer.Add( new InventoryElement() );
+            }
+            
             
             AddComponent(entity, new CharacterInventory
             {
-                Equipped = 1
+                
             });
             /*
             AddComponent(entity, new WeaponInfo

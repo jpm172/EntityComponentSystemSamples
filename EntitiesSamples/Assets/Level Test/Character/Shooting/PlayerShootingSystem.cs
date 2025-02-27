@@ -185,6 +185,7 @@ public partial struct PlayerShootingSystem : ISystem
         state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
 
+    /*
     private ref WeaponDesc GetEquippedWeapon(RefRW<CharacterInventory> inv)
     {
         if(inv.ValueRO.Equipped == 1)
@@ -192,6 +193,7 @@ public partial struct PlayerShootingSystem : ISystem
         
         return ref inv.ValueRW.SecondaryWeapon;
     }
+    */
     
     public void OnUpdate( ref SystemState state )
     {
@@ -221,14 +223,24 @@ public partial struct PlayerShootingSystem : ISystem
 
         foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
+            Entity equippedItem = inventory.ValueRW.EquippedItem;
+            if(!state.EntityManager.HasComponent( equippedItem,typeof(WeaponDesc) ))
+                continue;
+            WeaponDesc weapon = state.EntityManager.GetComponentData<WeaponDesc>( equippedItem );
+            /*
             ref WeaponDesc weapon = ref GetEquippedWeapon( inventory );
             if ( weapon.Null )
                 continue;
+                */
 
             weapon.Timer -= SystemAPI.Time.DeltaTime;
-            
+
             if ( !input.ValueRO.Shoot || weapon.Timer > 0 )
+            {
+                state.EntityManager.SetComponentData( equippedItem, weapon );
                 continue;
+            }
+                
             
             weapon.Timer = weapon.FireRate;
             weapon.CurrentAmmo--;
@@ -238,7 +250,7 @@ public partial struct PlayerShootingSystem : ISystem
                 ThrowProjectile(ref state, transform.ValueRO,  weapon, input.ValueRO);
                 return;
             }
-            
+            state.EntityManager.SetComponentData( equippedItem, weapon );
             
             
             //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);

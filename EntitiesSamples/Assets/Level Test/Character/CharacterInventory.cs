@@ -7,10 +7,18 @@ using UnityEngine;
 [Serializable]
 public struct CharacterInventory : IComponentData
 {
-    public int Equipped;
-    //public WeaponInfo EquippedWeapon;
-    public WeaponDesc PrimaryWeapon;
-    public WeaponDesc SecondaryWeapon;
+    //public int Equipped;
+
+    public Entity EquippedItem;
+
+    //public WeaponDesc PrimaryWeapon;
+    //public WeaponDesc SecondaryWeapon;
     
 
+}
+
+
+public struct InventoryElement : IBufferElementData
+{
+    public Entity Item;
 }

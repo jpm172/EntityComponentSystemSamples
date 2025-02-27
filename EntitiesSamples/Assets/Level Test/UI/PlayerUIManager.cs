@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -51,6 +52,7 @@ public class PlayerUIManager : MonoBehaviour
     //private Dictionary<int, HealthItemInfo> _healthItemDict;
     private List<int> _healthItemKeys;
     
+    private EntityManager _entityManager;
     
     
     //public List<WeaponItemInfo> WeaponItems => _weaponItems;
@@ -103,6 +105,9 @@ public class PlayerUIManager : MonoBehaviour
         {
             Destroy( Instance );
         }
+        
+        World world = World.DefaultGameObjectInjectionWorld;
+        _entityManager = world.EntityManager;
 
         _playerMaxHealth = 300;
         _playerCurrentHealth = _playerMaxHealth;
@@ -170,6 +175,51 @@ public class PlayerUIManager : MonoBehaviour
         }
         
     }
+
+
+    public void EquipSlot( int equipIndex )
+    {
+        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+        
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( player );
+        inventory.EquippedItem = invBuffer[equipIndex].Item;
+        _entityManager.SetComponentData( player, inventory );
+    }
+
+    public void AddItemEntity(ItemInfo item, int equipIndex)
+    {
+        
+        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+        
+        ItemType itemType = item.Data.ItemType;
+        if ( itemType == ItemType.Weapon )
+        {
+            Entity itemEntity = CreateWeaponEntity( (WeaponItemInfo) item );
+            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+            invBuffer.ElementAt( equipIndex ).Item = itemEntity;
+        }
+    }
+
+
+    private Entity CreateWeaponEntity( WeaponItemInfo weaponInfo )
+    {
+        Entity itemEntity = _entityManager.CreateEntity();
+#if UNITY_EDITOR
+        _entityManager.SetName( itemEntity, weaponInfo.Data.ItemName );
+#endif
+
+        _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
+
+        return itemEntity;
+    }
+    
     
     //set update == true whenever using them internally (like the Heal All action) so that
     //all items are properly updated, but when using items directly (drag and drop), 
