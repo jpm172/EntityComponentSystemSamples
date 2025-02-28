@@ -18,3 +18,4 @@ MonoBehaviour:
   ItemSprite: {fileID: 21300000, guid: bc93aef1e05a9524399e3b5ec05a2290, type: 3}
   Stackable: 1
   MaxCharges: 1
+  Type: 1

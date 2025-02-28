@@ -9,7 +9,9 @@ public class HealthItemData : ItemData
     [Tooltip("Max Charges")]
     [Range(1, 10000)]
     public int MaxCharges;
-    
-    
-    
+
+    [Tooltip( "Health Item Type" )] 
+    public HealthItemType Type;
+
+
 }

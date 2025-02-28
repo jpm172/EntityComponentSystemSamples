@@ -14,9 +14,13 @@ public class HotbarManager : MonoBehaviour
     private Vector3 _openPosition = new Vector3(0,-237, 0);
     private Vector3 _closePosition = new Vector3(0,-300, 0);
     private RectTransform _rect;
+
+    private PlayerUIManager _manager;
     
     [SerializeField]
     private HotbarSlotLayout[] _slots;
+
+    private HotbarSlotLayout _currentEquipped;
 
     private bool _open;
     private bool _holdOpen;
@@ -30,6 +34,7 @@ public class HotbarManager : MonoBehaviour
 
     void Start()
     {
+        _manager = PlayerUIManager.Instance;
         _slots = GetComponentsInChildren<HotbarSlotLayout>();
         _rect = GetComponent<RectTransform>();
         _inputActions = new DemoInputActions();
@@ -146,6 +151,7 @@ public class HotbarManager : MonoBehaviour
     public void AddToHotBar( ItemContainer item, int slotIndex )
     {
         _slots[slotIndex].TryPutInSlot( item );
+
     }
 
     public void RemoveFromHotBar( int slotIndex )
@@ -157,7 +163,13 @@ public class HotbarManager : MonoBehaviour
     {
         EquipHighlight.transform.parent = _slots[slotIndex].transform;
         EquipHighlight.transform.localPosition = Vector3.zero;
-        PlayerUIManager.Instance.EquipSlot( slotIndex );
+        
+        _slots[slotIndex].Equipped = true;
+        if(_currentEquipped != null)
+            _currentEquipped.Equipped = false;
+        _currentEquipped = _slots[slotIndex];
+        
+        _manager.EquipSlot( slotIndex );
         
         if(!_open)
             RevealHotBar();

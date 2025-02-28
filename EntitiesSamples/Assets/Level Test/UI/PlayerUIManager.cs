@@ -190,7 +190,7 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.SetComponentData( player, inventory );
     }
 
-    public void AddItemEntity(ItemInfo item, int equipIndex)
+    public void AddItemEntity(ItemInfo item, int equipIndex, bool equip)
     {
         
         bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
@@ -204,9 +204,50 @@ public class PlayerUIManager : MonoBehaviour
             Entity itemEntity = CreateWeaponEntity( (WeaponItemInfo) item );
             DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
             invBuffer.ElementAt( equipIndex ).Item = itemEntity;
+
+            if ( equip )
+            {
+                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
+                playerInv.EquippedItem = itemEntity;
+                _entityManager.SetComponentData( player, playerInv );
+            }
+            
+        }
+        else if ( itemType == ItemType.Health )
+        {
+            Entity itemEntity = CreateHealthItemEntity( (HealthItemInfo) item );
+            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+            invBuffer.ElementAt( equipIndex ).Item = itemEntity;
+            if ( equip )
+            {
+                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
+                playerInv.EquippedItem = itemEntity;
+                _entityManager.SetComponentData( player, playerInv );
+            }
         }
     }
 
+    public void RemoveItemEntity( int removeIndex, bool unequip )
+    {
+        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+
+        if ( unequip )
+        {
+            CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
+            playerInv.EquippedItem = Entity.Null;
+            _entityManager.SetComponentData( player, playerInv );
+        }
+        
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+        Entity removedItem = invBuffer.ElementAt( removeIndex ).Item;
+        invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
+        _entityManager.DestroyEntity( removedItem );
+        
+    }
+    
 
     private Entity CreateWeaponEntity( WeaponItemInfo weaponInfo )
     {
@@ -220,6 +261,17 @@ public class PlayerUIManager : MonoBehaviour
         return itemEntity;
     }
     
+    private Entity CreateHealthItemEntity( HealthItemInfo itemInfo )
+    {
+        Entity itemEntity = _entityManager.CreateEntity();
+#if UNITY_EDITOR
+        _entityManager.SetName( itemEntity, itemInfo.Data.ItemName );
+#endif
+
+        _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
+
+        return itemEntity;
+    }
     
     //set update == true whenever using them internally (like the Heal All action) so that
     //all items are properly updated, but when using items directly (drag and drop), 
@@ -242,7 +294,7 @@ public class PlayerUIManager : MonoBehaviour
     {
         bool value = !_panelsParent.activeInHierarchy;
         _panelsParent.SetActive( value );
-        _hotBar.HoldOpen = value;
+         _hotBar.HoldOpen = value;
     }
     
     public void OpenGear()

@@ -73,7 +73,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
         _hotBar.AddToHotBar( item, slotIndex );
         
-        EquipItem();
+        //EquipItem();
     }
 
     private void UpdateItem()
@@ -140,7 +140,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         
         if ( _equipType == InventorySlotType.Primary )
         {
-            PlayerUIManager.Instance.AddItemEntity( _container.Item, 0);
+            //PlayerUIManager.Instance.AddItemEntity( _container.Item, 0);
             
             /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
@@ -150,7 +150,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         }
         else if ( _equipType == InventorySlotType.Secondary )
         {
-            PlayerUIManager.Instance.AddItemEntity( _container.Item,1 );
+            //PlayerUIManager.Instance.AddItemEntity( _container.Item,1 );
             /*
             CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
             inv.SecondaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;

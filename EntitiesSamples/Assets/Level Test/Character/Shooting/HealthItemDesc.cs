@@ -3,8 +3,15 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public class HealthItemDesc : IComponentData
+public struct HealthItemDesc : IComponentData
 {
     public int MaxCharges;
     public int CurrentCharges;
+    public HealthItemType Type;
+}
+
+public enum HealthItemType
+{
+    HealthKit = 0,
+    Tourniquet = 1
 }

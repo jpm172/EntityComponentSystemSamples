@@ -23,8 +23,15 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
     private ItemInfo _heldItem;
 
     private bool _hasItem;
+    private bool _equipped;
 
     public bool HasItem => _hasItem;
+
+    public bool Equipped
+    {
+        get => _equipped;
+        set => _equipped = value;
+    }
 
     public ItemInfo HeldItem => _heldItem;
 
@@ -52,6 +59,8 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         _itemImage.sprite = _heldItem.Data.ItemSprite;
         _itemNameText.text = _heldItem.Data.ItemName;
         
+        PlayerUIManager.Instance.AddItemEntity( item.Item, _slotNumber -1, _equipped );
+        
         _hasItem = true;
         return true;
     }
@@ -74,10 +83,14 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public void ClearSlot()
     {
+        if ( _hasItem )
+            PlayerUIManager.Instance.RemoveItemEntity( _slotNumber -1, _equipped );
+        
         _itemNameText.text = "";
         _itemImage.enabled = false;
         _heldItem = null;
         _hasItem = false;
+        
     }
 
     public void OnPointerDown( PointerEventData eventData )

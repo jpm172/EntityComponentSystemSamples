@@ -22,7 +22,7 @@ public class HealthItemInfo : ItemInfo
         HealthItemDesc newHealthItem = new HealthItemDesc
         {
             MaxCharges = data.MaxCharges,
-            
+            Type = data.Type
         };
         
         return newHealthItem;
