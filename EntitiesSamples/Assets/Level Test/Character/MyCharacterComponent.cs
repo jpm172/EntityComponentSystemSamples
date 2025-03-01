@@ -8,7 +8,7 @@ public struct MyCharacterComponent : IComponentData
 {
     public float MovementSpeed;
     public float Health;
-    public float Blood;
+    public float MaxHealth;
 
 }
 

@@ -8,8 +8,7 @@ public class PlayerAuthoring : MonoBehaviour
 {
 
     public float MoveSpeed;
-    public float Health = 350;
-    public float Blood = 5000;
+    public float Health = 300;
     public class PlayerBaker : Baker<PlayerAuthoring>
     {
         public override void Bake(PlayerAuthoring authoring)
@@ -18,7 +17,9 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new MyCharacterComponent
             {
-                MovementSpeed = authoring.MoveSpeed
+                MovementSpeed = authoring.MoveSpeed,
+                Health = authoring.Health,
+                MaxHealth = authoring.Health,
             });
 
             DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
@@ -33,23 +34,22 @@ public class PlayerAuthoring : MonoBehaviour
             {
                 
             });
-            /*
-            AddComponent(entity, new WeaponInfo
-            {
-                Type = authoring.WeaponType,
-                IsExplosion = authoring.IsExplosion,
-                ThrowForce = authoring.ThrowForce,
-                ExplosionRadius = authoring.ExplosionRadius,
-                Range = authoring.WeaponRange,
-                Penetration = authoring.Penetration,
-                WeaponSpread = authoring.WeaponSpread,
-                BulletsPerShot = authoring.BulletsPerShot,
-                FireRate = authoring.FireRate
-            });
-            */
-            
+
             AddComponent<PlayerInputs>(entity);
-            
+            AuthorHealth( entity, authoring );
         }
+
+
+        private void AuthorHealth(Entity entity, PlayerAuthoring authoring)
+        {
+            DynamicBuffer<CharacterLimb> invBuffer =AddBuffer<CharacterLimb>( entity );
+            invBuffer.Add( new CharacterLimb( BodyPart.Head, 50 ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.Chest, authoring.Health ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.LeftArm, 50 ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.RightArm, 50 ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.LeftLeg, 50 ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.RightLeg, 50 ) );
+        }
+        
     }
 }

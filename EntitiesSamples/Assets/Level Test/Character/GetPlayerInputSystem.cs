@@ -33,6 +33,7 @@ public partial class GetPlayerInputSystem : SystemBase
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
         bool altFire = _inputActions.DemoMap.AlternateFire.IsPressed();
+        altFire = _inputActions.DemoMap.AlternateFire.WasPerformedThisFrame(); //DEBUG FOR HEALTH!!!
         bool equipPrimary = _inputActions.DemoMap.Primary.WasPerformedThisFrame();
         bool equipSecondary = _inputActions.DemoMap.Secondary.WasPerformedThisFrame();
         

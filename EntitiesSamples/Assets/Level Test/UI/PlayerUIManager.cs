@@ -251,6 +251,7 @@ public class PlayerUIManager : MonoBehaviour
 
     private Entity CreateWeaponEntity( WeaponItemInfo weaponInfo )
     {
+        
         Entity itemEntity = _entityManager.CreateEntity();
 #if UNITY_EDITOR
         _entityManager.SetName( itemEntity, weaponInfo.Data.ItemName );
