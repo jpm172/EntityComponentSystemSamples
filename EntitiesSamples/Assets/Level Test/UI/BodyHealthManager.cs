@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using UnityEngine;
@@ -99,6 +100,25 @@ public class BodyHealthManager : MonoBehaviour
         _bodyParts.Add( BodyPart.RightLeg, new Limb( BodyPart.RightLeg, _rightLeg, _meters[5], this, 50 ) );
     }
 
+
+    public void AddWoundECS()
+    {
+        int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
+        
+        int damage = 10;
+        float bleed = Random.Range( 0f, 12f );
+        bleed = 0.5f;
+
+        EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        bool hasPlayer = entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out Entity player);
+        if ( !hasPlayer )
+            return;
+        
+        entityManager.GetBuffer<DamageInfo>( player ).Add( new DamageInfo( damage, bleed ) );
+
+    }
+    
     public void AddWound()
     {
         int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );

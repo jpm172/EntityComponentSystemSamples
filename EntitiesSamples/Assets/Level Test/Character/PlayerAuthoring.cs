@@ -42,7 +42,12 @@ public class PlayerAuthoring : MonoBehaviour
 
         private void AuthorHealth(Entity entity, PlayerAuthoring authoring)
         {
-            DynamicBuffer<CharacterLimb> invBuffer =AddBuffer<CharacterLimb>( entity );
+
+            AddBuffer<DamageInfo>( entity );
+            AddBuffer<CharacterWound>( entity );
+            
+            
+            DynamicBuffer<CharacterLimb> invBuffer = AddBuffer<CharacterLimb>( entity );
             invBuffer.Add( new CharacterLimb( BodyPart.Head, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.Chest, authoring.Health ) );
             invBuffer.Add( new CharacterLimb( BodyPart.LeftArm, 50 ) );

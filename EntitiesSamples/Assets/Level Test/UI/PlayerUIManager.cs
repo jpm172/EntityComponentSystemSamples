@@ -92,7 +92,7 @@ public class PlayerUIManager : MonoBehaviour
 
     public void AddWound()
     {
-        _bodyManager.AddWound();
+        _bodyManager.AddWoundECS();
     }
     
     private void Awake()
