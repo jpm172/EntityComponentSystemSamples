@@ -178,7 +178,12 @@ public class PlayerUIManager : MonoBehaviour
 
     public void NewWoundECS(CharacterWound newWound, int woundIndex)
     {
-        
+        _bodyManager.AddWoundECS(newWound, woundIndex);
+    }
+
+    public void HealedWoundECS(int woundIndex)
+    {
+        _bodyManager.RemoveWoundECS( woundIndex );
     }
     
     public void EquipSlot( int equipIndex )

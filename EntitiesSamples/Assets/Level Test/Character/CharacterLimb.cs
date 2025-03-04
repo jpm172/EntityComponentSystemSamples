@@ -14,6 +14,9 @@ public struct CharacterLimb : IBufferElementData
 
 
     public float MissingHealth => GetMissingHealth();
+
+    public bool Healthy => GetMissingHealth() > 0;
+    
     public bool Destroyed => IsDestroyed();
 
     public CharacterLimb(BodyPart part, float maxHealth)
@@ -26,6 +29,17 @@ public struct CharacterLimb : IBufferElementData
         Bleed = 0;
     }
 
+
+    public float Heal( float healAmount, float bleedHealAmount )
+    {
+        float clampedHeal = math.min( GetMissingHealth(), healAmount );
+        CurrentHealth += clampedHeal;
+
+        Bleed = math.max( 0, Bleed - bleedHealAmount );
+        
+        return clampedHeal;
+    }
+    
     public float Damage(CharacterWound wound)
     {
         float clampedDamage = 

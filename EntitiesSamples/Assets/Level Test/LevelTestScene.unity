@@ -6126,6 +6126,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 45a0ae4e235a5b341ba6555f3edda8bf, type: 3}
   WoundPrefab: {fileID: 3009192529361793900, guid: 5752797652a44644b8fe299769089e1a,
     type: 3}
+  _wounds: []
   SerializedLimbs: []
 --- !u!1 &741539134
 GameObject:
