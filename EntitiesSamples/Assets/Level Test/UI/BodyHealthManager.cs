@@ -15,6 +15,9 @@ public class BodyHealthManager : MonoBehaviour
 {
 
     private PlayerUIManager _manager;
+
+    private Entity _playerEntity;
+    private EntityManager _entityManager;
     
     [SerializeField]
     private Image _head,
@@ -38,6 +41,8 @@ public class BodyHealthManager : MonoBehaviour
 
     private Dictionary<BodyPart, Limb> _bodyParts;
 
+    private Dictionary<int, Wound> _playerWounds;
+
     private readonly BodyPart[] _bodyPartLabels =
     {
         BodyPart.Head,
@@ -58,13 +63,41 @@ public class BodyHealthManager : MonoBehaviour
     void Start()
     {
         _manager = PlayerUIManager.Instance;
+        _playerWounds = new Dictionary<int, Wound>();
         InitializeLimbs();
         SerializedLimbs = _bodyParts.Values.ToArray();
         //_wounds = new List<Wound>();
         _healingMenu.OnSelected += HealWounds;
+        
+        _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out _playerEntity);
+
     }
 
+    private void FixedUpdate()
+    {
+        if ( _playerEntity == Entity.Null )
+            return;
 
+        DynamicBuffer<CharacterLimb> limbs = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
+        MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
+        float bleedRate = 0;
+        foreach ( CharacterLimb limb in limbs )
+        {
+            bleedRate += limb.Bleed;
+            _meters[(int)limb.Part].UpdateStatus( limb );
+        }
+
+        _manager.PlayerBleedRate = bleedRate;
+        _manager.PlayerCurrentHealth = character.Health;
+        
+        DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
+        
+
+    }
+
+    /*
     private void FixedUpdate()
     {
         return;
@@ -86,7 +119,7 @@ public class BodyHealthManager : MonoBehaviour
                 limb.CumulativeDamage -= damage;
             }
         }
-    }
+    }*/
 
     private void InitializeLimbs()
     {
@@ -103,19 +136,12 @@ public class BodyHealthManager : MonoBehaviour
 
     public void AddWoundECS()
     {
-        int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
-        
         int damage = 10;
         float bleed = Random.Range( 0f, 12f );
         bleed = 0.5f;
-
-        EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-        bool hasPlayer = entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
         
-        entityManager.GetBuffer<DamageInfo>( player ).Add( new DamageInfo( damage, bleed ) );
+        
+        _entityManager.GetBuffer<DamageInfo>( _playerEntity ).Add( new DamageInfo( damage, bleed ) );
 
     }
     
@@ -214,8 +240,6 @@ public class BodyHealthManager : MonoBehaviour
 
     public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
     {
-        
-
         if ( usedItem.Data.Stackable )
         {
             UseSpecialHealingItem( bodyPart, usedItem );
@@ -249,7 +273,7 @@ public class BodyHealthManager : MonoBehaviour
 
         if ( limb.Wounds.Count == 0 && !limb.Healthy )
         {
-            int healAmount =  Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
+            int healAmount =  (int)Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
             usedItem.HealthItem.CurrentCharges -= healAmount;
             limb.Heal( healAmount );
         }
@@ -293,7 +317,7 @@ public class BodyHealthManager : MonoBehaviour
 
         if ( limb.Wounds.Count == 0 && !limb.Healthy )
         {
-            int healAmount =  Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
+            int healAmount =  (int)Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
             usedItem.HealthItem.CurrentCharges -= healAmount;
             limb.Heal( healAmount );
         }
@@ -381,7 +405,7 @@ public class BodyHealthManager : MonoBehaviour
         if ( _bodyParts[woundedBodyPart].ShouldSpreadDamage(info.Damage) )
         {
             SpreadDamage( woundedBodyPart, info );
-            info.Damage = _bodyParts[woundedBodyPart].CurrentHealth;
+            info.Damage = (int)_bodyParts[woundedBodyPart].CurrentHealth;
         }
         
         if ( _bodyParts[woundedBodyPart].Destroyed )

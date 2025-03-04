@@ -41,14 +41,14 @@ public class Chest : Limb
         return _currentHealth >= 0;
     }
 
-    protected override int GetMissingHealth()
+    protected override float GetMissingHealth()
     {
         return Math.Abs( _currentHealth );
     }
 
     public override void Damage( WoundInfo info )
     {
-        int clampedDamage = Math.Min( info.Damage, _manager.PlayerCurrentHealth );
+        float clampedDamage = Math.Min( info.Damage, _manager.PlayerCurrentHealth );
         _manager.PlayerCurrentHealth -=clampedDamage;
         _currentHealth -= clampedDamage;
         _bleed += info.Bleed;
@@ -62,7 +62,7 @@ public class Chest : Limb
     
     public override void Damage( int damage )
     {
-        int clampedDamage = Math.Min( damage, _manager.PlayerCurrentHealth );
+        float clampedDamage = Math.Min( damage, _manager.PlayerCurrentHealth );
         _manager.PlayerCurrentHealth -= clampedDamage;
         _currentHealth -= clampedDamage;
         

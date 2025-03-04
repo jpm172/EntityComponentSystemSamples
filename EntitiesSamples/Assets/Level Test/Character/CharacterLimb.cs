@@ -21,6 +21,8 @@ public struct CharacterLimb : IBufferElementData
         Part = part;
         MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
+        if ( part == BodyPart.Chest )
+            CurrentHealth = 0;
         Bleed = 0;
     }
 

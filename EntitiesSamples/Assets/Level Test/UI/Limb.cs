@@ -13,8 +13,8 @@ public class Limb
     [SerializeField]
     protected BodyPart _bodyPart;
     protected Image _image;
-    protected int _maxHealth;
-    protected int _currentHealth;
+    protected float _maxHealth;
+    protected float _currentHealth;
 
     protected BodyHealthManager _bodyManager;
     
@@ -35,11 +35,11 @@ public class Limb
 
     public BodyPart BodyPart => _bodyPart;
 
-    public int CurrentHealth => _currentHealth;
+    public float CurrentHealth => _currentHealth;
 
-    public int MaxHealth => _maxHealth;
+    public float MaxHealth => _maxHealth;
 
-    public int MissingHealth => GetMissingHealth();
+    public float MissingHealth => GetMissingHealth();
 
     public float Bleed => GetBleed();
 
@@ -80,14 +80,14 @@ public class Limb
         return _currentHealth >= _maxHealth;
     }
 
-    protected virtual int GetMissingHealth()//
+    protected virtual float GetMissingHealth()//
     {
         return _maxHealth - _currentHealth;
     }
 
     public virtual void Damage( WoundInfo info )
     {
-        int clampedDamage = Math.Min( info.Damage, _currentHealth );
+        float clampedDamage = Math.Min( info.Damage, _currentHealth );
         _manager.PlayerCurrentHealth -=clampedDamage;
         _currentHealth -= clampedDamage;
         _bleed += info.Bleed;
@@ -102,7 +102,7 @@ public class Limb
     
     public virtual void Damage( int damage )
     {
-        int clampedDamage = Math.Min( damage, _currentHealth );
+        float clampedDamage = Math.Min( damage, _currentHealth );
         _manager.PlayerCurrentHealth -= clampedDamage;
         _currentHealth -= clampedDamage;
         

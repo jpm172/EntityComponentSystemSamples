@@ -49,7 +49,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             DynamicBuffer<CharacterLimb> invBuffer = AddBuffer<CharacterLimb>( entity );
             invBuffer.Add( new CharacterLimb( BodyPart.Head, 50 ) );
-            invBuffer.Add( new CharacterLimb( BodyPart.Chest, authoring.Health ) );
+            invBuffer.Add( new CharacterLimb( BodyPart.Chest, 0 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.LeftArm, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.RightArm, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.LeftLeg, 50 ) );

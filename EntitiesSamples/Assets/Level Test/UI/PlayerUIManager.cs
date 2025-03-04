@@ -26,7 +26,7 @@ public class PlayerUIManager : MonoBehaviour
     [SerializeField]
     private int _playerMaxHealth;
     [SerializeField]
-    private int _playerCurrentHealth;
+    private float _playerCurrentHealth;
 
     [SerializeField]
     private float _playerBleedRate;
@@ -64,7 +64,7 @@ public class PlayerUIManager : MonoBehaviour
     public List<ItemData> EquipmentItems => _equipmentItems;
     //public List<HealthItemInfo> HealthItems => _healthItems;
 
-    public int PlayerCurrentHealth
+    public float PlayerCurrentHealth
     {
         get => _playerCurrentHealth;
         set => _playerCurrentHealth = Math.Max(0,value);
@@ -176,7 +176,11 @@ public class PlayerUIManager : MonoBehaviour
         
     }
 
-
+    public void NewWoundECS(CharacterWound newWound, int woundIndex)
+    {
+        
+    }
+    
     public void EquipSlot( int equipIndex )
     {
         bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )

@@ -33,9 +33,40 @@ public class LimbStatusMeter : MonoBehaviour
     
     //0AD50A - green
     //D51409 - red
+    
+    public void UpdateStatus(CharacterLimb limb)
+    {
+        if ( limb.Part == BodyPart.Chest )
+        {
+            UpdateChestStatus( limb );
+            return;
+        }
+        _healthText.text = $"{limb.CurrentHealth:0}|{limb.MaxHealth:0}";
+        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
+        if ( limb.Bleed <= Mathf.Epsilon )
+        {
+            _canvasGroup.alpha = 0.5f;
+        }
+        else
+        {
+            _canvasGroup.alpha = 1;
+        }
+
+        _meterImage.fillAmount = (float)limb.CurrentHealth / limb.MaxHealth;
+
+        if ( limb.CurrentHealth <= 0 )
+        {
+            _destroyedImage.enabled = true;
+        }
+        else if(_destroyedImage.enabled)
+        {
+            _destroyedImage.enabled = false;
+        }
+    }
+    
+    
     public void UpdateStatus(Limb limb)
     {
-
         if ( limb.BodyPart == BodyPart.Chest )
         {
             UpdateChestStatus( limb );
@@ -64,6 +95,21 @@ public class LimbStatusMeter : MonoBehaviour
         }
     }
 
+    
+    private void UpdateChestStatus( CharacterLimb limb )
+    {
+        _healthText.text = $"{Mathf.Abs(limb.CurrentHealth):0}";
+        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
+        if ( limb.Bleed <= Mathf.Epsilon )
+        {
+            _canvasGroup.alpha = 0.5f;
+        }
+        else
+        {
+            _canvasGroup.alpha = 1;
+        }
+    }
+    
     private void UpdateChestStatus( Limb limb )
     {
         _healthText.text = $"{Mathf.Abs(limb.CurrentHealth)}";

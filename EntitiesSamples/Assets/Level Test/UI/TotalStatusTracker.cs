@@ -32,7 +32,7 @@ public class TotalStatusTracker : MonoBehaviour
 
     private void UpdateText()
     {
-        _healthText.text = $"{_manager.PlayerCurrentHealth}|{_manager.PlayerMaxHealth}";
+        _healthText.text = $"{_manager.PlayerCurrentHealth:0}|{_manager.PlayerMaxHealth:0}";
         
         float bleedRate = _manager.PlayerBleedRate;
         _bleedRateText.text = $"{bleedRate:0.00}";

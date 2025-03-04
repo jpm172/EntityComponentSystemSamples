@@ -14,8 +14,11 @@ public struct CharacterWound : IBufferElementData
     public float MaxBleed;
     public float Bleed;
 
-    public CharacterWound(DamageInfo damageInfo, BodyPart part)
+    public int ID;
+
+    public CharacterWound(DamageInfo damageInfo, BodyPart part, int id)
     {
+        ID = id;
         AffectedPart = part;
         HealingNeeded = MaxHealing = damageInfo.Damage;
         Bleed = MaxBleed = damageInfo.BleedDamage;
@@ -32,6 +35,15 @@ public struct CharacterWound : IBufferElementData
         {
             Type = WoundType.Severe;
         }
+    }
+
+    public CharacterWound( CharacterWound woundInfo, BodyPart part, int id )
+    {
+        ID = id;
+        AffectedPart = part;
+        HealingNeeded = MaxHealing = woundInfo.HealingNeeded;
+        Bleed = MaxBleed = woundInfo.Bleed;
+        Type = woundInfo.Type;
     }
     
     

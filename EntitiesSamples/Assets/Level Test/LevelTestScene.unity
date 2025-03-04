@@ -8709,7 +8709,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _gearLayer: {fileID: 781753421}
   _healthLayer: {fileID: 1690316803}
-  _hotBar: {fileID: 0}
+  _hotBar: {fileID: 1696488017}
   _panelsParent: {fileID: 2046032605}
   _bodyManager: {fileID: 735150871}
   _playerMaxHealth: 0

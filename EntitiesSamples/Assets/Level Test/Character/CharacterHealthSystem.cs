@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -8,9 +9,10 @@ using UnityEngine;
 public partial struct CharacterHealthSystem : ISystem
 {
 
+    private static int _lastWoundId = 0;
     public void OnCreate( ref SystemState state )
     {
-        
+        _lastWoundId = 0;
     }
 
     public void OnDestroy( ref SystemState state )
@@ -20,6 +22,7 @@ public partial struct CharacterHealthSystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
+        
         ApplyBleedDamage( ref state );
         
         foreach ( var (damage, wounds, character, player) in 
@@ -32,12 +35,10 @@ public partial struct CharacterHealthSystem : ISystem
 
             for ( int i = damage.Length - 1; i >= 0; i-- )
             {
-                CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm);
-                AddWound( newWound, body, character );
-                wounds.Add( newWound );
+                CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm, GenerateId());
+                AddWound( newWound, wounds, body, character );
                 damage.RemoveAt( i );
             }
-
         }
 
 
@@ -57,14 +58,11 @@ public partial struct CharacterHealthSystem : ISystem
                 if ( limb.Destroyed )
                 {
                     ref CharacterLimb chest = ref body.ElementAt( (int)BodyPart.Chest );
-                    //chest.CurrentHealth -= bleedDmg;
                     character.ValueRW.Health -= chest.Damage( bleedDmg );
                     continue;
                 }
 
                 character.ValueRW.Health -= limb.Damage( bleedDmg );
-                //float damageDealt = limb.Damage( bleedDmg );
-                //limb.CurrentHealth -= bleedDmg;
             }
 
 
@@ -92,28 +90,33 @@ public partial struct CharacterHealthSystem : ISystem
         }
     }
 
-    private void AddWound(CharacterWound newWound,  DynamicBuffer<CharacterLimb> body, RefRW<MyCharacterComponent> character)
+    private void AddWound(CharacterWound newWound,  DynamicBuffer<CharacterWound> wounds,DynamicBuffer<CharacterLimb> body, RefRW<MyCharacterComponent> character)
     {
         int limbIndex = (int)newWound.AffectedPart;
-        /*
-        for ( int i = 0; i < body.Length; i++ )
+        ref CharacterLimb limb = ref body.ElementAt(limbIndex);
+
+        if ( limb.Destroyed )
         {
-            if ( body[i].Part == newWound.AffectedPart )
+            for ( int i = 0; i < body.Length; i++ )
             {
-                limbIndex = i;
-                break;
+                ref CharacterLimb spreadLimb = ref body.ElementAt( i ); 
+                if ( spreadLimb.Part != limb.Part && !spreadLimb.Destroyed )
+                {
+                    CharacterWound spreadWound = new CharacterWound(newWound, spreadLimb.Part, GenerateId() );
+                    character.ValueRW.Health -= spreadLimb.Damage( spreadWound );
+                    wounds.Add( spreadWound );
+                }
             }
+
+            return;
         }
-        */
-        CharacterLimb limb = body[limbIndex];
-
-        float damageDealt = limb.Damage( newWound );
-
-        character.ValueRW.Health -= damageDealt;
-        
-        //limb.CurrentHealth = math.max( 0, limb.CurrentHealth - newWound.HealingNeeded );
-        //limb.Bleed += newWound.Bleed;
-        body[limbIndex] = limb;
-
+        PlayerUIManager.Instance.NewWoundECS(newWound, wounds.Length);
+        wounds.Add( newWound );
+        character.ValueRW.Health -= limb.Damage( newWound );
+    }
+    
+    private static int GenerateId()
+    {
+        return Interlocked.Increment(ref _lastWoundId);
     }
 }
