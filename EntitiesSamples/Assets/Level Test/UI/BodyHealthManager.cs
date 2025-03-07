@@ -132,7 +132,7 @@ public class BodyHealthManager : MonoBehaviour
     }
 
 
-    public void AddWoundECS(CharacterWound newWound, int index)
+    public void AddWoundECS(CharacterWound newWound)
     {
         GameObject newWoundObj = InstansiateWound( newWound.AffectedPart );
         _wounds.Add( newWoundObj );
@@ -140,7 +140,7 @@ public class BodyHealthManager : MonoBehaviour
     
     public void AddWoundECS()
     {
-        int damage = 10;
+        float damage = 10f;
         float bleed = Random.Range( 0f, 12f );
         bleed = 0.5f;
         
@@ -174,7 +174,7 @@ public class BodyHealthManager : MonoBehaviour
     {
         if ( value == 0 )//heal all
         {
-            HealBody();
+            HealBodyECS();
         }
         else if ( value == 1 )
         {
@@ -194,6 +194,48 @@ public class BodyHealthManager : MonoBehaviour
         _manager.PlayerBleedRate = GetTotalBleedRate();
     }
 
+    
+    private void HealBodyECS()
+    {
+        bool hasItem = GetBestHealingItem( out HealthItemInfo bestItem );
+
+        if ( !hasItem )
+            return;
+        
+        MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
+        DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
+        DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
+
+        while ( wounds.Length> 0 && hasItem )
+        {
+            for ( int i = 0; i < wounds.Length; i++ )
+            {
+                ref CharacterWound wound = ref wounds.ElementAt( i );
+                float2 healResult = wound.Heal(ref bestItem.HealthItem);
+            
+                ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
+                character.Health += limb.Heal( healResult.x, healResult.y );
+            
+                if ( wound.Healed )
+                {
+                    wounds.RemoveAt( i );
+                    RemoveWoundECS( i );
+                }
+
+                if ( bestItem.HealthItem.CurrentCharges <= 0 )
+                {
+                    _manager.RemoveItem( bestItem.Key, true );
+                    hasItem = GetBestHealingItem( out bestItem ); 
+                    continue;
+                }
+
+                _manager.ItemUpdateEvent.Invoke();
+            }
+        }
+        
+        _entityManager.SetComponentData( _playerEntity, character );
+    }
+    
     private void HealBody()
     {
         bool hasItem = GetBestHealingItem( out HealthItemInfo bestItem );
@@ -265,7 +307,7 @@ public class BodyHealthManager : MonoBehaviour
             ref CharacterWound wound = ref wounds.ElementAt( i );
             if ( wound.AffectedPart == bodyPart )
             {
-                float2 healResult = wound.Heal();
+                float2 healResult = wound.Heal(ref usedItem.HealthItem);
                 ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
                 character.Health += limb.Heal( healResult.x, healResult.y );
                 
@@ -277,6 +319,7 @@ public class BodyHealthManager : MonoBehaviour
             }
             _entityManager.SetComponentData( _playerEntity, character );
         }
+        _manager.AllItems[usedItem.Key] = usedItem;
         
     }
 

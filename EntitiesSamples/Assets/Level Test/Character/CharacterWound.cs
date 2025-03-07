@@ -15,13 +15,11 @@ public struct CharacterWound : IBufferElementData
     public float MaxBleed;
     public float Bleed;
 
-    public int ID;
-
     public bool Healed => HealingNeeded <= math.EPSILON;
+    public float HealProgress => HealingNeeded / MaxHealing;
 
-    public CharacterWound(DamageInfo damageInfo, BodyPart part, int id)
+    public CharacterWound(DamageInfo damageInfo, BodyPart part)
     {
-        ID = id;
         AffectedPart = part;
         HealingNeeded = MaxHealing = damageInfo.Damage;
         Bleed = MaxBleed = damageInfo.BleedDamage;
@@ -40,9 +38,8 @@ public struct CharacterWound : IBufferElementData
         }
     }
 
-    public CharacterWound( CharacterWound woundInfo, BodyPart part, int id )
+    public CharacterWound( CharacterWound woundInfo, BodyPart part )
     {
-        ID = id;
         AffectedPart = part;
         HealingNeeded = MaxHealing = woundInfo.HealingNeeded;
         Bleed = MaxBleed = woundInfo.Bleed;
@@ -59,6 +56,22 @@ public struct CharacterWound : IBufferElementData
         
         return new float2(healAmount, bleedHealAmount);
     }
+    
+    public float2 Heal(ref HealthItemDesc item)
+    {
+        float healAmount = math.min(HealingNeeded, item.CurrentCharges);
+        HealingNeeded -= healAmount;
+        
+        float bleedingHealed = Bleed - (MaxBleed * (HealingNeeded/MaxHealing));
+        Bleed -= bleedingHealed;
+
+        //Debug.Log( $"healed {healAmount}, used {(int)math.ceil( healAmount )} charges" );
+        
+        item.CurrentCharges -= (int)math.ceil( healAmount );
+        
+        return new float2(healAmount, bleedingHealed);
+    }
+
     
     
 }

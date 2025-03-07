@@ -154,6 +154,18 @@ public class HotbarManager : MonoBehaviour
 
     }
 
+    public void TryRemoveFromHotBar(int itemKey)
+    {
+        foreach ( HotbarSlotLayout slot in _slots )
+        {
+            if ( slot.HasItem && slot.HeldItem.Key == itemKey )
+            {
+                slot.ClearSlot();
+                return;
+            }
+        }
+    }
+    
     public void RemoveFromHotBar( int slotIndex )
     {
         _slots[slotIndex].ClearSlot();

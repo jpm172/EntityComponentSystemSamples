@@ -46,7 +46,7 @@ public partial struct CharacterHealthSystem : ISystem
 
             for ( int i = damage.Length - 1; i >= 0; i-- )
             {
-                CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm, GenerateId());
+                CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm);
                 AddWound( newWound, wounds, body, character );
                 damage.RemoveAt( i );
             }
@@ -87,37 +87,118 @@ public partial struct CharacterHealthSystem : ISystem
     
     private void UseHealingItem(ref SystemState state)
     {
+        NativeQueue<Entity> removedItems = new NativeQueue<Entity>(Allocator.Temp);
+        //Entity removedItem = Entity.Null;
+        
         foreach ( var (input, inventory, character, player) in 
             SystemAPI.Query< RefRO<PlayerInputs>, RefRW<CharacterInventory>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
         {
             Entity equippedItem = inventory.ValueRW.EquippedItem;
-
-
+            
             if(!input.ValueRO.Shoot || !state.EntityManager.HasComponent( equippedItem,typeof(HealthItemDesc) ))
                 continue;
 
-            DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
-            DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
-            
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
+            CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
 
-            
-            for ( int i = wounds.Length - 1; i >= 0; i-- )
+            if ( healthItem.Type == HealthItemType.HealthKit )
             {
-                ref CharacterWound wound = ref wounds.ElementAt( i );
-                float2 healResult = wound.Heal();
+                UseHealthKit(player,character, ref healthItem, ref state );
+            }
+            else if ( healthItem.Type == HealthItemType.Tourniquet )
+            {
+                UseTourniquet( player,character, ref healthItem, ref itemData, ref state );
+            }
+            
+            state.EntityManager.SetComponentData( equippedItem, healthItem );
+            state.EntityManager.SetComponentData( equippedItem, itemData );
 
-                ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
-                character.ValueRW.Health += limb.Heal( healResult.x, healResult.y );
+            if ( healthItem.CurrentCharges > 0 )
+            {
+                //CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
+                PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
+            }
+            else
+                removedItems.Enqueue( equippedItem );
                 
-                if ( wound.Healed )
-                {
-                    PlayerUIManager.Instance.HealedWoundECS( i );
-                    wounds.RemoveAt( i );   
-                }
+        }
+
+        while ( removedItems.TryDequeue( out Entity removed ) )
+        {
+            CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( removed );
+            PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
+        }
+    }
+
+    private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, ref SystemState state)
+    {
+        DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
+        DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
+
+        int maxIndex = -1;
+        float max = float.MinValue;
+        for(int i = 0; i < body.Length; i++)
+        {
+            CharacterLimb limb = body[i];
+            if(limb.Part == BodyPart.Chest || limb.Part == BodyPart.Head)
+                continue;
+
+            if ( limb.Bleed > math.EPSILON && limb.Bleed > max )
+            {
+                maxIndex = i;
+                max = limb.Bleed;
+            }
+        }
+
+        if ( maxIndex == -1 )
+            return;
+
+        ref CharacterLimb mostBleeding = ref body.ElementAt( maxIndex );
+        for ( int i = 0; i < wounds.Length; i++ )
+        {
+            ref CharacterWound wound = ref wounds.ElementAt( i );
+            if ( wound.AffectedPart == mostBleeding.Part )
+            {
+                mostBleeding.Bleed -= wound.Bleed;
+                wound.Bleed = 0;
+            }
+        }
+        
+        healthItem.CurrentCharges--;
+        if ( healthItem.CurrentCharges <= 0 )
+        {
+            itemData.Quantity--;
+            if ( itemData.Quantity > 0 )
+            {
+                healthItem.CurrentCharges = healthItem.MaxCharges;
+            }
+        }
+
+    }
+    
+    private void UseHealthKit(  Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref SystemState state )
+    {
+        DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
+        DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
+        
+        for ( int i = wounds.Length - 1; i >= 0; i-- )
+        {
+            ref CharacterWound wound = ref wounds.ElementAt( i );
+            float2 healResult = wound.Heal(ref healthItem);
+
+            ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
+            character.ValueRW.Health += limb.Heal( healResult.x, healResult.y );
                 
+            if ( wound.Healed )
+            {
+                PlayerUIManager.Instance.HealedWoundECS( i );
+                wounds.RemoveAt( i );   
             }
 
+            if ( healthItem.CurrentCharges <= 0 )
+            {
+                return;
+            }
         }
     }
 
@@ -133,8 +214,8 @@ public partial struct CharacterHealthSystem : ISystem
                 ref CharacterLimb spreadLimb = ref body.ElementAt( i ); 
                 if ( spreadLimb.Part != limb.Part && !spreadLimb.Destroyed )
                 {
-                    CharacterWound spreadWound = new CharacterWound(newWound, spreadLimb.Part, GenerateId() );
-                    PlayerUIManager.Instance.NewWoundECS(spreadWound, wounds.Length);
+                    CharacterWound spreadWound = new CharacterWound(newWound, spreadLimb.Part );
+                    PlayerUIManager.Instance.NewWoundECS(spreadWound);
                     character.ValueRW.Health -= spreadLimb.Damage( spreadWound );
                     wounds.Add( spreadWound );
                 }
@@ -142,7 +223,7 @@ public partial struct CharacterHealthSystem : ISystem
 
             return;
         }
-        PlayerUIManager.Instance.NewWoundECS(newWound, wounds.Length);
+        PlayerUIManager.Instance.NewWoundECS(newWound);
         wounds.Add( newWound );
         character.ValueRW.Health -= limb.Damage( newWound );
     }

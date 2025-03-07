@@ -114,8 +114,7 @@ public class PlayerUIManager : MonoBehaviour
         
         
         _allItemsDict = new Dictionary<int, ItemInfo>();
-
-        //_weaponItems = new List<WeaponItemInfo>(_loadWeapons.Count);
+        
         _weaponDict = new Dictionary<int, WeaponItemInfo>();
         for ( int i = 0; i < _loadWeapons.Count; i++ )
         {
@@ -129,7 +128,6 @@ public class PlayerUIManager : MonoBehaviour
             _itemKey++;
         }
         
-        //_healthItemDict = new Dictionary<int, HealthItemInfo>();
         _healthItemKeys = new List<int>();
         for ( int i = 0; i < _loadHealthItems.Count; i++ )
         {
@@ -176,9 +174,9 @@ public class PlayerUIManager : MonoBehaviour
         
     }
 
-    public void NewWoundECS(CharacterWound newWound, int woundIndex)
+    public void NewWoundECS(CharacterWound newWound)
     {
-        _bodyManager.AddWoundECS(newWound, woundIndex);
+        _bodyManager.AddWoundECS(newWound);
     }
 
     public void HealedWoundECS(int woundIndex)
@@ -267,6 +265,7 @@ public class PlayerUIManager : MonoBehaviour
 #endif
 
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(1, weaponInfo.Key));
 
         return itemEntity;
     }
@@ -277,8 +276,10 @@ public class PlayerUIManager : MonoBehaviour
 #if UNITY_EDITOR
         _entityManager.SetName( itemEntity, itemInfo.Data.ItemName );
 #endif
-
+        
+        
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(itemInfo.Quantity, itemInfo.Key));
 
         return itemEntity;
     }
@@ -288,10 +289,11 @@ public class PlayerUIManager : MonoBehaviour
     //it will be handled by the DragObject, and there is no need to update all the other items
     public void RemoveItem(int key, bool update)
     {
+        _hotBar.TryRemoveFromHotBar( key );
+        
         ItemInfo removedItem = _allItemsDict[key];
         if ( removedItem.GetType() == typeof(HealthItemInfo) )
         {
-            //_healthItemDict.Remove( removedItem.Key );
             _healthItemKeys.Remove( removedItem.Key );
             _allItemsDict.Remove( removedItem.Key );
         }
@@ -300,6 +302,15 @@ public class PlayerUIManager : MonoBehaviour
             ItemUpdateEvent.Invoke();
     }
 
+    public void UpdateItem( HealthItemDesc item, CharacterItemData itemData)
+    {
+        HealthItemInfo updatedItem = (HealthItemInfo)_allItemsDict[itemData.Key];
+        updatedItem.HealthItem = item;
+        updatedItem.Quantity = itemData.Quantity;
+        
+        ItemUpdateEvent.Invoke();
+    }
+    
     public void ToggleInventory()
     {
         bool value = !_panelsParent.activeInHierarchy;
