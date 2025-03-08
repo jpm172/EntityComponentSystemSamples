@@ -193,7 +193,14 @@ public class PlayerUIManager : MonoBehaviour
         
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( player );
-        inventory.EquippedItem = invBuffer[equipIndex].Item;
+        CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( invBuffer[equipIndex].Item );
+
+        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item || inventory.EquippedItem == invBuffer[equipIndex].Item )
+            return;
+        
+        inventory.SwitchToItem = invBuffer[equipIndex].Item;
+        inventory.Timer = itemData.EquipTime;
+        //inventory.EquippedItem = invBuffer[equipIndex].Item;
         _entityManager.SetComponentData( player, inventory );
     }
 
@@ -215,7 +222,9 @@ public class PlayerUIManager : MonoBehaviour
             if ( equip )
             {
                 CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
-                playerInv.EquippedItem = itemEntity;
+                //playerInv.EquippedItem = itemEntity;
+                playerInv.SwitchToItem = invBuffer[equipIndex].Item;
+                playerInv.Timer = item.Data.EquipTime;
                 _entityManager.SetComponentData( player, playerInv );
             }
             
@@ -228,7 +237,9 @@ public class PlayerUIManager : MonoBehaviour
             if ( equip )
             {
                 CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
-                playerInv.EquippedItem = itemEntity;
+                //playerInv.EquippedItem = itemEntity;
+                playerInv.SwitchToItem = invBuffer[equipIndex].Item;
+                playerInv.Timer = item.Data.EquipTime;
                 _entityManager.SetComponentData( player, playerInv );
             }
         }
@@ -265,7 +276,7 @@ public class PlayerUIManager : MonoBehaviour
 #endif
 
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(1, weaponInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
 
         return itemEntity;
     }
@@ -279,7 +290,7 @@ public class PlayerUIManager : MonoBehaviour
         
         
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(itemInfo.Quantity, itemInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
 
         return itemEntity;
     }

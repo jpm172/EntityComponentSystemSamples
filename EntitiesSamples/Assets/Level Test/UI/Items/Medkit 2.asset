@@ -17,4 +17,7 @@ MonoBehaviour:
   ItemType: 4
   ItemSprite: {fileID: 21300000, guid: f3bace51eae884049921097e6d24710a, type: 3}
   Stackable: 0
+  EquipTime: 5
+  HolsterTime: 0
   MaxCharges: 100
+  Type: 0

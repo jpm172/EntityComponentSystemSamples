@@ -20,5 +20,13 @@ public class ItemData : ScriptableObject
     [Tooltip( "Stackable" )] 
     public bool Stackable;
     
+    [Tooltip("Equip Time")]
+    [Range(0, 30)]
+    public float EquipTime;
+    
+    [Tooltip("Holster Time")]
+    [Range(0, 30)]
+    public float HolsterTime;
+    
 
 }

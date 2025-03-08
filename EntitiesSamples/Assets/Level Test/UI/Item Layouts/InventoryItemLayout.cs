@@ -48,7 +48,6 @@ public class InventoryItemLayout : MonoBehaviour
 
     public void ReloadItem()
     {
-        
         if ( !PlayerUIManager.Instance.AllItems.ContainsKey( _item.ItemKey ) )
         {
             GetComponentInParent<InventoryManager>().RemovedItem();
@@ -69,13 +68,17 @@ public class InventoryItemLayout : MonoBehaviour
     
     public void CallBack()
     {
+        //need to split this into a MoveCallback and UseCallback
+        /*
         _item.Item.Quantity--;
         if ( _item.Item.Quantity <= 0 )
         {
             RemoveItem();
             return;
         }
+        */
         Initialize();
+        Destroy( gameObject );
     }
 
     protected void RemoveItem()

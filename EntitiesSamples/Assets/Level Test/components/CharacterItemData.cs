@@ -10,9 +10,12 @@ public struct CharacterItemData : IComponentData
     public int Key => _key;
 
     public int Quantity;
+
+    public float EquipTime;
     
-    public CharacterItemData( int quantity, int key )
+    public CharacterItemData( float equipTime, int quantity, int key )
     {
+        EquipTime = equipTime;
         _key = key;
         Quantity = quantity;
     }

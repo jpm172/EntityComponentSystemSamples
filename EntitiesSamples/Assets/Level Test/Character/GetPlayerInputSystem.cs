@@ -40,10 +40,11 @@ public partial class GetPlayerInputSystem : SystemBase
         
         foreach (var (playerInputs, playerInventory) in SystemAPI.Query<RefRW<PlayerInputs>, RefRW<CharacterInventory>>())
         {
+            shoot &= playerInventory.ValueRO.SwitchToItem == Entity.Null;
+            altFire &= playerInventory.ValueRO.SwitchToItem == Entity.Null;
 
             if ( inventory )
             {
-                //_ui.SetActive( !_ui.activeInHierarchy );
                 PlayerUIManager.Instance.ToggleInventory();
             }
             

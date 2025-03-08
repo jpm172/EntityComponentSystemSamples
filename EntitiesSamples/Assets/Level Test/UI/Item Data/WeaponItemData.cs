@@ -6,14 +6,6 @@ using UnityEngine;
 public class WeaponItemData : ItemData
 {
 
-    [Tooltip("Equip Time")]
-    [Range(0, 30)]
-    public float EquipTime;
-    
-    [Tooltip("Holster Time")]
-    [Range(0, 30)]
-    public float HolsterTime;
-    
     [Tooltip("Ammo Capacity")]
     [Range(1, 1000)]
     public int MaxAmmo;

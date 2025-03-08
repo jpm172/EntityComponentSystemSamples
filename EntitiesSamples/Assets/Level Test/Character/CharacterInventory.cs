@@ -11,9 +11,12 @@ public struct CharacterInventory : IComponentData
 
     public Entity EquippedItem;
 
+    public Entity SwitchToItem;
+
+    public float Timer;
     //public WeaponDesc PrimaryWeapon;
     //public WeaponDesc SecondaryWeapon;
-    
+
 
 }
 

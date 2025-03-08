@@ -49,8 +49,12 @@ public class HotbarManager : MonoBehaviour
         _inputActions.DemoMap.Hotbar7.performed += EquipSlot7;
         _inputActions.DemoMap.Hotbar8.performed += EquipSlot8;
         _inputActions.DemoMap.Hotbar9.performed += EquipSlot9;
+        
         _open = true;
         _holdOpen = true;
+        
+        EquipSlot( 0 );
+        
     }
 
 
@@ -181,7 +185,8 @@ public class HotbarManager : MonoBehaviour
             _currentEquipped.Equipped = false;
         _currentEquipped = _slots[slotIndex];
         
-        _manager.EquipSlot( slotIndex );
+        if(_slots[slotIndex].HasItem)
+            _manager.EquipSlot( slotIndex );
         
         if(!_open)
             RevealHotBar();
