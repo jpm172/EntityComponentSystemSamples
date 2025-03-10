@@ -77,7 +77,8 @@ public class InventoryItemLayout : MonoBehaviour
             return;
         }
         */
-        Initialize();
+        //Initialize();
+        GetComponentInParent<InventoryManager>().RemovedItem();
         Destroy( gameObject );
     }
 

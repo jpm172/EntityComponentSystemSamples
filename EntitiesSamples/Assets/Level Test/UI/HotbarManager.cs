@@ -120,6 +120,9 @@ public class HotbarManager : MonoBehaviour
             RectTransform slotRect = slot.GetComponent<RectTransform>();
             if ( GetBoundingBoxRect( slotRect ).Contains( position ) )
             {
+                if ( i <= 1 )
+                    return;
+                
                 bool hasItem = ContainsItem( drag, out int result );
                 if ( slot.TryPutInSlot( drag.Container ) )
                 {
@@ -141,6 +144,23 @@ public class HotbarManager : MonoBehaviour
         {
             HotbarSlotLayout slot = _slots[i];
             
+            
+            if ( slot.HasItem && slot.HeldItem.Key == itemKey )
+            {
+                result = i;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public bool ContainsItem( int itemKey, out int result )
+    {
+        result = -1;
+        for ( int i = 0; i < _slots.Length; i++ )
+        {
+            HotbarSlotLayout slot = _slots[i];
             
             if ( slot.HasItem && slot.HeldItem.Key == itemKey )
             {
@@ -185,8 +205,7 @@ public class HotbarManager : MonoBehaviour
             _currentEquipped.Equipped = false;
         _currentEquipped = _slots[slotIndex];
         
-        if(_slots[slotIndex].HasItem)
-            _manager.EquipSlot( slotIndex );
+        _manager.EquipSlot( slotIndex );
         
         if(!_open)
             RevealHotBar();

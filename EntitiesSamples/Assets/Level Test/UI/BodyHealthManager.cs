@@ -292,12 +292,17 @@ public class BodyHealthManager : MonoBehaviour
 
     public void HealBodyPartECS( BodyPart bodyPart, HealthItemInfo usedItem )
     {
+        /*
         if ( usedItem.Data.Stackable )
         {
             //UseSpecialHealingItem( bodyPart, usedItem );
             return;
         }
+        */
 
+        _manager.QuickUseItem(usedItem, bodyPart);
+        return;
+        
         MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
         DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
         DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );

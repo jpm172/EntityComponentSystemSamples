@@ -19,7 +19,7 @@ public partial struct CharacterInventorySystem : ISystem
     {
         foreach ( var (input, inventory) in SystemAPI.Query<RefRO<PlayerInputs>, RefRW<CharacterInventory>>() )
         {
-            if ( inventory.ValueRW.SwitchToItem == Entity.Null )
+            if ( inventory.ValueRW.Timer <= 0 )
                 continue;
 
             inventory.ValueRW.Timer -= SystemAPI.Time.DeltaTime;

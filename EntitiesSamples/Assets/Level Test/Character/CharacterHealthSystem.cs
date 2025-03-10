@@ -10,8 +10,11 @@ public partial struct CharacterHealthSystem : ISystem
 {
 
     private static int _lastWoundId = 0;
+    //private EndSimulationEntityCommandBufferSystem _commandBuffer;
     public void OnCreate( ref SystemState state )
     {
+        //_commandBuffer = state.World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>();
+        
         _lastWoundId = 0;
     }
 
@@ -35,6 +38,8 @@ public partial struct CharacterHealthSystem : ISystem
             }
         }
         */
+
+        
         
         foreach ( var (damage, wounds, character, player) in 
             SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
@@ -87,48 +92,106 @@ public partial struct CharacterHealthSystem : ISystem
     
     private void UseHealingItem(ref SystemState state)
     {
+        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
         NativeQueue<Entity> removedItems = new NativeQueue<Entity>(Allocator.Temp);
-        //Entity removedItem = Entity.Null;
-        
+
         foreach ( var (input, inventory, character, player) in 
             SystemAPI.Query< RefRO<PlayerInputs>, RefRW<CharacterInventory>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
         {
             Entity equippedItem = inventory.ValueRW.EquippedItem;
             
-            if(!input.ValueRO.Shoot || !state.EntityManager.HasComponent( equippedItem,typeof(HealthItemDesc) ))
+            if(!state.EntityManager.HasComponent( equippedItem,typeof(HealthItemDesc) ))
                 continue;
 
+            QuickUseData quickData = new QuickUseData();
+            bool quickUse = false;
+            if ( state.EntityManager.HasComponent<QuickUseData>( equippedItem ) )
+            {
+                quickData = state.EntityManager.GetComponentData<QuickUseData>( equippedItem );
+                quickUse = true;
+            }
+                
+            if(!input.ValueRO.Shoot && !quickUse)
+                continue;
+            
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
             CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
-
+            
             if ( healthItem.Type == HealthItemType.HealthKit )
             {
-                UseHealthKit(player,character, ref healthItem, ref state );
+                if ( quickUse )
+                {
+                    UseHealthKit(player,character, ref healthItem, quickData, ref state );
+                    if ( quickData.PreviousEquipped != Entity.Null )
+                    {
+                        inventory.ValueRW.SwitchToItem = quickData.PreviousEquipped;
+                    }
+                    inventory.ValueRW.EquippedItem = Entity.Null;
+
+                }
+                else
+                {
+                    UseHealthKit(player,character, ref healthItem, ref state );
+                }
+                
             }
             else if ( healthItem.Type == HealthItemType.Tourniquet )
             {
-                UseTourniquet( player,character, ref healthItem, ref itemData, ref state );
+                if ( quickUse )
+                {
+                    UseTourniquet( player,character, ref healthItem, ref itemData, quickData, ref state );
+                    if ( quickData.PreviousEquipped != Entity.Null )
+                    {
+                        inventory.ValueRW.SwitchToItem = quickData.PreviousEquipped;
+                    }
+                    inventory.ValueRW.EquippedItem = Entity.Null;
+                }
+                else
+                {
+                    UseTourniquet( player,character, ref healthItem, ref itemData, ref state );
+                }
+                
             }
-            
+
             state.EntityManager.SetComponentData( equippedItem, healthItem );
             state.EntityManager.SetComponentData( equippedItem, itemData );
 
             if ( healthItem.CurrentCharges > 0 )
             {
-                //CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
                 PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
+
+                if ( quickUse )
+                {
+                    if ( quickData.InHotBar )
+                    {
+                        ecb.RemoveComponent<QuickUseData>( equippedItem );
+                    }
+                    else
+                    {
+                        ecb.DestroyEntity( equippedItem );
+                    }
+                }
+                
             }
             else
-                removedItems.Enqueue( equippedItem );
+            {
+                //removedItems.Enqueue( equippedItem );
+                PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
+                ecb.DestroyEntity( equippedItem );
+            }
+                
                 
         }
 
+        /*
         while ( removedItems.TryDequeue( out Entity removed ) )
         {
             CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( removed );
             PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
         }
+        */
     }
+
 
     private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, ref SystemState state)
     {
@@ -176,6 +239,35 @@ public partial struct CharacterHealthSystem : ISystem
 
     }
     
+    private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, QuickUseData quickData, ref SystemState state)
+    {
+        DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
+        DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
+        
+
+        ref CharacterLimb mostBleeding = ref body.ElementAt( (int)quickData.Part );
+        for ( int i = 0; i < wounds.Length; i++ )
+        {
+            ref CharacterWound wound = ref wounds.ElementAt( i );
+            if ( wound.AffectedPart == mostBleeding.Part )
+            {
+                mostBleeding.Bleed -= wound.Bleed;
+                wound.Bleed = 0;
+            }
+        }
+        
+        healthItem.CurrentCharges--;
+        if ( healthItem.CurrentCharges <= 0 )
+        {
+            itemData.Quantity--;
+            if ( itemData.Quantity > 0 )
+            {
+                healthItem.CurrentCharges = healthItem.MaxCharges;
+            }
+        }
+
+    }
+    
     private void UseHealthKit(  Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref SystemState state )
     {
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
@@ -201,6 +293,37 @@ public partial struct CharacterHealthSystem : ISystem
             }
         }
     }
+    
+    private void UseHealthKit( Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, QuickUseData quickData, ref SystemState state )
+    {
+        DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
+        DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
+        
+        for ( int i = wounds.Length - 1; i >= 0; i-- )
+        {
+            ref CharacterWound wound = ref wounds.ElementAt( i );
+            
+            if(wound.AffectedPart != quickData.Part)
+                continue;
+            
+            float2 healResult = wound.Heal(ref healthItem);
+
+            ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
+            character.ValueRW.Health += limb.Heal( healResult.x, healResult.y );
+                
+            if ( wound.Healed )
+            {
+                PlayerUIManager.Instance.HealedWoundECS( i );
+                wounds.RemoveAt( i );   
+            }
+
+            if ( healthItem.CurrentCharges <= 0 )
+            {
+                return;
+            }
+        }
+    }
+    
 
     private void AddWound(CharacterWound newWound,  DynamicBuffer<CharacterWound> wounds,DynamicBuffer<CharacterLimb> body, RefRW<MyCharacterComponent> character)
     {

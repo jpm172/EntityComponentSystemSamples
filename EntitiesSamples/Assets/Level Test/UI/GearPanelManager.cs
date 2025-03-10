@@ -108,9 +108,7 @@ public class GearPanelManager : DragManager
                 
                 if ( !slot.MatchesType( container ) )
                     return;
-                
-                //StartCoroutine( DelayAddToSlot(slot, drag, item) );
-                
+
                 if ( slot.HasItem )
                 {
                     slot.SwapItem( drag );

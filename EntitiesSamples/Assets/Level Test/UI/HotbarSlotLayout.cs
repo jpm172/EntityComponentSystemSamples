@@ -83,8 +83,8 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public void ClearSlot()
     {
-        if ( _hasItem )
-            PlayerUIManager.Instance.RemoveItemEntity( _slotNumber -1, _equipped );
+        //if ( _hasItem )
+            //PlayerUIManager.Instance.RemoveItemEntity( _slotNumber -1, _equipped );
         
         _itemNameText.text = "";
         _itemImage.enabled = false;

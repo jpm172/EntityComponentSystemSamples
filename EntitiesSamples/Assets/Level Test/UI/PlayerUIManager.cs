@@ -53,6 +53,7 @@ public class PlayerUIManager : MonoBehaviour
     private List<int> _healthItemKeys;
     
     private EntityManager _entityManager;
+    private Entity _playerEntity;
     
     
     //public List<WeaponItemInfo> WeaponItems => _weaponItems;
@@ -174,6 +175,12 @@ public class PlayerUIManager : MonoBehaviour
         
     }
 
+    private void Start()
+    {
+        _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out _playerEntity);
+    }
+
     public void NewWoundECS(CharacterWound newWound)
     {
         _bodyManager.AddWoundECS(newWound);
@@ -186,22 +193,31 @@ public class PlayerUIManager : MonoBehaviour
     
     public void EquipSlot( int equipIndex )
     {
-        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
-        
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
-        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( player );
-        CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( invBuffer[equipIndex].Item );
 
-        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item || inventory.EquippedItem == invBuffer[equipIndex].Item )
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+
+        if ( invBuffer[equipIndex].Item == Entity.Null )
+        {
+            if ( inventory.EquippedItem != Entity.Null )
+                inventory.Timer = _entityManager.GetComponentData<CharacterItemData>( inventory.EquippedItem ).EquipTime;
+            
+            return;
+        }
+        
+        CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( invBuffer[equipIndex].Item );
+        
+        //if already equipping this item, dont reset the timer
+        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item )
             return;
         
         inventory.SwitchToItem = invBuffer[equipIndex].Item;
         inventory.Timer = itemData.EquipTime;
-        //inventory.EquippedItem = invBuffer[equipIndex].Item;
-        _entityManager.SetComponentData( player, inventory );
+
+        if ( inventory.EquippedItem != Entity.Null )
+            inventory.Timer += _entityManager.GetComponentData<CharacterItemData>( inventory.EquippedItem ).EquipTime;
+        
+        _entityManager.SetComponentData( _playerEntity, inventory );
     }
 
     public void AddItemEntity(ItemInfo item, int equipIndex, bool equip)
@@ -265,7 +281,36 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.DestroyEntity( removedItem );
         
     }
-    
+
+    public void QuickUseItem(HealthItemInfo healthItem, BodyPart healPart)
+    {
+        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        Entity itemEntity;
+        bool inHotBar = _hotBar.ContainsItem( healthItem.Key, out int result );
+        if ( inHotBar )
+        {
+            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+            itemEntity = invBuffer[result].Item;
+        }
+        else
+        {
+            itemEntity = CreateHealthItemEntity( healthItem );
+        }
+        
+        QuickUseData quickData = new QuickUseData
+        {
+            PreviousEquipped = playerInv.EquippedItem,
+            Part = healPart,
+            InHotBar = inHotBar
+        };
+        _entityManager.AddComponentData( itemEntity, quickData );
+        
+         
+        playerInv.SwitchToItem = itemEntity;
+        playerInv.Timer = healthItem.Data.EquipTime;
+        _entityManager.SetComponentData( _playerEntity, playerInv );
+        
+    }
 
     private Entity CreateWeaponEntity( WeaponItemInfo weaponInfo )
     {
