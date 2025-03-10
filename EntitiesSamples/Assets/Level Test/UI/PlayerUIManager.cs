@@ -202,13 +202,16 @@ public class PlayerUIManager : MonoBehaviour
             if ( inventory.EquippedItem != Entity.Null )
                 inventory.Timer = _entityManager.GetComponentData<CharacterItemData>( inventory.EquippedItem ).EquipTime;
             
+            inventory.SwitchToItem = Entity.Null;
+            _entityManager.SetComponentData( _playerEntity, inventory );
             return;
         }
         
         CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( invBuffer[equipIndex].Item );
-        
+
+        bool newSwitchEquipped = inventory.Timer <= 0 && inventory.EquippedItem == invBuffer[equipIndex].Item;
         //if already equipping this item, dont reset the timer
-        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item )
+        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item || newSwitchEquipped )
             return;
         
         inventory.SwitchToItem = invBuffer[equipIndex].Item;

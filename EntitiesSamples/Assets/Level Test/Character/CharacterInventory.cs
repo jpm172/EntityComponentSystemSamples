@@ -14,6 +14,8 @@ public struct CharacterInventory : IComponentData
     public Entity SwitchToItem;
 
     public float Timer;
+
+    public float Remaining;
     //public WeaponDesc PrimaryWeapon;
     //public WeaponDesc SecondaryWeapon;
 

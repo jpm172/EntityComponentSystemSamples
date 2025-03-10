@@ -22,12 +22,14 @@ public partial struct CharacterInventorySystem : ISystem
             if ( inventory.ValueRW.Timer <= 0 )
                 continue;
 
-            inventory.ValueRW.Timer -= SystemAPI.Time.DeltaTime;
+            inventory.ValueRW.Remaining += SystemAPI.Time.DeltaTime;
 
-            if ( inventory.ValueRW.Timer <= 0 )
+            if ( inventory.ValueRW.Remaining >= inventory.ValueRW.Timer )
             {
                 inventory.ValueRW.EquippedItem = inventory.ValueRW.SwitchToItem;
                 inventory.ValueRW.SwitchToItem = Entity.Null;
+                inventory.ValueRW.Remaining = 0;
+                inventory.ValueRW.Timer = 0;
             }
 
         }

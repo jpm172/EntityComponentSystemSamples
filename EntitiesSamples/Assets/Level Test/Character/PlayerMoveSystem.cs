@@ -12,7 +12,8 @@ using UnityEngine;
 using CapsuleCollider = Unity.Physics.CapsuleCollider;
 using RaycastHit = Unity.Physics.RaycastHit;
 
-[UpdateBefore(typeof(TransformSystemGroup))]
+//[UpdateBefore(typeof(TransformSystemGroup))]
+[UpdateInGroup(typeof(TransformSystemGroup), OrderFirst = true)]
 public partial struct PlayerMoveSystem : ISystem
 {
     

@@ -6,6 +6,8 @@ using UnityEngine.InputSystem;
 
 public class HotbarManager : MonoBehaviour
 {
+    private const float TransitionSpeed = 4.5f;
+
     public GameObject EquipHighlight;
 
     private DemoInputActions _inputActions;
@@ -21,9 +23,10 @@ public class HotbarManager : MonoBehaviour
     private HotbarSlotLayout[] _slots;
 
     private HotbarSlotLayout _currentEquipped;
-
+    [SerializeField]
     private bool _open;
     private bool _holdOpen;
+    [SerializeField]
     private float _openTimer;
 
     public bool HoldOpen
@@ -61,16 +64,26 @@ public class HotbarManager : MonoBehaviour
     private void FixedUpdate()
     {
 
-        if ( _open && !_holdOpen )
+        if ( _open )
         {
-            _openTimer += Time.fixedDeltaTime;
-            if(_openTimer >= 2)
-                HideHotBar();
+            _rect.localPosition = Vector3.MoveTowards( _rect.localPosition, _openPosition, TransitionSpeed );
+
+            if ( !_holdOpen )
+            {
+                _openTimer += Time.fixedDeltaTime;
+                if(_openTimer >= 2)
+                    HideHotBar();
+            }
+            else
+            {
+                _openTimer = 0;
+            }
         }
         else
         {
-            _openTimer = 0;
+            _rect.localPosition = Vector3.MoveTowards( _rect.localPosition, _closePosition, TransitionSpeed );
         }
+        
     }
 
     private bool SetHoldOpen( bool value )
@@ -87,31 +100,13 @@ public class HotbarManager : MonoBehaviour
     private void HideHotBar()
     {
         _open = false;
-        StartCoroutine( HotBarTransition( _openPosition, _closePosition ) );
     }
 
     private void RevealHotBar()
     {
         _open = true;
-        StartCoroutine( HotBarTransition( _closePosition, _openPosition ) );
     }
 
-    private IEnumerator HotBarTransition(Vector3 a, Vector3 b)
-    {
-        float remaining = 0;
-        float timer = 0.2f;
-
-        while ( remaining <= timer )
-        {
-            remaining += Time.deltaTime;
-            
-            _rect.localPosition = Vector3.Lerp( a, b, remaining / timer );
-            yield return null;
-        }
-
-        _rect.localPosition = b;
-    }
-    
     public void TryAddToHotBar(DragObject drag, Vector2 position)
     {
         for ( int i = 0; i < _slots.Length; i++ )
