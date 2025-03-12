@@ -2,20 +2,40 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HealthPanelManager : DragManager
+public class HealthPanelManager : PanelManager
 {
+    
+    
+    [SerializeField]
+    protected RectTransform[] _inventoryRects;
+    [SerializeField]
+    protected InventoryManager[] _inventoryManagers;
+    
     [SerializeField]
     private BodyHealthManager _bodyManager;
     
     [SerializeField]
     private GameObject[] _bodyParts;
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
-        
+        InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
+        _inventoryManagers = new InventoryManager[managers.Length];
+        _inventoryRects = new RectTransform[managers.Length];
+        for ( int i = 0; i < managers.Length; i++ )
+        {
+            _inventoryManagers[i] = managers[i];
+            _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
+        }
     }
 
-    protected override void TryPutIntoSlot( DragObject drag, Vector2 position )
+    
+    public override void DropItem( DragObject drag )
+    {
+        Debug.Log( "Health Drop" );
+        TryPutIntoSlot( drag, drag._worldCenterPoint );
+    }
+    
+    private void TryPutIntoSlot( DragObject drag, Vector2 position )
     {
         if ( !GetBoundingBoxRect( _dragLayer ).Contains( position ) )
         {
@@ -43,4 +63,5 @@ public class HealthPanelManager : DragManager
         
     }
 
+    
 }

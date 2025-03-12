@@ -4048,6 +4048,7 @@ GameObject:
   - component: {fileID: 415887144}
   - component: {fileID: 415887143}
   - component: {fileID: 415887142}
+  - component: {fileID: 415887145}
   m_Layer: 5
   m_Name: Player UI
   m_TagString: Untagged
@@ -4138,6 +4139,19 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &415887145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415887140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0664df04d324174a970e7527a8413ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _reloadMeter: {fileID: 421178409}
 --- !u!1 &420351197
 GameObject:
   m_ObjectHideFlags: 0
@@ -4307,7 +4321,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 20, y: 20}
+  m_AnchoredPosition: {x: 23, y: 23}
   m_SizeDelta: {x: 15, y: 15}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &421178409
@@ -4336,7 +4350,7 @@ MonoBehaviour:
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 0
-  m_FillClockwise: 1
+  m_FillClockwise: 0
   m_FillOrigin: 2
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
@@ -6966,17 +6980,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c27f5331a849bd24ba2a400eb2c3350a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _defaultLayer: {fileID: 1786278520}
   _dragLayer: {fileID: 977741506}
-  _itemPrefab: {fileID: 6763600580921533132, guid: c448e88ba9d66cf49b0139ab20583f35,
-    type: 3}
-  _transferItemPrefab: {fileID: 1766037046150380363, guid: 5bef336cb0236a14da4025fe2939b78e,
-    type: 3}
+  _weaponSlots: []
   _inventoryRects: []
   _inventoryManagers: []
-  _hotBarRect: {fileID: 1696488015}
-  _currentDraggedObject: {fileID: 0}
-  _weaponSlots: []
 --- !u!1 &790934781
 GameObject:
   m_ObjectHideFlags: 0
@@ -8782,6 +8789,7 @@ GameObject:
   - component: {fileID: 993911222}
   - component: {fileID: 993911221}
   - component: {fileID: 993911225}
+  - component: {fileID: 993911226}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: PlayerUI
@@ -8885,6 +8893,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c68455da476903241b8a5a6f9e2096ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ActivePanel: {fileID: 781753427}
   _gearLayer: {fileID: 781753421}
   _healthLayer: {fileID: 1690316803}
   _hotBar: {fileID: 1696488017}
@@ -8907,6 +8916,26 @@ MonoBehaviour:
   ItemUpdateEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &993911226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993911220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deff0625e24a98c4a9e1c6642a768e70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _defaultLayer: {fileID: 1786278520}
+  _dragLayer: {fileID: 977741506}
+  _itemPrefab: {fileID: 6763600580921533132, guid: c448e88ba9d66cf49b0139ab20583f35,
+    type: 3}
+  _transferItemPrefab: {fileID: 1766037046150380363, guid: 5bef336cb0236a14da4025fe2939b78e,
+    type: 3}
+  _hotBarRect: {fileID: 1696488015}
+  _currentDraggedObject: {fileID: 0}
 --- !u!1 &995232791
 GameObject:
   m_ObjectHideFlags: 0
@@ -14987,16 +15016,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7b0586ac635cc740870ffe348018837, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _defaultLayer: {fileID: 1251794270}
   _dragLayer: {fileID: 773095466}
-  _itemPrefab: {fileID: 6763600580921533132, guid: c448e88ba9d66cf49b0139ab20583f35,
-    type: 3}
-  _transferItemPrefab: {fileID: 1766037046150380363, guid: 5bef336cb0236a14da4025fe2939b78e,
-    type: 3}
   _inventoryRects: []
   _inventoryManagers: []
-  _hotBarRect: {fileID: 1696488015}
-  _currentDraggedObject: {fileID: 0}
   _bodyManager: {fileID: 735150871}
   _bodyParts:
   - {fileID: 96587752}
@@ -15242,6 +15264,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EquipHighlight: {fileID: 838400592}
   _slots: []
+  _open: 0
+  _openTimer: 0
 --- !u!1 &1700224911
 GameObject:
   m_ObjectHideFlags: 0

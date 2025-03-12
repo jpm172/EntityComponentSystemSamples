@@ -88,7 +88,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
         int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
-        _hotBar.AddToHotBar( _container, slotIndex );
+        //_hotBar.AddToHotBar( _container, slotIndex );
         
     }
     

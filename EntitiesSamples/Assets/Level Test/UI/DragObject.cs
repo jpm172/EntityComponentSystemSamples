@@ -32,7 +32,8 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     public void Initialize()
     {
         _container = GetComponent<ItemContainer>();
-        _manager = GetComponentInParent<DragManager>();
+        _manager = PlayerUIManager.Instance.gameObject.GetComponent<DragManager>();
+        //_manager = GetComponentInParent<DragManager>();
         //_centerPoint = (transform as RectTransform).rect.center;
         _centerPoint = GetComponent<RectTransform>().rect.center;
     }

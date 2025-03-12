@@ -6,65 +6,43 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 
-public class GearPanelManager : DragManager
+public class GearPanelManager : PanelManager
 {
 
     private const string InventoryTag = "InventorySlot";
-
+    
+    
     [SerializeField]
     private GameObject[] _weaponSlots;
+    
+    [SerializeField]
+    protected RectTransform[] _inventoryRects;
+    [SerializeField]
+    protected InventoryManager[] _inventoryManagers;
 
     
-    protected override void Awake()
+
+    private void Awake()
     {
-        base.Awake();
-        
-        //_weaponInventory = _invetoryLayer.GetComponent<InventoryManager>();
-        
         _weaponSlots = GameObject.FindGameObjectsWithTag( InventoryTag );
-    }
-
-    
-/*
-    public void PickUpItem(DragObject drag)
-    {
-        _currentDraggedObject = drag;
-        drag.transform.SetParent(_dragLayer);
-    }
-    */
-
-
-/*
-    public void DropItem()
-    {
-        DragObject drag = _currentDraggedObject.GetComponent<DragObject>();
-        TryPutIntoSlot( drag, drag._worldCenterPoint );
-
-        Destroy( _currentDraggedObject.gameObject );
-        _currentDraggedObject = null;
-    }
-    */
-    
-    /*
-    public DragObject SpawnItem( ItemInfo item, Vector3 position )
-    {
-        DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
-        newItem.GetComponent<ItemContainer>().ItemKey = item.Key;
-        //newItem.GetComponent<ItemContainer>().Item = item;
-        newItem.Initialize();
-
-        if(_currentDraggedObject != null)
+        
+        InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
+        _inventoryManagers = new InventoryManager[managers.Length];
+        _inventoryRects = new RectTransform[managers.Length];
+        for ( int i = 0; i < managers.Length; i++ )
         {
-            Destroy( _currentDraggedObject.gameObject );
-            _currentDraggedObject = null;
+            _inventoryManagers[i] = managers[i];
+            _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
         }
-        PickUpItem( newItem );
-        return newItem;
     }
-    */
 
+    public override void DropItem( DragObject drag )
+    {
+        Debug.Log( "Gear Drop" );
+        TryPutIntoSlot( drag, drag._worldCenterPoint );
+    }
 
-    protected override void TryPutIntoSlot(DragObject drag, Vector2 position)
+    private void TryPutIntoSlot(DragObject drag, Vector2 position)
     {
         if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
         {

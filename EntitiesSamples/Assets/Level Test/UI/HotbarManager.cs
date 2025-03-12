@@ -61,9 +61,17 @@ public class HotbarManager : MonoBehaviour
     }
 
 
+    public int GetEquippedIndex()
+    {
+        if ( _currentEquipped == null )
+            return -1;
+
+        return _currentEquipped.SlotIndex;
+    }
+
     private void FixedUpdate()
     {
-
+        //handles the smooth transitioning between revealed/hidden
         if ( _open )
         {
             _rect.localPosition = Vector3.MoveTowards( _rect.localPosition, _openPosition, TransitionSpeed );
@@ -115,25 +123,34 @@ public class HotbarManager : MonoBehaviour
             RectTransform slotRect = slot.GetComponent<RectTransform>();
             if ( GetBoundingBoxRect( slotRect ).Contains( position ) )
             {
-                if ( i <= 1 )
+                bool validSlot = slot.CanPutInSlot( drag.Container );
+                if ( i <= 1 || !validSlot )
                     return;
                 
-                bool hasItem = ContainsItem( drag, out int result );
-                if ( slot.TryPutInSlot( drag.Container ) )
+                bool hasItem = ContainsItem( drag.Container.Item, out int result );
+
+                if ( hasItem )
                 {
-                    if ( hasItem && result != i )
+                    if ( result != i )
                     {
-                        ClearSlot( result );
+                        slot.SwapWith( _slots[result] );
+                        _manager.SwapItemEntities( result, i );
                     }
+                    
+                    return;
                 }
+
+                slot.TryPutInSlot( drag.Container );
                 return;
             }
         }
     }
+    
+    
 
-    private bool ContainsItem(DragObject drag, out int result)
+    private bool ContainsItem(ItemInfo item, out int result)
     {
-        int itemKey = drag.Container.ItemKey;
+        int itemKey = item.Key;
         result = -1;
         for ( int i = 0; i < _slots.Length; i++ )
         {
@@ -169,6 +186,13 @@ public class HotbarManager : MonoBehaviour
 
     public void AddToHotBar( ItemContainer item, int slotIndex )
     {
+        if ( ContainsItem( item.Item, out int result ) )
+        {
+            _slots[slotIndex].SwapWith( _slots[result] );
+            _manager.SwapItemEntities( result, slotIndex );
+            return;
+        }
+        
         _slots[slotIndex].TryPutInSlot( item );
 
     }
@@ -179,7 +203,7 @@ public class HotbarManager : MonoBehaviour
         {
             if ( slot.HasItem && slot.HeldItem.Key == itemKey )
             {
-                slot.ClearSlot();
+                slot.ClearSlot(true);
                 return;
             }
         }
@@ -187,7 +211,7 @@ public class HotbarManager : MonoBehaviour
     
     public void RemoveFromHotBar( int slotIndex )
     {
-        _slots[slotIndex].ClearSlot();
+        _slots[slotIndex].ClearSlot(true);
     }
     
     private void EquipSlot( int slotIndex )
@@ -207,11 +231,6 @@ public class HotbarManager : MonoBehaviour
         _openTimer = 0;
     }
 
-    private void ClearSlot( int slotIndex )
-    {
-        _slots[slotIndex].ClearSlot();
-    }
-    
     private Rect GetBoundingBoxRect(RectTransform rectTransform)
     {
         var corners = new Vector3[4];

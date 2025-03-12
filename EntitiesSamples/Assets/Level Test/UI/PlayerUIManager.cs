@@ -10,6 +10,8 @@ public class PlayerUIManager : MonoBehaviour
     public static PlayerUIManager Instance;
 
     private int _itemKey;
+
+    public PanelManager ActivePanel;
     
     [SerializeField]
     private GameObject _gearLayer;
@@ -225,41 +227,36 @@ public class PlayerUIManager : MonoBehaviour
 
     public void AddItemEntity(ItemInfo item, int equipIndex, bool equip)
     {
-        
-        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
-        
+
         ItemType itemType = item.Data.ItemType;
         if ( itemType == ItemType.Weapon )
         {
             Entity itemEntity = CreateWeaponEntity( (WeaponItemInfo) item );
-            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
             invBuffer.ElementAt( equipIndex ).Item = itemEntity;
 
             if ( equip )
             {
-                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
+                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
                 //playerInv.EquippedItem = itemEntity;
                 playerInv.SwitchToItem = invBuffer[equipIndex].Item;
                 playerInv.Timer = item.Data.EquipTime;
-                _entityManager.SetComponentData( player, playerInv );
+                _entityManager.SetComponentData( _playerEntity, playerInv );
             }
             
         }
         else if ( itemType == ItemType.Health )
         {
             Entity itemEntity = CreateHealthItemEntity( (HealthItemInfo) item );
-            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
             invBuffer.ElementAt( equipIndex ).Item = itemEntity;
             if ( equip )
             {
-                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
+                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
                 //playerInv.EquippedItem = itemEntity;
                 playerInv.SwitchToItem = invBuffer[equipIndex].Item;
                 playerInv.Timer = item.Data.EquipTime;
-                _entityManager.SetComponentData( player, playerInv );
+                _entityManager.SetComponentData( _playerEntity, playerInv );
             }
         }
     }
@@ -285,6 +282,43 @@ public class PlayerUIManager : MonoBehaviour
         
     }
 
+    public void SwapItemEntities( int index1, int index2 )
+    {
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+
+        float timer = 0;
+        
+        InventoryElement swap = invBuffer[index1];
+        invBuffer.ElementAt( index1 ) = invBuffer[index2];
+        invBuffer.ElementAt( index2 ) = swap;
+
+        if ( invBuffer[index1].Item != Entity.Null )
+            timer += _entityManager.GetComponentData<CharacterItemData>( invBuffer[index1].Item ).EquipTime;
+        
+        if ( invBuffer[index2].Item != Entity.Null )
+            timer += _entityManager.GetComponentData<CharacterItemData>( invBuffer[index2].Item ).EquipTime;
+
+
+        int equippedIndex = _hotBar.GetEquippedIndex();
+        if ( equippedIndex >= 0 && equippedIndex == index1 )
+        {
+            inventory.SwitchToItem = invBuffer[index1].Item;
+            inventory.Timer = timer;
+            inventory.Remaining = 0;
+        }
+        else if (equippedIndex >= 0 && equippedIndex == index2)
+        {
+            
+            inventory.SwitchToItem = invBuffer[index2].Item;
+            inventory.Timer = timer;
+            inventory.Remaining = 0;
+        }
+
+        _entityManager.SetComponentData( _playerEntity, inventory );
+
+    }
+    
     public void QuickUseItem(HealthItemInfo healthItem, BodyPart healPart)
     {
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
@@ -379,12 +413,14 @@ public class PlayerUIManager : MonoBehaviour
     
     public void OpenGear()
     {
+        ActivePanel = _gearLayer.GetComponent<PanelManager>();
         _gearLayer.SetActive( true );
         _healthLayer.SetActive( false );
     }
 
     public void OpenHealth()
     {
+        ActivePanel = _healthLayer.GetComponent<PanelManager>();
         _healthLayer.SetActive( true );
         _gearLayer.SetActive( false );
     }
