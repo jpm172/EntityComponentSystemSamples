@@ -216,8 +216,9 @@ public class HotbarManager : MonoBehaviour
     
     private void EquipSlot( int slotIndex )
     {
-        EquipHighlight.transform.parent = _slots[slotIndex].transform;
-        EquipHighlight.transform.localPosition = Vector3.zero;
+        EquipHighlight.transform.SetParent( _slots[slotIndex].transform, false );
+        //EquipHighlight.transform.parent = _slots[slotIndex].transform;
+        //EquipHighlight.transform.localPosition = Vector3.zero;
         
         _slots[slotIndex].Equipped = true;
         if(_currentEquipped != null)

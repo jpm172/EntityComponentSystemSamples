@@ -28,13 +28,25 @@ public partial struct CharacterInventorySystem : ISystem
             {
                 inventory.ValueRW.Remaining -= SystemAPI.Time.DeltaTime;
                 float itemTime = GetItemEquipTime( inventory.ValueRW.EquippedItem, ref state );
-                
-                //Debug.Log( $"{itemTime} | {inventory.ValueRW.Remaining}" );
-                
-                if ( inventory.ValueRW.Remaining <=  itemTime)
+
+
+                if ( inventory.ValueRW.IsSwitchingTo( inventory.ValueRW.EquippedItem ) )
+                {
+                    if ( inventory.ValueRW.Remaining <= 0 )
+                    {
+                        inventory.ValueRW.SwitchToItem = EquippingData.Null;
+                        inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
+                        inventory.ValueRW.Remaining = 0;
+                        inventory.ValueRW.Timer = 0;
+                        inventory.ValueRW.SwitchBack = false;
+                        continue;
+                    }
+                }
+                else if ( inventory.ValueRW.Remaining <=  itemTime)
                 {
                     inventory.ValueRW.SwitchToItem = inventory.ValueRW.SwitchToBuffer;
                     inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
+                    inventory.ValueRW.Timer = itemTime + GetItemEquipTime( inventory.ValueRW.SwitchToItem.SwitchTo, ref state );
                     inventory.ValueRW.SwitchBack = false;
                 }
             }
@@ -70,7 +82,6 @@ public partial struct CharacterInventorySystem : ISystem
         if ( inventory.ValueRW.SwitchToBuffer == EquippingData.Null )
             return;
         
-
         if ( inventory.ValueRW.SwitchToItem == EquippingData.Null )
         {
             inventory.ValueRW.SwitchToItem = inventory.ValueRW.SwitchToBuffer;

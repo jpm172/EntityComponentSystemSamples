@@ -195,7 +195,7 @@ public class PlayerUIManager : MonoBehaviour
     
     public void EquipSlot( int equipIndex )
     {
-        Debug.Log( $"equip slot {equipIndex}" );
+        
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
@@ -207,10 +207,8 @@ public class PlayerUIManager : MonoBehaviour
         }
         
 
-        bool newSwitchEquipped = !inventory.Switching && inventory.EquippedItem == invBuffer[equipIndex].Item;
-        
-        //if already equipping this item, dont reset the switch
-        if ( inventory.IsSwitchingTo( invBuffer[equipIndex].Item ) || newSwitchEquipped )
+        bool newSwitchIsEquipped = !inventory.Switching && inventory.EquippedItem == invBuffer[equipIndex].Item;
+        if(newSwitchIsEquipped)
             return;
         
         inventory.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
