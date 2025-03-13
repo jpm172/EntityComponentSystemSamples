@@ -38,7 +38,6 @@ public class GearPanelManager : PanelManager
 
     public override void DropItem( DragObject drag )
     {
-        Debug.Log( "Gear Drop" );
         TryPutIntoSlot( drag, drag._worldCenterPoint );
     }
 

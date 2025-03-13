@@ -31,7 +31,6 @@ public class HealthPanelManager : PanelManager
     
     public override void DropItem( DragObject drag )
     {
-        Debug.Log( "Health Drop" );
         TryPutIntoSlot( drag, drag._worldCenterPoint );
     }
     

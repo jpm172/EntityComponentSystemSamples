@@ -124,7 +124,7 @@ public partial struct CharacterHealthSystem : ISystem
                     UseHealthKit(player,character, ref healthItem, quickData, ref state );
                     if ( quickData.PreviousEquipped != Entity.Null )
                     {
-                        inventory.ValueRW.SwitchToItem = quickData.PreviousEquipped;
+                        inventory.ValueRW.SwitchToBuffer = new EquippingData(quickData.PreviousEquipped);
                     }
                     inventory.ValueRW.EquippedItem = Entity.Null;
 
@@ -142,7 +142,7 @@ public partial struct CharacterHealthSystem : ISystem
                     UseTourniquet( player,character, ref healthItem, ref itemData, quickData, ref state );
                     if ( quickData.PreviousEquipped != Entity.Null )
                     {
-                        inventory.ValueRW.SwitchToItem = quickData.PreviousEquipped;
+                        inventory.ValueRW.SwitchToBuffer = new EquippingData(quickData.PreviousEquipped);
                     }
                     inventory.ValueRW.EquippedItem = Entity.Null;
                 }

@@ -9,15 +9,25 @@ public struct CharacterInventory : IComponentData
 {
 
     public Entity EquippedItem;
-    public Entity SwitchToItem;
-    public Entity SwitchToBuffer;
+    public EquippingData SwitchToItem;
+    public EquippingData SwitchToBuffer;
 
     public float Timer;
     public float Remaining;
 
-    public bool Switching => SwitchToItem != Entity.Null || SwitchToBuffer != Entity.Null;
+    public bool SwitchBack;
+
+    public bool Switching => SwitchToItem != EquippingData.Null || SwitchToBuffer != EquippingData.Null;
 
 
+    public bool IsSwitchingTo( Entity entity )
+    {
+        bool value = SwitchToItem != EquippingData.Null && SwitchToItem.SwitchTo == entity;
+        value |= SwitchToBuffer != EquippingData.Null && SwitchToBuffer.SwitchTo == entity;
+        
+        return value;
+    }
+    
 
 }
 
@@ -33,8 +43,6 @@ public struct EquippingData
 
     private bool _null;
 
-    public bool IsNull => _null;
-    
     public static EquippingData Null = new EquippingData
     {
         SwitchTo = Entity.Null,
@@ -49,7 +57,7 @@ public struct EquippingData
 
     public static bool operator==(EquippingData lhs, EquippingData rhs)
     {
-        return lhs.SwitchTo == rhs.SwitchTo && lhs.IsNull == rhs.IsNull;
+        return lhs.SwitchTo == rhs.SwitchTo && lhs._null == rhs._null;
     }
     
     public static bool operator!=(EquippingData lhs, EquippingData rhs)

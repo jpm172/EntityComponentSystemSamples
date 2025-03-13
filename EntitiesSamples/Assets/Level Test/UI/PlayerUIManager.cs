@@ -195,33 +195,26 @@ public class PlayerUIManager : MonoBehaviour
     
     public void EquipSlot( int equipIndex )
     {
-
+        Debug.Log( $"equip slot {equipIndex}" );
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
         if ( invBuffer[equipIndex].Item == Entity.Null )
         {
-            if ( inventory.EquippedItem != Entity.Null )
-                inventory.Timer = _entityManager.GetComponentData<CharacterItemData>( inventory.EquippedItem ).EquipTime;
-            
-            inventory.SwitchToItem = Entity.Null;
+            inventory.SwitchToBuffer = new EquippingData(Entity.Null);
             _entityManager.SetComponentData( _playerEntity, inventory );
             return;
         }
         
-        CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( invBuffer[equipIndex].Item );
 
-        bool newSwitchEquipped = inventory.Timer <= 0 && inventory.EquippedItem == invBuffer[equipIndex].Item;
-        //if already equipping this item, dont reset the timer
-        if ( inventory.SwitchToItem == invBuffer[equipIndex].Item || newSwitchEquipped )
+        bool newSwitchEquipped = !inventory.Switching && inventory.EquippedItem == invBuffer[equipIndex].Item;
+        
+        //if already equipping this item, dont reset the switch
+        if ( inventory.IsSwitchingTo( invBuffer[equipIndex].Item ) || newSwitchEquipped )
             return;
         
-        inventory.SwitchToItem = invBuffer[equipIndex].Item;
-        inventory.Timer = itemData.EquipTime;
+        inventory.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
 
-        if ( inventory.EquippedItem != Entity.Null )
-            inventory.Timer += _entityManager.GetComponentData<CharacterItemData>( inventory.EquippedItem ).EquipTime;
-        
         _entityManager.SetComponentData( _playerEntity, inventory );
     }
 
@@ -238,9 +231,7 @@ public class PlayerUIManager : MonoBehaviour
             if ( equip )
             {
                 CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-                //playerInv.EquippedItem = itemEntity;
-                playerInv.SwitchToItem = invBuffer[equipIndex].Item;
-                playerInv.Timer = item.Data.EquipTime;
+                playerInv.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
                 _entityManager.SetComponentData( _playerEntity, playerInv );
             }
             
@@ -253,9 +244,7 @@ public class PlayerUIManager : MonoBehaviour
             if ( equip )
             {
                 CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-                //playerInv.EquippedItem = itemEntity;
-                playerInv.SwitchToItem = invBuffer[equipIndex].Item;
-                playerInv.Timer = item.Data.EquipTime;
+                playerInv.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
                 _entityManager.SetComponentData( _playerEntity, playerInv );
             }
         }
@@ -287,32 +276,19 @@ public class PlayerUIManager : MonoBehaviour
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
-        float timer = 0;
-        
         InventoryElement swap = invBuffer[index1];
         invBuffer.ElementAt( index1 ) = invBuffer[index2];
         invBuffer.ElementAt( index2 ) = swap;
-
-        if ( invBuffer[index1].Item != Entity.Null )
-            timer += _entityManager.GetComponentData<CharacterItemData>( invBuffer[index1].Item ).EquipTime;
-        
-        if ( invBuffer[index2].Item != Entity.Null )
-            timer += _entityManager.GetComponentData<CharacterItemData>( invBuffer[index2].Item ).EquipTime;
 
 
         int equippedIndex = _hotBar.GetEquippedIndex();
         if ( equippedIndex >= 0 && equippedIndex == index1 )
         {
-            inventory.SwitchToItem = invBuffer[index1].Item;
-            inventory.Timer = timer;
-            inventory.Remaining = 0;
+            inventory.SwitchToBuffer = new EquippingData(invBuffer[index1].Item);
         }
         else if (equippedIndex >= 0 && equippedIndex == index2)
         {
-            
-            inventory.SwitchToItem = invBuffer[index2].Item;
-            inventory.Timer = timer;
-            inventory.Remaining = 0;
+            inventory.SwitchToBuffer = new EquippingData(invBuffer[index2].Item);
         }
 
         _entityManager.SetComponentData( _playerEntity, inventory );
@@ -343,8 +319,7 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.AddComponentData( itemEntity, quickData );
         
          
-        playerInv.SwitchToItem = itemEntity;
-        playerInv.Timer = healthItem.Data.EquipTime;
+        playerInv.SwitchToBuffer = new EquippingData(itemEntity);
         _entityManager.SetComponentData( _playerEntity, playerInv );
         
     }
