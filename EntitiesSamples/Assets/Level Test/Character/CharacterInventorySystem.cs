@@ -95,6 +95,12 @@ public partial struct CharacterInventorySystem : ISystem
             return;
         }
 
+        if ( inventory.ValueRW.SwitchToItem.SwitchTo == inventory.ValueRW.SwitchToBuffer.SwitchTo )
+        {
+            inventory.ValueRW.SwitchBack = false;
+            return;
+        }
+
         inventory.ValueRW.SwitchBack = true;
 
 

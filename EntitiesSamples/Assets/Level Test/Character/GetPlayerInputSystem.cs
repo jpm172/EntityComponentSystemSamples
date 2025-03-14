@@ -40,8 +40,8 @@ public partial class GetPlayerInputSystem : SystemBase
         
         foreach (var (playerInputs, playerInventory) in SystemAPI.Query<RefRW<PlayerInputs>, RefRW<CharacterInventory>>())
         {
-            shoot &= playerInventory.ValueRO.Switching;
-            altFire &= playerInventory.ValueRO.Switching;
+            shoot &= !playerInventory.ValueRO.Switching;
+            altFire &= !playerInventory.ValueRO.Switching;
 
             if ( inventory )
             {

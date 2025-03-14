@@ -29,8 +29,8 @@ public class PlayerActionTracker : MonoBehaviour
     void Update()
     {
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-
-        if ( inventory.Timer > 0 )
+        
+        if( inventory.SwitchToItem != EquippingData.Null)
         {
             if ( !_indicator.enabled )
                 _indicator.enabled = true; 
@@ -50,15 +50,22 @@ public class PlayerActionTracker : MonoBehaviour
 
         float holsterTime = GetItemEquipTime( inventory.EquippedItem );
         float equipTime = GetItemEquipTime( inventory.SwitchToItem.SwitchTo );
-
+        
+        
         if (  inventory.Remaining < holsterTime )
         {
-            _equippingMeter.fillAmount = (inventory.Remaining / holsterTime) *0.5f;
+            if ( holsterTime <= math.EPSILON )
+                _equippingMeter.fillAmount = 0.5f;
+            else
+                _equippingMeter.fillAmount = (inventory.Remaining / holsterTime) *0.5f;
         }
         else
         {
-            _equippingMeter.fillAmount = 0.5f + (((inventory.Remaining- holsterTime) / equipTime) *0.5f);
-        }//
+            if ( equipTime <= math.EPSILON )
+                _equippingMeter.fillAmount = 1;
+            else
+                _equippingMeter.fillAmount = 0.5f + (((inventory.Remaining- holsterTime) / equipTime) *0.5f);
+        }
     }
     
     private void UpdateMeterProportional(CharacterInventory inventory)
