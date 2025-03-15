@@ -27,6 +27,11 @@ public struct CharacterInventory : IComponentData
         
         return value;
     }
+
+    public bool IsInPipeline( Entity entity )
+    {
+        return EquippedItem == entity || IsSwitchingTo( entity );
+    }
     
 
 }
@@ -54,6 +59,7 @@ public struct EquippingData
         SwitchTo = switchTo;
         _null = false;
     }
+    
 
     public static bool operator==(EquippingData lhs, EquippingData rhs)
     {

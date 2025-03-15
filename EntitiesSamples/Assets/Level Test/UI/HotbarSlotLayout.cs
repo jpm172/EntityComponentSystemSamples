@@ -75,6 +75,9 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         if ( !CanPutInSlot( item ) )
             return false;
         
+        if(_hasItem)
+            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
+        
         _itemImage.enabled = true;
         _heldItem = item.Item;
         _imageFitter.aspectRatio = _heldItem.Data.ItemSprite.textureRect.size.x / _heldItem.Data.ItemSprite.textureRect.size.y;

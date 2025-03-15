@@ -248,25 +248,52 @@ public class PlayerUIManager : MonoBehaviour
         }
     }
 
+    
+    
     public void RemoveItemEntity( int removeIndex, bool unequip )
     {
-        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
-
-        if ( unequip )
-        {
-            CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( player );
-            playerInv.EquippedItem = Entity.Null;
-            _entityManager.SetComponentData( player, playerInv );
-        }
         
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( player );
+        
+        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
         Entity removedItem = invBuffer.ElementAt( removeIndex ).Item;
         invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
-        _entityManager.DestroyEntity( removedItem );
         
+        _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
+        if ( unequip )
+        {
+            playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
+            _entityManager.SetComponentData( _playerEntity, playerInv );
+        }
+        
+        
+        
+        
+        /*
+        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        Entity removedItem = invBuffer.ElementAt( removeIndex ).Item;
+        
+        if ( unequip )
+        {
+            playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
+            _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
+            _entityManager.SetComponentData( _playerEntity, playerInv );
+        }
+        else
+        {
+            if ( playerInv.IsInPipeline( removedItem ) )
+            {
+                _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
+            }
+            else
+            {
+                invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
+                _entityManager.DestroyEntity( removedItem );
+            }
+        }
+        */
+
     }
 
     public void SwapItemEntities( int index1, int index2 )
@@ -331,7 +358,7 @@ public class PlayerUIManager : MonoBehaviour
 #endif
 
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
 
         return itemEntity;
     }
@@ -345,7 +372,7 @@ public class PlayerUIManager : MonoBehaviour
         
         
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
 
         return itemEntity;
     }

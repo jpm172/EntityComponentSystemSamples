@@ -17,7 +17,10 @@ public partial struct CharacterInventorySystem : ISystem
 
     public void OnUpdate( ref SystemState state )
     {
-        foreach ( var (input, inventory) in SystemAPI.Query<RefRO<PlayerInputs>, RefRW<CharacterInventory>>() )
+        
+        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
+        
+        foreach ( var (input, inventory, player) in SystemAPI.Query<RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess() )
         {
             if(!inventory.ValueRW.Switching)
                 continue;
@@ -58,16 +61,23 @@ public partial struct CharacterInventorySystem : ISystem
 
             if ( inventory.ValueRW.Remaining >= inventory.ValueRW.Timer )
             {
-                inventory.ValueRW.EquippedItem = inventory.ValueRW.SwitchToItem.SwitchTo;
-                inventory.ValueRW.SwitchToItem = EquippingData.Null;
-                inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
-                inventory.ValueRW.Remaining = 0;
-                inventory.ValueRW.Timer = 0;
+                FinishedEquip( inventory, player, ecb, ref state );
             }
 
         }
     }
 
+    private void FinishedEquip( RefRW<CharacterInventory> inventory, Entity player, EntityCommandBuffer ecb, ref SystemState state )
+    {
+
+        inventory.ValueRW.EquippedItem = inventory.ValueRW.SwitchToItem.SwitchTo;
+        inventory.ValueRW.SwitchToItem = EquippingData.Null;
+        inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
+        inventory.ValueRW.Remaining = 0;
+        inventory.ValueRW.Timer = 0;
+        
+    }
+    
     private float GetItemEquipTime( Entity entity, ref SystemState state )
     {
         if ( entity == Entity.Null )
