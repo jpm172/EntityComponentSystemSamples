@@ -60,7 +60,6 @@ public class DragManager : MonoBehaviour
     {
         _currentDraggedObject = drag;
         drag.transform.SetParent(PlayerUIManager.Instance.ActivePanel.DragLayer);
-        //drag.transform.SetParent(_dragLayer);
     }
 
     
@@ -95,8 +94,8 @@ public class DragManager : MonoBehaviour
     {
         DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity ).GetComponent<DragObject>();
         //DragObject newItem = Instantiate( _transferItemPrefab, position, Quaternion.identity, _defaultLayer ).GetComponent<DragObject>();
-        newItem.GetComponent<ItemContainer>().ItemKey = item.Key;
-        //newItem.GetComponent<ItemContainer>().Item = item;
+        newItem.GetComponent<ItemContainer>().Set( item );
+        //newItem.GetComponent<ItemContainer>().ItemKey = item.Key;
         newItem.Initialize();
 
         if(_currentDraggedObject != null)

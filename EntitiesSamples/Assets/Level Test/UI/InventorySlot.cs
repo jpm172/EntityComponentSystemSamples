@@ -9,14 +9,11 @@ using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour, IPointerDownHandler
 {
-    private static readonly Vector2 _emptySize = new Vector2( 40, 40 );
-   
-    
     [SerializeField]
     private Image _displayImage;
 
     [SerializeField]
-    private Image _trasnferingImage;
+    private Image _transferingImage;
     
     [SerializeField]
     private float _padding = 10;
@@ -36,25 +33,40 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     [SerializeField] 
     private InventorySlotType _equipType;
-
-    private EntityManager _entityManager;
     
-    private bool _hasItem;
 
-    public bool HasItem => _hasItem;
+    public bool HasItem => _container.HasItem;
 
     public void Awake()
     {
-        World world = World.DefaultGameObjectInjectionWorld;
-        _entityManager = world.EntityManager;
-        
-        _hasItem = false;
         _dragManager = GetComponentInParent<DragManager>();
         _container = GetComponent<ItemContainer>();
         _displayImage.gameObject.SetActive( false );
     }
 
     public void AddItem( ItemContainer item )
+    {
+        _displayImage.gameObject.SetActive( true );
+        
+        Vector2 spriteSize = item.Data.ItemSprite.textureRect.size;
+        var rect = _containerRect.rect;
+        float xScale = rect.width  / (spriteSize.x+ _padding*2);
+        float yScale = rect.height / (spriteSize.y+ _padding*2);
+        float scale = Math.Min( xScale, yScale );
+        //Debug.Log( xScale + ", " + yScale + " == " + scale );
+        
+        _displayImage.sprite = item.Data.ItemSprite;
+        _displayImage.rectTransform.sizeDelta = spriteSize * scale;
+        
+        _container.Set( item.Item );
+        //_container.ItemKey = item.ItemKey;
+        //_hasItem = true;
+
+        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
+        _hotBar.AddToHotBar( item, slotIndex );
+    }
+
+    public void AddItemFromHotBar(ItemInfo item)
     {
         _displayImage.gameObject.SetActive( true );
         
@@ -67,13 +79,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
-        _container.ItemKey = item.ItemKey;
-        _hasItem = true;
-
-        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
-        _hotBar.AddToHotBar( item, slotIndex );
-        
-        //EquipItem();
+        _container.Set( item );
+        //_container.ItemKey = item.Key;
+        //_hasItem = true;
     }
 
     private void UpdateItem()
@@ -87,7 +95,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = _container.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
-        int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
+        //int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
         //_hotBar.AddToHotBar( _container, slotIndex );
         
     }
@@ -95,9 +103,14 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void SwapItem(DragObject drag)
     {
-        int swap = _container.ItemKey;
-        _container.ItemKey = drag.TransferFromContainer.ItemKey;
-        drag.TransferFromContainer.ItemKey = swap;
+        
+        //int swap = _container.ItemKey;
+        //_container.ItemKey = drag.TransferFromContainer.ItemKey;
+        ItemInfo swap = _container.Item;
+        _container.Set( drag.TransferFromContainer.Item );
+
+        //drag.TransferFromContainer.ItemKey = swap;
+        drag.TransferFromContainer.Set( swap );
         drag.SwapCallback();
         AddItem( _container );
     }
@@ -109,7 +122,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void GetTransferItem()
     {
-        if ( !_hasItem )
+        if ( !HasItem )
             return;
         
         DragObject transferItem = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
@@ -123,66 +136,22 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     {
         _displayImage.sprite = null;
         _displayImage.gameObject.SetActive( false );
-        _hasItem = false;
+        //_hasItem = false;
+        _container.Clear();
         
         int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
         _hotBar.RemoveFromHotBar( slotIndex );
         
-        UnequipItem();
     }
 
-    private void EquipItem()
+    public void RemoveItemFromHotBar()
     {
-        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
-        
-        if ( _equipType == InventorySlotType.Primary )
-        {
-            //PlayerUIManager.Instance.AddItemEntity( _container.Item, 0);
-            
-            /*
-            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.PrimaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
-            _entityManager.SetComponentData( player, inv );
-            */
-        }
-        else if ( _equipType == InventorySlotType.Secondary )
-        {
-            //PlayerUIManager.Instance.AddItemEntity( _container.Item,1 );
-            /*
-            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.SecondaryWeapon = ( (WeaponItemInfo) _container.Item ).Weapon;
-            _entityManager.SetComponentData( player, inv );
-            */
-        }
+        _displayImage.sprite = null;
+        _displayImage.gameObject.SetActive( false );
+        _container.Clear();
+        //_hasItem = false;
     }
-
-    private void UnequipItem()
-    {
-        bool hasPlayer = _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
-            .TryGetSingletonEntity<Entity>(out Entity player);
-        if ( !hasPlayer )
-            return;
-        
-        if ( _equipType == InventorySlotType.Primary )
-        {
-            /*
-            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.PrimaryWeapon = new WeaponDesc{Null = true};
-            _entityManager.SetComponentData( player, inv );
-            */
-        }
-        else if ( _equipType == InventorySlotType.Secondary )
-        {
-            /*
-            CharacterInventory inv = _entityManager.GetComponentData<CharacterInventory>( player );
-            inv.SecondaryWeapon = new WeaponDesc{Null = true};
-            _entityManager.SetComponentData( player, inv );
-            */
-        }
-    }
+    
 
     public void OnPointerDown( PointerEventData eventData )
     {

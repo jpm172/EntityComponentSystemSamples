@@ -13,6 +13,7 @@ public partial struct CharacterInventoryCleanUpSystem : ISystem
     public void OnCreate( ref SystemState state )
     {
         query = new EntityQueryBuilder(Allocator.Temp).WithAll<DestroyOnUnequip, CharacterItemData>().Build(ref state);
+        state.RequireForUpdate<DestroyOnUnequip>();
     }
 
     public void OnDestroy( ref SystemState state )

@@ -123,13 +123,10 @@ public class HotbarManager : MonoBehaviour
             RectTransform slotRect = slot.GetComponent<RectTransform>();
             if ( GetBoundingBoxRect( slotRect ).Contains( position ) )
             {
-                bool validSlot = slot.CanPutInSlot( drag.Container );
-                if ( i <= 1 || !validSlot )
+                if (!slot.CanPutInSlot( drag.Container ) )
                     return;
-                
-                bool hasItem = ContainsItem( drag.Container.Item, out int result );
 
-                if ( hasItem )
+                if ( ContainsItem( drag.Container.Item, out int result ) )
                 {
                     if ( result != i )
                     {
@@ -140,13 +137,13 @@ public class HotbarManager : MonoBehaviour
                     return;
                 }
 
-                slot.TryPutInSlot( drag.Container );
+                slot.TryPutInSlot( drag );
                 return;
             }
         }
     }
-    
-    
+
+
 
     private bool ContainsItem(ItemInfo item, out int result)
     {

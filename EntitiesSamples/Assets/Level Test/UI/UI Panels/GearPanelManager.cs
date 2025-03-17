@@ -55,7 +55,7 @@ public class GearPanelManager : PanelManager
             Rect invRect = GetBoundingBoxRect( _inventoryRects[i] );
             if ( invRect.Contains( position )  )
             {
-                if ( !_inventoryManagers[i].CanAddItem( drag.Container ) )
+                if ( !_inventoryManagers[i].CanAddItem( drag.Container.Item ) )
                     return;
                 
                 if ( drag.SourceObject == _inventoryRects[i].gameObject )
@@ -64,7 +64,7 @@ public class GearPanelManager : PanelManager
                     return;
                 }
                 
-                _inventoryManagers[i].AddItem( drag.Container );
+                //_inventoryManagers[i].AddItem( drag.Container.Item );
                 drag.Callback();
                 return;
             }

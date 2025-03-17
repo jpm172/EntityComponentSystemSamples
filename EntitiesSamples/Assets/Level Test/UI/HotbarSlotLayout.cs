@@ -12,20 +12,21 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
     private int _slotIndex;
 
     [SerializeField]
-    private TextMeshProUGUI _itemNameText;
+    protected TextMeshProUGUI _itemNameText;
 
-    private AspectRatioFitter _imageFitter;
+    protected AspectRatioFitter _imageFitter;
     
     [SerializeField]
-    private Image _itemImage;
+    protected Image _itemImage;
 
     [SerializeField]
-    private ItemInfo _heldItem;
+    protected ItemContainer _container;
 
-    private bool _hasItem;
+    protected DragManager _dragManager;
+    
     private bool _equipped;
 
-    public bool HasItem => _hasItem;
+    public bool HasItem => _container.HasItem;
 
     public bool Equipped
     {
@@ -35,69 +36,88 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public int SlotIndex => _slotIndex;
     
-    public ItemInfo HeldItem => _heldItem;
+    public ItemInfo HeldItem => _container.Item;
 
     private void Awake()
     {
+        _container = GetComponent<ItemContainer>();
         _imageFitter = GetComponentInChildren<AspectRatioFitter>();
         _slotIndex = transform.GetSiblingIndex();
         
-        
-        if ( !_hasItem )
+        if ( !HasItem )
         {
             ClearSlot(false);
         }
     }
 
-    public void SwapWith( HotbarSlotLayout otherSlot )
+    private void Start()
     {
-        ItemInfo swapItem = _heldItem;
-        
-        _itemImage.enabled = true;
-        _heldItem = otherSlot.HeldItem;
-        _imageFitter.aspectRatio = _heldItem.Data.ItemSprite.textureRect.size.x / _heldItem.Data.ItemSprite.textureRect.size.y;
-        _itemImage.sprite = _heldItem.Data.ItemSprite;
-        _itemNameText.text = _heldItem.Data.ItemName;
-        
-        if ( _hasItem )
-        {
-            otherSlot.ReplaceSlot( swapItem );
-        }
-        else
-        {
-            otherSlot.ClearSlot(false);
-        }
-        _hasItem = true;
+        _dragManager = PlayerUIManager.Instance.gameObject.GetComponent<DragManager>();
+    }
+
+    public virtual void SwapWith( HotbarSlotLayout otherSlot )
+    {
+        ItemInfo swapItem = _container.Item;
+        UpdateLayout( otherSlot.HeldItem );
+
+        otherSlot.ReplaceSlot( swapItem );
+        //_hasItem = true;
     }
     
-    public bool TryPutInSlot(ItemContainer item)
+    
+    public virtual void TryPutInSlot(DragObject drag)
     {
-        if ( !CanPutInSlot( item ) )
-            return false;
+        if ( !CanPutInSlot( drag.Container ) )
+            return;
+
+        ItemInfo item = drag.Container.Item;
         
-        if(_hasItem)
+        if(HasItem)
             PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
         
-        _itemImage.enabled = true;
-        _heldItem = item.Item;
-        _imageFitter.aspectRatio = _heldItem.Data.ItemSprite.textureRect.size.x / _heldItem.Data.ItemSprite.textureRect.size.y;
+        UpdateLayout( item );
 
-        _itemImage.sprite = _heldItem.Data.ItemSprite;
-        _itemNameText.text = _heldItem.Data.ItemName;
+        PlayerUIManager.Instance.AddItemEntity( item, _slotIndex, _equipped );
+        
+        //_hasItem = true;
+    }
+    
+    public void TryPutInSlot(ItemContainer item)
+    {
+        if ( !CanPutInSlot( item ) )
+            return;
+        
+        if(HasItem)
+            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
+        
+        UpdateLayout(item.Item);
         
         PlayerUIManager.Instance.AddItemEntity( item.Item, _slotIndex, _equipped );
         
-        _hasItem = true;
-        return true;
+        //_hasItem = true;
+    }
+    
+    
+
+    protected virtual void ReplaceSlot(ItemInfo item)
+    {
+        if ( item == null )
+        {
+            ClearSlot(false);
+            return;
+        }
+        
+        UpdateLayout(item);
     }
 
-    public void ReplaceSlot(ItemInfo item)
+    protected void UpdateLayout(ItemInfo item)
     {
-        _heldItem = item;
-        _imageFitter.aspectRatio = _heldItem.Data.ItemSprite.textureRect.size.x / _heldItem.Data.ItemSprite.textureRect.size.y;
-
-        _itemImage.sprite = _heldItem.Data.ItemSprite;
-        _itemNameText.text = _heldItem.Data.ItemName;
+        _container.Set( item );
+        //_container.ItemKey = item.Key;
+        _itemImage.enabled = true;
+        _imageFitter.aspectRatio = _container.Data.ItemSprite.textureRect.size.x / _container.Data.ItemSprite.textureRect.size.y;
+        _itemImage.sprite = _container.Data.ItemSprite;
+        _itemNameText.text = _container.Data.ItemName;
     }
     
     
@@ -117,27 +137,29 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         return true;
     }
 
-    public void ClearSlot(bool deleteEntity)
+    public virtual void ClearSlot(bool deleteEntity)
     {
-        if ( _hasItem && deleteEntity )
+        if ( HasItem && deleteEntity )
             PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
         
         _itemNameText.text = "";
         _itemImage.enabled = false;
-        _heldItem = null;
-        _hasItem = false;
+        //_container = null;
+        _container.Clear();
     }
     
 
     public void OnPointerDown( PointerEventData eventData )
     {
-
         if ( eventData.clickCount == 1 )
         {
             ClearSlot(true);
+            return;
         }
         
-            
+        DragObject transfer = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
+        transfer.TransferFromContainer = _container;
+        transfer.SourceObject = gameObject;
         
     }
 }

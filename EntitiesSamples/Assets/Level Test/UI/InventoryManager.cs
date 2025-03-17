@@ -82,40 +82,16 @@ public class InventoryManager : MonoBehaviour
         }
     }
     
-    
-    private List<ItemData> FetchItems()
-    {
-        List<ItemData> items = new List<ItemData>();
-        foreach ( ItemType type in _itemTypeWhitelist )
-        {
-            if ( type == ItemType.Weapon )
-            {
-                items.AddRange( _manager.WeaponItems );
-            }
-            /*
-            else if ( type == ItemType.Armor || type == ItemType.Helmet )
-            {
-                items.AddRange( _manager.EquipmentItems );
-                return items;
-            }
-            else if ( type == ItemType.Health )
-            {
-                items.AddRange( _manager.HealthItems );
-            }
-            */
-        }
 
-        return items;
-    }
-
-    private void LoadItem( ItemInfo data )
+    private void LoadItem( ItemInfo item )
     {
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
-
-        newContainer.ItemKey = data.Key;
+        
+        //newContainer.ItemKey = data.Key;
+        newContainer.Set( item );
         newContainer.transform.SetAsFirstSibling();
-        newContainer.transform.SetSiblingIndex( data.Order );
+        newContainer.transform.SetSiblingIndex( item.Order );
 
         DragObject drag = newContainer.GetComponent<DragObject>();
         drag.Initialize();
@@ -127,37 +103,15 @@ public class InventoryManager : MonoBehaviour
         
     }
     
-    public void AddItem(ItemInfo item)
-    {
-        /*
-        ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemInfo>();
-        InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
-        
-        
-        
-        newItem.Data = item.Data;
-        newItem.transform.SetAsFirstSibling();
-        
-        DragObject drag = newItem.GetComponent<DragObject>();
-        drag.Initialize();
-        drag.Callback = layout.CallBack;
-        drag.SwapCallback = layout.SwapCallback;
-        drag.TransferFromObj = newItem;
-        drag.SourceObject = gameObject;
-        
-        _itemCount++;
-        UpdateInventoryLayout();
-        */
-    }
     
-    public void AddItem(ItemContainer item)
+    public void AddItem(ItemInfo item)
     {
         
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
         
-        //newContainer.Item = item.Item;
-        newContainer.ItemKey = item.ItemKey;
+        newContainer.Set( item );
+        //newContainer.ItemKey = item.Key;
         newContainer.transform.SetAsFirstSibling();
         
         DragObject drag = newContainer.GetComponent<DragObject>();
@@ -171,7 +125,18 @@ public class InventoryManager : MonoBehaviour
         UpdateInventoryLayout();
         
     }
-    
+
+    public void TryAddItem(ItemInfo item)
+    {
+        if ( !CanAddItem( item ) )
+        {
+            //TODO: drop item
+            return;
+        }
+        
+        AddItem( item );
+        
+    }
 
     public void ReOrderItem( DragObject drag, Vector2 position )
     {
@@ -215,7 +180,7 @@ public class InventoryManager : MonoBehaviour
         
     }
 
-    public bool CanAddItem( ItemContainer info )
+    public bool CanAddItem( ItemInfo info )
     {
         if ( _hasCapacity && _itemCount >= _maxItems )
             return false;

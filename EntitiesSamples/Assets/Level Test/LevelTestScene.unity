@@ -15340,6 +15340,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   EquipHighlight: {fileID: 838400592}
+  _weaponSlots:
+  - {fileID: 377450947}
+  - {fileID: 704505171}
   _slots: []
   _open: 0
   _openTimer: 0

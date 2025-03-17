@@ -4,21 +4,39 @@ using UnityEngine;
 
 public class ItemContainer : MonoBehaviour
 {
-    //public ItemInfo Item;
-    public int ItemKey;
+    [SerializeField]
+    private int _itemKey;
     public ItemInfo Item => GetItem();
 
+    [SerializeField] private bool _hasItem;
+    
     private ItemInfo GetItem()
     {
-        return PlayerUIManager.Instance.AllItems[ItemKey];
+        if(_hasItem)
+            return PlayerUIManager.Instance.AllItems[_itemKey];
+
+        return null;
     }
+
+    public int Key => _itemKey;
     
-    public ItemData Data
-    {
-        get => Item.Data;
-        set => Item.Data = value;
-    }
+    public ItemData Data => Item.Data;
 
     public ItemType Type => Item.Data.ItemType;
 
+    public bool HasItem => _hasItem;
+
+
+    public void Set( ItemInfo newItem )
+    {
+        _hasItem = true;
+        _itemKey = newItem.Key;
+    }
+
+    public void Clear()
+    {
+        _hasItem = false;
+
+    }
+    
 }
