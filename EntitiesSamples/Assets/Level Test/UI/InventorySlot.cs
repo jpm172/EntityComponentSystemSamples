@@ -164,7 +164,7 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     }
 
     public void SwapCallback()
-    {
+    {//
         UpdateItem();
     }
 }
