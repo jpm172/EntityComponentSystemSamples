@@ -38,12 +38,22 @@ public class WeaponHotBarSlotLayout : HotbarSlotLayout
         _linkedSlot.AddItemFromHotBar( _container.Item );
     }
 
-    public override void ClearSlot( bool deleteEntity )
+    protected override void DoubleClickClear()
     {
         if ( HasItem )
         {
             _linkedSlot.RemoveItemFromHotBar();
             _linkedInventory.TryAddItem( _container.Item );
+        }
+
+        base.DoubleClickClear();
+    }
+    public override void ClearSlot( bool deleteEntity )
+    {
+        if ( HasItem )
+        {
+            _linkedSlot.RemoveItemFromHotBar();
+            //_linkedInventory.TryAddItem( _container.Item );
         }
 
         base.ClearSlot( deleteEntity );

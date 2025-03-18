@@ -144,22 +144,48 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         
         _itemNameText.text = "";
         _itemImage.enabled = false;
-        //_container = null;
         _container.Clear();
     }
-    
+
+    public void ClearFromLinkedSlot()
+    {
+        if(HasItem)
+            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
+        
+        _itemNameText.text = "";
+        _itemImage.enabled = false;
+        _container.Clear();
+    }
+
+    protected virtual void DoubleClickClear()
+    {
+        if(HasItem)
+            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
+        
+        _itemNameText.text = "";
+        _itemImage.enabled = false;
+        _container.Clear();
+    }
 
     public void OnPointerDown( PointerEventData eventData )
     {
         if ( eventData.clickCount == 1 )
         {
-            ClearSlot(true);
+            DoubleClickClear();
+            //ClearSlot(true);
             return;
         }
         
         DragObject transfer = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.TransferFromContainer = _container;
         transfer.SourceObject = gameObject;
-        
+        transfer.Callback = Callback;
     }
+
+    private void Callback()
+    {
+        ClearSlot( true );
+        //ClearFromLinkedSlot();
+    }
+    
 }

@@ -59,9 +59,5 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         transfer.SourceObject = SourceObject;
         //_manager.PickUpItem(this);
     }
-
-    public void SetTransfering()
-    {
-        
-    }
+    
 }

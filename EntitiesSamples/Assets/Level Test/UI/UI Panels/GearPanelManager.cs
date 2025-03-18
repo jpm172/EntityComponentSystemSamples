@@ -64,7 +64,7 @@ public class GearPanelManager : PanelManager
                     return;
                 }
                 
-                //_inventoryManagers[i].AddItem( drag.Container.Item );
+                _inventoryManagers[i].AddItem( drag.Container.Item );
                 drag.Callback();
                 return;
             }

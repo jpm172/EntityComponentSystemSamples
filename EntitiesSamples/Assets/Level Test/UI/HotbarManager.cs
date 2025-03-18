@@ -208,7 +208,7 @@ public class HotbarManager : MonoBehaviour
     
     public void RemoveFromHotBar( int slotIndex )
     {
-        _slots[slotIndex].ClearSlot(true);
+        _slots[slotIndex].ClearFromLinkedSlot();
     }
     
     private void EquipSlot( int slotIndex )
