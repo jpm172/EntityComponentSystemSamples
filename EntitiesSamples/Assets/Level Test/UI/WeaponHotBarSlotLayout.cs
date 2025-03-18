@@ -9,6 +9,8 @@ public class WeaponHotBarSlotLayout : HotbarSlotLayout
 
     [SerializeField]
     private InventoryManager _linkedInventory;
+    
+    protected override bool BlockAdd => false;
 
     public override void TryPutInSlot( DragObject drag )
     {

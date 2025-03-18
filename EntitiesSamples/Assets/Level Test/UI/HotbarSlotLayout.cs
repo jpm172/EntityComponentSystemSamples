@@ -35,6 +35,8 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
     }
 
     public int SlotIndex => _slotIndex;
+
+    protected virtual bool BlockAdd => true;
     
     public ItemInfo HeldItem => _container.Item;
 
@@ -180,6 +182,7 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         transfer.TransferFromContainer = _container;
         transfer.SourceObject = gameObject;
         transfer.Callback = Callback;
+        transfer.BlockAdd = BlockAdd;
     }
 
     private void Callback()

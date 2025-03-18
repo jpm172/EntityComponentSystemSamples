@@ -28,6 +28,8 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
 
     public bool IsTransferItem;
 
+    public bool BlockAdd;
+
     //initialize when instansiating new item
     public void Initialize()
     {

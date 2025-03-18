@@ -55,7 +55,7 @@ public class GearPanelManager : PanelManager
             Rect invRect = GetBoundingBoxRect( _inventoryRects[i] );
             if ( invRect.Contains( position )  )
             {
-                if ( !_inventoryManagers[i].CanAddItem( drag.Container.Item ) )
+                if ( !_inventoryManagers[i].CanAddItem( drag.Container.Item ) || drag.BlockAdd )
                     return;
                 
                 if ( drag.SourceObject == _inventoryRects[i].gameObject )
