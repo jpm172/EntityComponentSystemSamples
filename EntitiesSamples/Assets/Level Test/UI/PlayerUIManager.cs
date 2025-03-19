@@ -408,7 +408,8 @@ public class PlayerUIManager : MonoBehaviour
     {
         bool value = !_panelsParent.activeInHierarchy;
         _panelsParent.SetActive( value );
-         _hotBar.HoldOpen = value;
+        _hotBar.HoldOpen = value;
+        _hotBar.GetComponent<CanvasGroup>().blocksRaycasts = value;
     }
     
     public void OpenGear()

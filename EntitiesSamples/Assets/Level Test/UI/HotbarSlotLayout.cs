@@ -177,6 +177,9 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
             //ClearSlot(true);
             return;
         }
+
+        if ( !HasItem )
+            return;
         
         DragObject transfer = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.TransferFromContainer = _container;

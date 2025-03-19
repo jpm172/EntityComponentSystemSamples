@@ -103,9 +103,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void SwapItem(DragObject drag)
     {
+        if ( drag.Container.Key == _container.Key )
+            return;
         
-        //int swap = _container.ItemKey;
-        //_container.ItemKey = drag.TransferFromContainer.ItemKey;
         ItemInfo swap = _container.Item;
         _container.Set( drag.TransferFromContainer.Item );
 
