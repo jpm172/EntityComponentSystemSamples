@@ -218,8 +218,6 @@ public class InventoryManager : MonoBehaviour
     public void RemovedItem()
     {
         _itemCount--;
-        
-        //_rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30); //works, but only if we delay update by a frame (becuase of deleting GO)
         UpdateInventoryLayout();
     }
 
@@ -232,6 +230,15 @@ public class InventoryManager : MonoBehaviour
         return layoutSize;
     }
 
+    private Vector2 CalculateItemListLayoutSize()
+    {
+        Vector2 itemSize = _invItemPrefab.GetComponent<RectTransform>().rect.size;
+        
+        Vector2 layoutSize = new Vector2(_rectTransform.rect.width, Math.Max(_itemCount, 1)*itemSize.y);
+        layoutSize += new Vector2( 0, _spacing *(_itemCount+1) );
+        return layoutSize;
+    }
+    
     private void UpdateInventoryLayout()
     {
         //update item capacity
@@ -241,8 +248,12 @@ public class InventoryManager : MonoBehaviour
             _itemCounter.text = _itemCount.ToString();
         
         //change layout to fit items
-        if(!_collapsed)
+        if ( !_collapsed )
+        {
             _rectTransform.sizeDelta = CalculateLayoutSize();
+        }
+        _itemLayer.sizeDelta = CalculateItemListLayoutSize();
+            
     }
     
 }

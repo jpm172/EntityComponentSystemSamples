@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
@@ -10,6 +11,8 @@ using UnityEngine.UI.CoroutineTween;
 
 public class SubMenu : MonoBehaviour, IPointerClickHandler
 {
+    private static float _buffer = 10f;
+    
     public Canvas RootCanvas;
 
     public GameObject OptionPrefab;
@@ -42,15 +45,30 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
 
     private void OpenMenu()
     {
-        foreach ( SubMenuOption o in _options )
+        float maxWidth = Mathf.NegativeInfinity;
+        RectTransform[] optionRects = new RectTransform[_options.Count];
+        for ( int i = 0; i < _options.Count; i++ )
         {
+            SubMenuOption o = _options[i];
             GameObject newOption = Instantiate( OptionPrefab, OptionsTransform );
-            newOption.GetComponentInChildren<TextMeshProUGUI>().text = o.Text;
+            TextMeshProUGUI tmp = newOption.GetComponentInChildren<TextMeshProUGUI>();
+            tmp.text = o.Text;
+            if ( tmp.preferredWidth > maxWidth )
+                maxWidth = tmp.preferredWidth;
+
+            optionRects[i] = newOption.GetComponent<RectTransform>();
             
             ValueButton button = newOption.GetComponent<ValueButton>();
             button.Value = o.Value;
             button.OnClick = ButtonClicked;
         }
+
+
+        foreach ( RectTransform rect in optionRects )
+        {
+            rect.sizeDelta = new Vector2(maxWidth + _buffer, rect.sizeDelta.y);
+        }
+        
         _blocker = CreateBlocker( RootCanvas );
         _open = true;
     }

@@ -17,8 +17,10 @@ public class PlayerUIManager : MonoBehaviour
     private GameObject _gearLayer;
     [SerializeField]
     private GameObject _healthLayer;
+    
     [SerializeField]
     private HotbarManager _hotBar;
+    private CanvasGroup _hotBarGroup;
 
     [SerializeField]
     private GameObject _panelsParent;
@@ -114,7 +116,7 @@ public class PlayerUIManager : MonoBehaviour
 
         _playerMaxHealth = 300;
         _playerCurrentHealth = _playerMaxHealth;
-        
+        _hotBarGroup = _hotBar.GetComponent<CanvasGroup>();
         
         _allItemsDict = new Dictionary<int, ItemInfo>();
         
@@ -409,7 +411,8 @@ public class PlayerUIManager : MonoBehaviour
         bool value = !_panelsParent.activeInHierarchy;
         _panelsParent.SetActive( value );
         _hotBar.HoldOpen = value;
-        _hotBar.GetComponent<CanvasGroup>().blocksRaycasts = value;
+        _hotBarGroup.blocksRaycasts = value;
+        //Cursor.visible = value; //works, but commented out while developing
     }
     
     public void OpenGear()
