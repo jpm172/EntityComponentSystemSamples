@@ -47,7 +47,8 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
 
         if ( eventData.button == PointerEventData.InputButton.Right )
         {
-            Debug.Log( "right click" );
+            //Debug.Log( "right click" );
+            PlayerUIManager.Instance.CreateSubMenu( _container, eventData.position );
             //TODO: implement options menu
             return;
         }

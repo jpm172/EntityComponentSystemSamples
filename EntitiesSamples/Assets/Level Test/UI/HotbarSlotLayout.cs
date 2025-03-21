@@ -180,6 +180,12 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
         if ( !HasItem )
             return;
+
+        if ( eventData.button == PointerEventData.InputButton.Right )
+        {
+            //todo: options menu for hotbar
+            return;
+        }
         
         DragObject transfer = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.TransferFromContainer = _container;

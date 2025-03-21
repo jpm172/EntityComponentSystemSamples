@@ -9,9 +9,16 @@ public class PlayerUIManager : MonoBehaviour
 {
     public static PlayerUIManager Instance;
 
+    private Canvas _rootCanvas;
+
     private int _itemKey;
 
     public PanelManager ActivePanel;
+
+    [SerializeField]
+    private GameObject _subMenuPrefab;
+
+    private GameObject _pooledSubMenu;
     
     [SerializeField]
     private GameObject _gearLayer;
@@ -40,13 +47,7 @@ public class PlayerUIManager : MonoBehaviour
     
     [SerializeField]
     private List<HealthItemData> _loadHealthItems;
-    
-    //[SerializeField]
-    //private List<WeaponItemInfo> _weaponItems;
-    //[SerializeField]
-    //private List<HealthItemInfo> _healthItems;
-    [SerializeField]
-    private List<ItemData> _equipmentItems;
+
 
     [SerializeField]
     private ItemInfo[] _serializedItems;
@@ -65,9 +66,7 @@ public class PlayerUIManager : MonoBehaviour
     public Dictionary<int, WeaponItemInfo> WeaponItems => _weaponDict;
     //public Dictionary<int, HealthItemInfo> HealthItems => _healthItemDict;
     public List<int> HealthItemKeys => _healthItemKeys;
-
-    public List<ItemData> EquipmentItems => _equipmentItems;
-    //public List<HealthItemInfo> HealthItems => _healthItems;
+    
 
     public float PlayerCurrentHealth
     {
@@ -116,6 +115,7 @@ public class PlayerUIManager : MonoBehaviour
 
         _playerMaxHealth = 300;
         _playerCurrentHealth = _playerMaxHealth;
+        _rootCanvas = GetComponent<Canvas>();
         _hotBarGroup = _hotBar.GetComponent<CanvasGroup>();
         
         _allItemsDict = new Dictionary<int, ItemInfo>();
@@ -181,10 +181,37 @@ public class PlayerUIManager : MonoBehaviour
 
     private void Start()
     {
+        _pooledSubMenu = Instantiate( _subMenuPrefab, transform );
+        SubMenu menu = _pooledSubMenu.GetComponent<SubMenu>();
+        menu.RootCanvas = _rootCanvas;
+        _pooledSubMenu.SetActive( false );
+        
         _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
             .TryGetSingletonEntity<Entity>(out _playerEntity);
     }
 
+    public void CreateSubMenu( ItemContainer container, Vector2 clickPosition )
+    {
+        ItemData data = container.Item.Data;
+
+        //GameObject newSubMenu = Instantiate( _subMenuPrefab, clickPosition, Quaternion.identity, transform );
+        _pooledSubMenu.SetActive( true );
+        _pooledSubMenu.transform.position = clickPosition;
+        SubMenu menu = _pooledSubMenu.GetComponent<SubMenu>();
+        menu.ClearOptions();
+        //menu.RootCanvas = _rootCanvas;
+        
+        if ( data.ItemType == ItemType.Weapon )
+        {
+            menu.AddOption( new SubMenuOption("Equip Primary", 0) );    
+            menu.AddOption( new SubMenuOption("Equip Secondary", 1) );    
+            menu.AddOption( new SubMenuOption("Modify", 2) );    
+        }
+        
+        menu.OpenMenu();
+    }
+    
+    
     public void NewWoundECS(CharacterWound newWound)
     {
         _bodyManager.AddWoundECS(newWound);
@@ -408,11 +435,18 @@ public class PlayerUIManager : MonoBehaviour
     
     public void ToggleInventory()
     {
-        bool value = !_panelsParent.activeInHierarchy;
-        _panelsParent.SetActive( value );
-        _hotBar.HoldOpen = value;
-        _hotBarGroup.blocksRaycasts = value;
-        //Cursor.visible = value; //works, but commented out while developing
+        bool open = !_panelsParent.activeInHierarchy;
+        _panelsParent.SetActive( open );
+        _hotBar.HoldOpen = open;
+        _hotBarGroup.blocksRaycasts = open;
+        //Cursor.visible = open; //works, but commented out while developing
+
+        //close any open submenus when closing inventory
+        if ( !open && _pooledSubMenu.activeInHierarchy )
+        {
+            _pooledSubMenu.GetComponent<SubMenu>().Hide();
+            _pooledSubMenu.SetActive( false );
+        }
     }
     
     public void OpenGear()

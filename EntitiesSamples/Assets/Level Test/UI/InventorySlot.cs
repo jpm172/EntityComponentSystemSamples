@@ -120,11 +120,9 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         return container.Type == _slotItemType;
     }
 
-    public void GetTransferItem()
+    private void GetTransferItem()
     {
-        if ( !HasItem )
-            return;
-        
+
         DragObject transferItem = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transferItem.Callback = Callback;
         transferItem.SwapCallback = SwapCallback;
@@ -155,6 +153,16 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown( PointerEventData eventData )
     {
+        
+        if ( !HasItem )
+            return;
+        
+        if ( eventData.button == PointerEventData.InputButton.Right )
+        {
+            PlayerUIManager.Instance.CreateSubMenu( _container, eventData.position );
+            return;
+        }
+        
         GetTransferItem();
     }
 

@@ -24,8 +24,7 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
     
     public delegate void SelectAction(int value);
     public SelectAction OnSelected;
-    //
-    
+
     private GameObject _blocker;
     private bool _open;
 
@@ -42,8 +41,28 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
         
     }
 
+    public void AddOption(SubMenuOption newOption)
+    {
+        if(_options == null)
+            _options = new List<SubMenuOption>();
+        
+        _options.Add( newOption );
+        
+    }
 
-    private void OpenMenu()
+    public void ClearOptions()
+    {
+        if ( _options == null )
+        {
+            _options = new List<SubMenuOption>();
+            return;
+        }
+        
+        _options.Clear();
+            
+    }
+    
+    public void OpenMenu()
     {
         float maxWidth = Mathf.NegativeInfinity;
         RectTransform[] optionRects = new RectTransform[_options.Count];
@@ -156,7 +175,7 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
     }
 
 
-    private void Hide()
+    public void Hide()
     {
         if ( _blocker != null )
         {
