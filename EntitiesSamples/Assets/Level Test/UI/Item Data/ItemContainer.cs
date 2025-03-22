@@ -29,6 +29,12 @@ public class ItemContainer : MonoBehaviour
 
     public void Set( ItemInfo newItem )
     {
+        if ( newItem == null )
+        {
+            Clear();
+            return;
+        }
+        
         _hasItem = true;
         _itemKey = newItem.Key;
     }

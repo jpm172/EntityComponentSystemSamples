@@ -25,11 +25,26 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
     public delegate void SelectAction(int value);
     public SelectAction OnSelected;
 
+    private ItemContainer _container;
     private GameObject _blocker;
     private bool _open;
 
+    public int OptionsCount => _options.Count;
+
+    public ItemInfo RelatedItem => _container.Item;
+
+    private void Awake()
+    {
+        _container = GetComponent<ItemContainer>();
+        _options = new List<SubMenuOption>();
+    }
+
     public void OnPointerClick( PointerEventData eventData )
     {
+
+        if ( eventData.button != PointerEventData.InputButton.Left )
+            return;
+        
         if ( !_open )
         {
             OpenMenu();
@@ -43,23 +58,24 @@ public class SubMenu : MonoBehaviour, IPointerClickHandler
 
     public void AddOption(SubMenuOption newOption)
     {
-        if(_options == null)
-            _options = new List<SubMenuOption>();
-        
         _options.Add( newOption );
-        
     }
 
-    public void ClearOptions()
+    public void AddOptions( List<SubMenuOption> newOptions )
     {
-        if ( _options == null )
-        {
-            _options = new List<SubMenuOption>();
-            return;
-        }
-        
+        _options.AddRange( newOptions );
+    }
+
+    public void ResetMenu()
+    {
+        _container.Clear();
         _options.Clear();
-            
+        OnSelected = null;
+    }
+
+    public void SetItem( ItemInfo item )
+    {
+        _container.Set( item );
     }
     
     public void OpenMenu()

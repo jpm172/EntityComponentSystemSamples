@@ -116,6 +116,7 @@ GameObject:
   - component: {fileID: 8127401566012249761}
   - component: {fileID: 5826525277324957041}
   - component: {fileID: 3964492021067744290}
+  - component: {fileID: 8661598881871276045}
   m_Layer: 5
   m_Name: SubMenuPrefab
   m_TagString: Untagged
@@ -220,3 +221,17 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &8661598881871276045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4746811937844748007}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _itemKey: 0
+  _hasItem: 0

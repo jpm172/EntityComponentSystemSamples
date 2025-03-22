@@ -9,16 +9,15 @@ public class PlayerUIManager : MonoBehaviour
 {
     public static PlayerUIManager Instance;
 
-    private Canvas _rootCanvas;
+    
 
     private int _itemKey;
 
     public PanelManager ActivePanel;
 
-    [SerializeField]
-    private GameObject _subMenuPrefab;
-
-    private GameObject _pooledSubMenu;
+    private SubMenuManager _subMenuManager;
+    
+    
     
     [SerializeField]
     private GameObject _gearLayer;
@@ -115,8 +114,9 @@ public class PlayerUIManager : MonoBehaviour
 
         _playerMaxHealth = 300;
         _playerCurrentHealth = _playerMaxHealth;
-        _rootCanvas = GetComponent<Canvas>();
+        
         _hotBarGroup = _hotBar.GetComponent<CanvasGroup>();
+        _subMenuManager = GetComponent<SubMenuManager>();
         
         _allItemsDict = new Dictionary<int, ItemInfo>();
         
@@ -181,34 +181,19 @@ public class PlayerUIManager : MonoBehaviour
 
     private void Start()
     {
-        _pooledSubMenu = Instantiate( _subMenuPrefab, transform );
-        SubMenu menu = _pooledSubMenu.GetComponent<SubMenu>();
-        menu.RootCanvas = _rootCanvas;
-        _pooledSubMenu.SetActive( false );
-        
         _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
             .TryGetSingletonEntity<Entity>(out _playerEntity);
     }
 
     public void CreateSubMenu( ItemContainer container, Vector2 clickPosition )
     {
-        ItemData data = container.Item.Data;
+        _subMenuManager.CreateSubMenu( container, clickPosition );
+    }
 
-        //GameObject newSubMenu = Instantiate( _subMenuPrefab, clickPosition, Quaternion.identity, transform );
-        _pooledSubMenu.SetActive( true );
-        _pooledSubMenu.transform.position = clickPosition;
-        SubMenu menu = _pooledSubMenu.GetComponent<SubMenu>();
-        menu.ClearOptions();
-        //menu.RootCanvas = _rootCanvas;
-        
-        if ( data.ItemType == ItemType.Weapon )
-        {
-            menu.AddOption( new SubMenuOption("Equip Primary", 0) );    
-            menu.AddOption( new SubMenuOption("Equip Secondary", 1) );    
-            menu.AddOption( new SubMenuOption("Modify", 2) );    
-        }
-        
-        menu.OpenMenu();
+    public SubMenu CreateStaticSubMenu()
+    {
+
+        return _subMenuManager.CreateStaticSubMenu();
     }
     
     
@@ -442,10 +427,9 @@ public class PlayerUIManager : MonoBehaviour
         //Cursor.visible = open; //works, but commented out while developing
 
         //close any open submenus when closing inventory
-        if ( !open && _pooledSubMenu.activeInHierarchy )
+        if ( !open )
         {
-            _pooledSubMenu.GetComponent<SubMenu>().Hide();
-            _pooledSubMenu.SetActive( false );
+            _subMenuManager.OnCloseInventory();
         }
     }
     
@@ -462,4 +446,5 @@ public class PlayerUIManager : MonoBehaviour
         _healthLayer.SetActive( true );
         _gearLayer.SetActive( false );
     }
+    
 }

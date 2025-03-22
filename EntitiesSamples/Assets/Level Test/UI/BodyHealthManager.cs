@@ -31,7 +31,7 @@ public class BodyHealthManager : MonoBehaviour
     private LimbStatusMeter[] _meters;
 
     [SerializeField]
-    public SubMenu _healingMenu;
+    public StaticSubMenu _healingMenu;
     
     public Sprite[] WoundSprites;
 
