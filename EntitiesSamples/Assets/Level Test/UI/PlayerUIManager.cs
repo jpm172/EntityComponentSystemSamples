@@ -99,6 +99,11 @@ public class PlayerUIManager : MonoBehaviour
     {
         _bodyManager.AddWoundECS();
     }
+
+    public void BreakLimb()
+    {
+        Debug.Log( "break" );
+    }
     
     private void Awake()
     {
