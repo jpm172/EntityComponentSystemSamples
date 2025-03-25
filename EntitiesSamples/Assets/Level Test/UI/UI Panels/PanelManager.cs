@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class PanelManager : MonoBehaviour
+public abstract class PanelManager : MonoBehaviour, IInitializeUI
 {
    [SerializeField]
    protected RectTransform _dragLayer;
@@ -22,4 +22,6 @@ public abstract class PanelManager : MonoBehaviour
 
       return new Rect(position, size);
    }
+
+   public abstract void Initialize();
 }

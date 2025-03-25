@@ -17,23 +17,17 @@ public class WorkbenchItemLayout : MonoBehaviour
     
     private AspectRatioFitter _imageFitter;
     
+
     
-    
-    private void Awake()
+
+    public void Initialize()
     {
         _container = GetComponent<ItemContainer>();
         _imageFitter = _itemImage.GetComponent<AspectRatioFitter>();
         
         if(!_container.HasItem)
             ClearItem();
-        
     }
-
-    void Start()
-    {
-        
-    }
-
 
     public void SetItem( ItemInfo item )
     {

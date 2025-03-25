@@ -16,13 +16,18 @@ public class SubMenuManager : MonoBehaviour
     
     private Canvas _rootCanvas;
 
+    private PlayerUIManager _manager;
+
     private void Awake()
     {
         _rootCanvas = GetComponent<Canvas>();
+        
     }
 
     void Start()
     {
+        _manager = PlayerUIManager.Instance; 
+            
         _pooledSubMenu = Instantiate( _subMenuPrefab, transform );
         _menu = _pooledSubMenu.GetComponent<SubMenu>();
         _menu.RootCanvas = _rootCanvas;
@@ -84,7 +89,7 @@ public class SubMenuManager : MonoBehaviour
     private void ModifyWeapon()
     {
         _workbenchPanel.PlaceWeaponOnBench( _menu.RelatedItem );
-        _workbenchPanel.gameObject.SetActive( true );
+        _manager.OpenWorkbench();
     }
     
     public void OnCloseInventory()

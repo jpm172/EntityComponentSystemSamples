@@ -23,6 +23,8 @@ public class PlayerUIManager : MonoBehaviour
     private GameObject _gearLayer;
     [SerializeField]
     private GameObject _healthLayer;
+    [SerializeField]
+    private GameObject _workbenchLayer;
     
     [SerializeField]
     private HotbarManager _hotBar;
@@ -177,6 +179,7 @@ public class PlayerUIManager : MonoBehaviour
             }
         }
         
+        InitializePanels();
     }
 
     private void Start()
@@ -185,6 +188,15 @@ public class PlayerUIManager : MonoBehaviour
             .TryGetSingletonEntity<Entity>(out _playerEntity);
     }
 
+
+    //will make sure even the disabled panels are set up properly
+    private void InitializePanels()
+    {
+        _workbenchLayer.GetComponent<IInitializeUI>().Initialize();
+        _healthLayer.GetComponent<IInitializeUI>().Initialize();
+        _gearLayer.GetComponent<IInitializeUI>().Initialize();
+    }
+    
     public void CreateSubMenu( ItemContainer container, Vector2 clickPosition )
     {
         _subMenuManager.CreateSubMenu( container, clickPosition );
@@ -438,6 +450,7 @@ public class PlayerUIManager : MonoBehaviour
         ActivePanel = _gearLayer.GetComponent<PanelManager>();
         _gearLayer.SetActive( true );
         _healthLayer.SetActive( false );
+        _workbenchLayer.SetActive( false );
     }
 
     public void OpenHealth()
@@ -445,6 +458,30 @@ public class PlayerUIManager : MonoBehaviour
         ActivePanel = _healthLayer.GetComponent<PanelManager>();
         _healthLayer.SetActive( true );
         _gearLayer.SetActive( false );
+        _workbenchLayer.SetActive( false );
     }
+
+    public void OpenWorkbench()
+    {
+        ActivePanel = _workbenchLayer.GetComponent<PanelManager>();
+        _workbenchLayer.SetActive( true );
+    }
+    
+    public void CloseWorkbench()
+    {
+        _workbenchLayer.SetActive( false );
+
+        if ( _healthLayer.activeInHierarchy )
+        {
+            ActivePanel = _healthLayer.GetComponent<PanelManager>();
+        }
+        else if(_gearLayer.activeInHierarchy)
+        {
+            ActivePanel = _gearLayer.GetComponent<PanelManager>();
+        }
+        
+    }
+    
+    
     
 }

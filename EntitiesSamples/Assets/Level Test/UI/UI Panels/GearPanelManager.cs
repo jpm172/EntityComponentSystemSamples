@@ -19,10 +19,9 @@ public class GearPanelManager : PanelManager
     protected RectTransform[] _inventoryRects;
     [SerializeField]
     protected InventoryManager[] _inventoryManagers;
-
     
 
-    private void Awake()
+    public override void Initialize()
     {
         _weaponSlots = GameObject.FindGameObjectsWithTag( InventoryTag );
         
@@ -32,10 +31,11 @@ public class GearPanelManager : PanelManager
         for ( int i = 0; i < managers.Length; i++ )
         {
             _inventoryManagers[i] = managers[i];
+            _inventoryManagers[i].Initialize();
             _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
         }
     }
-
+    
     public override void DropItem( DragObject drag )
     {
         TryPutIntoSlot( drag, drag._worldCenterPoint );
@@ -102,6 +102,8 @@ public class GearPanelManager : PanelManager
         }
     }
 
+
+    
     
     private IEnumerator DelayAddToSlot(InventorySlot slot, DragObject drag, ItemContainer item)
     {

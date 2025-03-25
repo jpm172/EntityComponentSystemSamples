@@ -45,6 +45,7 @@ public class InventoryManager : MonoBehaviour
 
     private RectTransform _rectTransform;
 
+    /*
     private void Awake()
     {
         _manager = GetComponentInParent<PlayerUIManager>();
@@ -55,6 +56,18 @@ public class InventoryManager : MonoBehaviour
 
     private void Start()
     {
+        LoadItems();
+        UpdateInventoryLayout();
+    }
+    */
+
+    public void Initialize()
+    {
+        _manager = GetComponentInParent<PlayerUIManager>();
+        _rectTransform = GetComponent<RectTransform>();
+        
+        _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
+        
         LoadItems();
         UpdateInventoryLayout();
     }

@@ -16,8 +16,11 @@ public class HealthPanelManager : PanelManager
     
     [SerializeField]
     private GameObject[] _bodyParts;
+    
+    /*
     private void Awake()
     {
+        
         InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
         _inventoryManagers = new InventoryManager[managers.Length];
         _inventoryRects = new RectTransform[managers.Length];
@@ -26,8 +29,23 @@ public class HealthPanelManager : PanelManager
             _inventoryManagers[i] = managers[i];
             _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
         }
+        
     }
-
+*/
+    
+    public override void Initialize()
+    {
+        InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
+        _inventoryManagers = new InventoryManager[managers.Length];
+        _inventoryRects = new RectTransform[managers.Length];
+        for ( int i = 0; i < managers.Length; i++ )
+        {
+            _inventoryManagers[i] = managers[i];
+            _inventoryManagers[i].Initialize();
+            _inventoryRects[i] = managers[i].GetComponent<RectTransform>();
+        }
+    }
+    
     
     public override void DropItem( DragObject drag )
     {
@@ -61,6 +79,6 @@ public class HealthPanelManager : PanelManager
         }
         
     }
-
+    
     
 }
