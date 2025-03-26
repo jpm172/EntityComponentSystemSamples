@@ -11,6 +11,7 @@ public struct CharacterLimb : IBufferElementData
     public float MaxHealth;
     public float CurrentHealth;
     public float Bleed;
+    public float Condition;
 
 
     public float MissingHealth => GetMissingHealth();
@@ -22,6 +23,7 @@ public struct CharacterLimb : IBufferElementData
     public CharacterLimb(BodyPart part, float maxHealth)
     {
         Part = part;
+        Condition = 1;
         MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
         if ( part == BodyPart.Chest )

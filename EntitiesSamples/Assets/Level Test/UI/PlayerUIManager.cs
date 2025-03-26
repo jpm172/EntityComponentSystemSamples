@@ -101,8 +101,10 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     public void BreakLimb()
-    {
-        Debug.Log( "break" );
+    { 
+       Entity breakDebuff =  _entityManager.CreateEntity();
+       DynamicBuffer<CharacterDebuff> debuffs = _entityManager.GetBuffer<CharacterDebuff>( _playerEntity );
+       debuffs.Add( new CharacterDebuff {AffectedPart = BodyPart.LeftArm, DebuffEntity = breakDebuff} );
     }
     
     private void Awake()

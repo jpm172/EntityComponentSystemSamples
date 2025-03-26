@@ -30,10 +30,9 @@ public class PlayerAuthoring : MonoBehaviour
             }
             
             
-            AddComponent(entity, new CharacterInventory
-            {
-                
-            });
+            AddComponent(entity, new CharacterInventory { });
+            
+            AddBuffer<CharacterDebuff>( entity );
 
             AddComponent<PlayerInputs>(entity);
             AuthorHealth( entity, authoring );

@@ -23,6 +23,7 @@ public struct PlayerInputs : IComponentData
 {
     public float2 MoveInput;
     public float3 AimPosition;
+    public float3 RecoilOffset;
     public bool Shoot;
     public bool AltFire;
     public float Debug;

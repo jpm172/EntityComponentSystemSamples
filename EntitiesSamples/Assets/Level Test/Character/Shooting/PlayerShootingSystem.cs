@@ -221,7 +221,7 @@ public partial struct PlayerShootingSystem : ISystem
             
         }
 
-        foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
+        foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRW<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
             Entity equippedItem = inventory.ValueRW.EquippedItem;
             if(!state.EntityManager.HasComponent( equippedItem,typeof(WeaponDesc) ))
@@ -240,8 +240,8 @@ public partial struct PlayerShootingSystem : ISystem
                 state.EntityManager.SetComponentData( equippedItem, weapon );
                 continue;
             }
-                
-            
+
+            input.ValueRW.RecoilOffset = _rng.NextFloat3( new float3( -100, 0, 0 ), new float3( 100, 0, 0 ) );
             weapon.Timer = weapon.FireRate;
             weapon.CurrentAmmo--;
 

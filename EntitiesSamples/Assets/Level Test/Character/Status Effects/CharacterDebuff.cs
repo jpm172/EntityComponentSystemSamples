@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public struct CharacterDebuff : IComponentData
+[InternalBufferCapacity(30)]
+public struct CharacterDebuff : IBufferElementData
 {
-  
+    public BodyPart AffectedPart;
+    public Entity DebuffEntity;
+
 }

@@ -57,8 +57,9 @@ public partial struct PlayerMoveJob : IJobEntity
     };
 
     private void Execute( ref LocalTransform transform, in PlayerInputs input, MyCharacterComponent attributes,
-        PhysicsCollider col )
+        PhysicsCollider col, DynamicBuffer<CharacterLimb> limbs )
     {
+        float legCondition = GetLegCondition( limbs );
         //rotate the character to look at the mouse
         float3 forward = input.AimPosition - transform.Position;
         quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward );
@@ -66,7 +67,7 @@ public partial struct PlayerMoveJob : IJobEntity
         transform.Rotation = rotation;
         transform = transform.RotateZ( AngleAdjust );
 
-        float2 targetMove = input.MoveInput * attributes.MovementSpeed * DeltaTime;
+        float2 targetMove = input.MoveInput * (attributes.MovementSpeed*legCondition) * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
 
         float3 result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel );
@@ -145,6 +146,14 @@ public partial struct PlayerMoveJob : IJobEntity
     public static float3 ProjectOnPlane(float3 vector, float3 planeNormal)
     {
         return vector - math.project(vector, planeNormal);
+    }
+
+    private float GetLegCondition(DynamicBuffer<CharacterLimb> limbs)
+    {
+        CharacterLimb leftLeg = limbs[(int) BodyPart.LeftLeg];
+        CharacterLimb rightLeg = limbs[(int) BodyPart.RightLeg];
+
+        return ( leftLeg.Condition + rightLeg.Condition ) / 2;
     }
     
     private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits)
