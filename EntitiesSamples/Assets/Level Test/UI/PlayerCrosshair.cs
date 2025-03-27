@@ -35,6 +35,9 @@ public class PlayerCrosshair : MonoBehaviour
 
     private EntityManager _entityManager;
     private Entity _playerEntity;
+
+    public float horizontalRecoil = 2;
+    public float verticalRecoil = 0.25f;
     
     void Start()
     {
@@ -47,14 +50,31 @@ public class PlayerCrosshair : MonoBehaviour
 
     void Update()
     {
-        
-        //_direction = (transform.position - _playerTransform.position).normalized;
-        //transform.up = _direction;
-        //transform.position =  (_camera.ScreenToWorldPoint( Input.mousePosition ) * xy);
 
         PlayerInputs inputs = _entityManager.GetComponentData<PlayerInputs>( _playerEntity );
+
+        if ( Input.GetMouseButtonDown( 0 ) )
+        {
+            // inputs.RecoilValue = new Vector3(Random.Range( -2, 2 ),Random.Range( -2, 2 ),0);
+           inputs.TargetRecoilValue += new float3(Random.Range( 0, horizontalRecoil),
+               Random.Range( -verticalRecoil, verticalRecoil ),0);
+           inputs.TimeSinceShot = 0;
+           //inputs.TargetRecoilValue = new float3(1,1,0);
+            _entityManager.SetComponentData( _playerEntity, inputs );
+            
+        }
+            
         
+        transform.position =  inputs.AimPosition;
+        _crosshair.transform.position = inputs.AimPosition + inputs.RecoilOffset;
         
+        _direction = (transform.position - _playerTransform.position).normalized;
+
+        _markers.transform.up = _direction;
+        
+        Vector3 inverse = _markers.InverseTransformPoint( inputs.AimPosition + inputs.RecoilOffset );
+        _leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), _leftMarker.transform.position.y);
+        _rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), _rightMarker.transform.position.y,0);
 
     }
 
