@@ -53,18 +53,24 @@ public class PlayerCrosshair : MonoBehaviour
 
         PlayerInputs inputs = _entityManager.GetComponentData<PlayerInputs>( _playerEntity );
 
+
+        if ( Input.mouseScrollDelta.y > 0 )
+        {
+            inputs.TargetRecoilAngle += 1;
+            _entityManager.SetComponentData( _playerEntity, inputs );
+        }
+        
         if ( Input.GetMouseButtonDown( 0 ) )
         {
-            // inputs.RecoilValue = new Vector3(Random.Range( -2, 2 ),Random.Range( -2, 2 ),0);
-           inputs.TargetRecoilValue += new float3(Random.Range( 0, horizontalRecoil),
-               Random.Range( -verticalRecoil, verticalRecoil ),0);
+
+            inputs.TargetRecoilAngle = 0;
+           //inputs.TargetRecoilValue = CalculateRecoil( inputs );
            inputs.TimeSinceShot = 0;
            //inputs.TargetRecoilValue = new float3(1,1,0);
             _entityManager.SetComponentData( _playerEntity, inputs );
             
         }
-            
-        
+
         transform.position =  inputs.AimPosition;
         _crosshair.transform.position = inputs.AimPosition + inputs.RecoilOffset;
         
@@ -73,9 +79,49 @@ public class PlayerCrosshair : MonoBehaviour
         _markers.transform.up = _direction;
         
         Vector3 inverse = _markers.InverseTransformPoint( inputs.AimPosition + inputs.RecoilOffset );
-        _leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), _leftMarker.transform.position.y);
-        _rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), _rightMarker.transform.position.y,0);
+        _leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), 0);
+        _rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), 0);
+        //_leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), _leftMarker.transform.position.y);
+        //_rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), _rightMarker.transform.position.y,0);
 
+    }
+
+    private float3 CalculateRecoil(PlayerInputs inputs)
+    {
+        float4 recoilBounds = new float4(-2, -0.5f, 2, 0.5f);
+        float3 newRecoil = inputs.RecoilValue;
+
+        float xMin = recoilBounds.x - newRecoil.x;
+        float xMax = recoilBounds.z - newRecoil.x;
+
+        float yMin = recoilBounds.y - newRecoil.y;
+        float yMax = recoilBounds.w - newRecoil.y;
+        //Debug.Log( $"{newRecoil} -> {xMin}, {xMax}" );
+
+
+        float3 addRecoil = new float3(0,0,0);
+        bool fitLeft = math.abs( xMin ) >= Magnitude;
+        bool fitRight = xMax >= Magnitude;
+        
+        if ( fitLeft && fitRight )
+        {
+            addRecoil.x = Magnitude *  math.@select( 1, -1, Random.Range( 0, 2 ) == 1 );
+        }
+        else if ( fitLeft )
+        {
+            addRecoil.x = -Magnitude;
+        }
+        else
+        {
+            addRecoil.x = Magnitude;
+        }
+        
+        float xMag = Random.Range( xMin, xMax );
+        float yMag = Random.Range( yMin, yMax );
+
+
+        return newRecoil + addRecoil;
+        //return newRecoil + new float3(xMag, yMag,0);
     }
 
     private void MonoCrosshair()

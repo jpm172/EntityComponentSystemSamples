@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -29,41 +30,107 @@ public partial struct RecoilSystem : ISystem
 
 public partial struct RecoilJob : IJobEntity
 {
-
+    
     public float DeltaTime;
+    private static readonly float4 RecoilBounds = new float4(-2, -0.5f, 2, 0.5f);
+    
     private void Execute( ref LocalTransform transform, ref PlayerInputs input )
     {
-        float speed = math.max( 0.5f - input.TimeSinceShot, input.TimeSinceShot );//
-        //float speed = math.abs(0.5f - input.TimeSinceShot);
+        float3 forward = math.normalizesafe( transform.Position-input.AimPosition );
+        float distance = math.distance( transform.Position, input.AimPosition );
+        
+        float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
+        
+        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( input.TargetRecoilAngle ) ), forward );
+
+        
+        
+        Debug.DrawLine( transform.Position, transform.Position - forward * 40, Color.green);
+        Debug.DrawLine( transform.Position, transform.Position - recoilPos  * 40 , Color.red);//
+        Debug.DrawLine( input.AimPosition, input.AimPosition - right * 40, Color.black );
+
+
+        /*
+        float adjacent = distance;
+        float opposite = math.tan( math.radians(input.TargetRecoilAngle) ) * adjacent;
+        float hypotenus = math.sqrt( math.pow( opposite, 2 ) + math.pow( adjacent, 2 ) );
+        */
+
+        //obviously, recoil angle of 90 will then cause a division by 0 
+        float hypotenus = distance / math.cos( math.radians( input.TargetRecoilAngle ) );
+        
+        float3 pos = transform.Position - ( recoilPos * hypotenus );
+        //float3 pos = transform.Position - ( recoilPos * distance );
+        
+        
+        DrawRecoil( pos );
+       
+    }
+
+
+
+
+    private void DrawBounds(PlayerInputs input, float3 forward, float4 scaledBounds)
+    {
+        float3 b1 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * scaledBounds.x;
+        b1 -= forward * scaledBounds.y;
+        
+        float3 b2 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * scaledBounds.z;
+        b2 -= forward * scaledBounds.y;
+        
+        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b1 - 2*forward *scaledBounds.w, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b2, input.AimPosition + b2 - 2*forward *scaledBounds.w, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b2, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b1 - 2*forward *scaledBounds.w, input.AimPosition + b2 - 2*forward *scaledBounds.w, Color.white, 0.1f );
+    }
+
+
+    private void Iteration2( ref LocalTransform transform, ref PlayerInputs input )
+    {
+         float boundsScale = math.distance( transform.Position, input.AimPosition ) / 5;
+        boundsScale = math.clamp( boundsScale, 0.2f, 1 );
+        float4 scaledBounds = RecoilBounds * boundsScale;
+
+        float speed = math.max( 0.5f - input.TimeSinceShot, input.TimeSinceShot ); // / math.max(0.5f, boundsScale);
         input.RecoilValue = MoveTowards( input.RecoilValue, input.TargetRecoilValue, speed );
-        //input.RecoilValue = MoveTowards( input.RecoilValue, input.TargetRecoilValue, math.max( 0.5f - input.TimeSinceShot, 0.1f ) );
-        //input.RecoilValue = MoveTowards( input.RecoilValue, input.TargetRecoilValue, 0.1f );
-        //input.RecoilValue = Vector3.MoveTowards( input.RecoilValue, input.TargetRecoilValue, 0.1f );
+
 
         float3 forward = math.normalizesafe( transform.Position-input.AimPosition );
 
         float3 targetPosition = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * input.RecoilValue.x;
         targetPosition -= forward * input.RecoilValue.y;
 
-        input.RecoilOffset = targetPosition;
-        
-        //input.RecoilOffset = math.rotate( quaternion.RotateZ( math.radians( 90) ), forward  ) * input.RecoilValue.x ;
-        //input.RecoilOffset -= forward * input.RecoilValue.y;
+        input.RecoilOffset = targetPosition * boundsScale;
 
-        
-        
         float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
         Debug.DrawLine( input.AimPosition, input.AimPosition + forward, Color.green, 0.1f );
         Debug.DrawLine( input.AimPosition, input.AimPosition + right, Color.red, 0.1f );
         Debug.DrawLine( input.AimPosition, input.AimPosition - right, Color.blue, 0.1f );
+        
+        DrawBounds( input, forward, scaledBounds );
+       
+        
+        /*
+        float3 b1 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * RecoilBounds.x;
+        b1 -= forward * RecoilBounds.y;
+        
+        float3 b2 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * RecoilBounds.z;
+        b2 -= forward * RecoilBounds.y;
+        
+        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b1 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b2, input.AimPosition + b2 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b2, Color.white, 0.1f );
+        Debug.DrawLine( input.AimPosition + b1 - 2*forward *RecoilBounds.w, input.AimPosition + b2 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
+        */
+        
         DrawRecoil( input, input.RecoilOffset);
         
-        input.TargetRecoilValue = Vector3.MoveTowards( input.TargetRecoilValue, float3.zero, input.TimeSinceShot );
+        input.TargetRecoilValue = Vector3.MoveTowards( input.TargetRecoilValue, float3.zero, input.TimeSinceShot/2 );
         //input.TargetRecoilValue = MoveTowards( input.TargetRecoilValue, float3.zero, input.TimeSinceShot );
         //input.TargetRecoilValue = MoveTowards( input.TargetRecoilValue, float3.zero, 0.1f );
         input.TimeSinceShot += DeltaTime;
     }
-
+    
     private void Iteration1(ref LocalTransform transform, ref PlayerInputs input)
     {
         //input.RecoilValue = new float3(-1,1,0);
@@ -112,6 +179,17 @@ public partial struct RecoilJob : IJobEntity
         float size = 0.25f;
         Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow, 0.1f );
         Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow, 0.1f );
+        
+    }
+    
+    private void DrawRecoil( float3 pos)
+    {
+        float3 center = pos;
+        float size = 0.25f;
+        Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow, 0.1f );
+        Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow, 0.1f );
+        
+        
         
     }
 

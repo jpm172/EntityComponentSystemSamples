@@ -16511,7 +16511,7 @@ MonoBehaviour:
   _playerTransform: {fileID: 1458517020}
   RecoilOffset: {x: 0, y: 0, z: 0}
   Recovery: 5
-  Magnitude: 10
+  Magnitude: 1
   horizontalRecoil: 2
   verticalRecoil: 0.25
 --- !u!114 &1498078259
