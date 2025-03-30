@@ -36,38 +36,54 @@ public partial struct RecoilJob : IJobEntity
     
     private void Execute( ref LocalTransform transform, ref PlayerInputs input )
     {
-        float3 forward = math.normalizesafe( transform.Position-input.AimPosition );
+        float3 forward = math.normalizesafe( input.AimPosition - transform.Position );
         float distance = math.distance( transform.Position, input.AimPosition );
         
-        float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
-        
-        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( input.TargetRecoilAngle ) ), forward );
+        //float3 targetRecoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.TargetRecoilAngle ) ), forward );
 
-        
-        
-        Debug.DrawLine( transform.Position, transform.Position - forward * 40, Color.green);
-        Debug.DrawLine( transform.Position, transform.Position - recoilPos  * 40 , Color.red);//
-        Debug.DrawLine( input.AimPosition, input.AimPosition - right * 40, Color.black );
+        float snap =  math.min(math.sqrt( input.TimeSinceShot ), 1);
 
-
-        /*
-        float adjacent = distance;
-        float opposite = math.tan( math.radians(input.TargetRecoilAngle) ) * adjacent;
-        float hypotenus = math.sqrt( math.pow( opposite, 2 ) + math.pow( adjacent, 2 ) );
-        */
+        if ( input.RecoilTimer > 0 )
+        {
+            snap = math.min(math.pow( input.TimeSinceShot, 0.25f ), 1);
+        }
+        
+        input.RecoilAngle = math.lerp( input.RecoilAngle, input.TargetRecoilAngle, snap );
+        
+        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.RecoilAngle ) ), forward );
 
         //obviously, recoil angle of 90 will then cause a division by 0 
-        float hypotenus = distance / math.cos( math.radians( input.TargetRecoilAngle ) );
+        float hypotenus = distance / math.cos( math.radians( input.RecoilAngle ) );
+        float3 pos = transform.Position + ( recoilPos * hypotenus );
+
+        input.RecoilOffset =  pos - input.AimPosition;
+        float recovery = math.min( math.pow( input.TimeSinceShot, 4 ), 1 );
         
-        float3 pos = transform.Position - ( recoilPos * hypotenus );
-        //float3 pos = transform.Position - ( recoilPos * distance );
+        input.TargetRecoilAngle = math.lerp( input.TargetRecoilAngle, 0, recovery );
+        input.TimeSinceShot += DeltaTime;
+        input.RecoilTimer -= DeltaTime;
         
         
+        DrawAim( transform, input );
         DrawRecoil( pos );
        
     }
 
 
+    private void DrawAim(LocalTransform transform, PlayerInputs input)
+    {
+        float3 forward = math.normalizesafe( input.AimPosition - transform.Position );
+        float3 targetRecoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.TargetRecoilAngle ) ), forward );
+        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.RecoilAngle ) ), forward );
+        
+        
+        float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
+        Debug.DrawLine( transform.Position, transform.Position + forward * 40, Color.green);
+        Debug.DrawLine( transform.Position, transform.Position + targetRecoilPos  * 40 , Color.blue);
+        Debug.DrawLine( transform.Position, transform.Position + recoilPos  * 40 , Color.red);
+        Debug.DrawLine( input.AimPosition, input.AimPosition + right * 40, Color.black );
+        Debug.DrawLine( input.AimPosition, input.AimPosition - right * 40, Color.black );
+    }
 
 
     private void DrawBounds(PlayerInputs input, float3 forward, float4 scaledBounds)
@@ -177,8 +193,8 @@ public partial struct RecoilJob : IJobEntity
     {
         float3 center = input.AimPosition + pos;
         float size = 0.25f;
-        Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow, 0.1f );
-        Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow, 0.1f );
+        Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow );
+        Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow );
         
     }
     
@@ -186,8 +202,8 @@ public partial struct RecoilJob : IJobEntity
     {
         float3 center = pos;
         float size = 0.25f;
-        Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow, 0.1f );
-        Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow, 0.1f );
+        Debug.DrawLine( center + new float3(-size, -size, 0) , center+ new float3(size, size, 0) , Color.yellow );
+        Debug.DrawLine( center + new float3(-size, size, 0) , center+ new float3(size, -size, 0) , Color.yellow );
         
         
         

@@ -54,18 +54,22 @@ public class PlayerCrosshair : MonoBehaviour
         PlayerInputs inputs = _entityManager.GetComponentData<PlayerInputs>( _playerEntity );
 
 
+        /*
         if ( Input.mouseScrollDelta.y > 0 )
         {
             inputs.TargetRecoilAngle += 1;
             _entityManager.SetComponentData( _playerEntity, inputs );
         }
+        */
         
         if ( Input.GetMouseButtonDown( 0 ) )
         {
 
-            inputs.TargetRecoilAngle = 0;
+            //inputs.TargetRecoilAngle = 45;
+            inputs.TargetRecoilAngle += AddRecoilAngle(inputs);
            //inputs.TargetRecoilValue = CalculateRecoil( inputs );
            inputs.TimeSinceShot = 0;
+           inputs.RecoilTimer = Recovery;
            //inputs.TargetRecoilValue = new float3(1,1,0);
             _entityManager.SetComponentData( _playerEntity, inputs );
             
@@ -84,6 +88,29 @@ public class PlayerCrosshair : MonoBehaviour
         //_leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), _leftMarker.transform.position.y);
         //_rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), _rightMarker.transform.position.y,0);
 
+    }
+
+    private float AddRecoilAngle(PlayerInputs inputs)
+    {
+        float recoil = Magnitude;
+
+        if ( inputs.RecoilTimer > 0 )
+        {
+            recoil *= 0.25f;
+        }
+        
+        if ( inputs.TargetRecoilAngle + Magnitude > 45 )
+        {
+            recoil *= -1;
+        }
+        else if ( inputs.TargetRecoilAngle - Magnitude >= -45 )
+        {
+            recoil *= math.@select( 1, -1, Random.Range( 0, 2 ) == 1 );
+        }
+        
+        
+        
+        return recoil;
     }
 
     private float3 CalculateRecoil(PlayerInputs inputs)
