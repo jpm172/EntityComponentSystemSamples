@@ -32,40 +32,40 @@ public partial struct RecoilJob : IJobEntity
 {
     
     public float DeltaTime;
-    private static readonly float4 RecoilBounds = new float4(-2, -0.5f, 2, 0.5f);
-    
-    private void Execute( ref LocalTransform transform, ref PlayerInputs input )
+
+    private void Execute( in PlayerInputs input, ref LocalTransform transform, ref RecoilData recoil )
     {
         float3 forward = math.normalizesafe( input.AimPosition - transform.Position );
         float distance = math.distance( transform.Position, input.AimPosition );
 
-        float tts = math.clamp(math.pow( input.TimeSinceShot, 4 ), 0, 1);
-        float snap = math.pow(math.max( input.RecoilTimer, tts ), 2);
+        float tts = math.clamp(math.pow( recoil.TimeSinceShot, 4 ), 0, 1);
+        float snap = math.pow(math.max( recoil.RecoilTimer, tts ), 2);
 
-        snap = math.clamp( snap, 0.5f, 1 );
+        snap = math.clamp( snap, 0.5f, 0.8f );
         
-        input.RecoilAngle = math.lerp( input.RecoilAngle, input.TargetRecoilAngle, snap );
+        recoil.RecoilAngle = math.lerp( recoil.RecoilAngle, recoil.TargetRecoilAngle, snap );
         
-        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.RecoilAngle ) ), forward );
+        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -recoil.RecoilAngle ) ), forward );
 
         //obviously, recoil angle of 90 will then cause a division by 0 
-        float hypotenus = distance / math.cos( math.radians( input.RecoilAngle ) );
+        float hypotenus = distance / math.cos( math.radians( recoil.RecoilAngle ) );
         float3 pos = transform.Position + ( recoilPos * hypotenus );
 
-        input.RecoilOffset =  pos - input.AimPosition;
+        recoil.RecoilOffset =  pos - input.AimPosition;
         
 
-        float recovery =  math.max( 30*(input.TimeSinceShot - input.RecoveryTime), 1 );
-        recovery = math.@select(  math.min( recovery * DeltaTime, 1 ), DeltaTime, input.RecoilTimer > 0 );
+        float recovery =  math.max( 30*(recoil.TimeSinceShot - recoil.RecoveryTime), 1 );
+        recovery = math.@select(  math.min( recovery * DeltaTime, 1 ), DeltaTime, recoil.RecoilTimer > 0 );
         
-        input.TargetRecoilAngle = math.lerp( input.TargetRecoilAngle, 0, recovery );
-        input.TimeSinceShot += DeltaTime;
-        input.RecoilTimer = math.max(input.RecoilTimer - DeltaTime, 0);
-        
-        
-        DrawAim( transform, input );
-        DrawRecoil( pos );
-       
+        recoil.TargetRecoilAngle = math.lerp( recoil.TargetRecoilAngle, 0, recovery );
+        recoil.TimeSinceShot += DeltaTime;
+        recoil.RecoilTimer = math.max(recoil.RecoilTimer - DeltaTime, 0);
+
+        if ( recoil.Debug )
+        {
+            DrawAim( transform, input, recoil );
+            DrawRecoil( pos );
+        }
     }
 
         /*
@@ -90,7 +90,7 @@ public partial struct RecoilJob : IJobEntity
         Debug.DrawLine( input.AimPosition + b1 - 2*forward *scaledBounds.w, input.AimPosition + b2 - 2*forward *scaledBounds.w, Color.white, 0.1f );
     }
 
-
+/*
     private void JumpAndJitterRecoil( ref LocalTransform transform, ref PlayerInputs input )
     {
         float3 forward = math.normalizesafe( input.AimPosition - transform.Position );
@@ -123,80 +123,7 @@ public partial struct RecoilJob : IJobEntity
         DrawAim( transform, input );
         DrawRecoil( pos );
     }
-
-    private void Iteration2( ref LocalTransform transform, ref PlayerInputs input )
-    {
-         float boundsScale = math.distance( transform.Position, input.AimPosition ) / 5;
-        boundsScale = math.clamp( boundsScale, 0.2f, 1 );
-        float4 scaledBounds = RecoilBounds * boundsScale;
-
-        float speed = math.max( 0.5f - input.TimeSinceShot, input.TimeSinceShot ); // / math.max(0.5f, boundsScale);
-        input.RecoilValue = MoveTowards( input.RecoilValue, input.TargetRecoilValue, speed );
-
-
-        float3 forward = math.normalizesafe( transform.Position-input.AimPosition );
-
-        float3 targetPosition = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * input.RecoilValue.x;
-        targetPosition -= forward * input.RecoilValue.y;
-
-        input.RecoilOffset = targetPosition * boundsScale;
-
-        float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
-        Debug.DrawLine( input.AimPosition, input.AimPosition + forward, Color.green, 0.1f );
-        Debug.DrawLine( input.AimPosition, input.AimPosition + right, Color.red, 0.1f );
-        Debug.DrawLine( input.AimPosition, input.AimPosition - right, Color.blue, 0.1f );
-        
-        DrawBounds( input, forward, scaledBounds );
-       
-        
-        /*
-        float3 b1 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * RecoilBounds.x;
-        b1 -= forward * RecoilBounds.y;
-        
-        float3 b2 = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * RecoilBounds.z;
-        b2 -= forward * RecoilBounds.y;
-        
-        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b1 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
-        Debug.DrawLine( input.AimPosition + b2, input.AimPosition + b2 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
-        Debug.DrawLine( input.AimPosition + b1, input.AimPosition + b2, Color.white, 0.1f );
-        Debug.DrawLine( input.AimPosition + b1 - 2*forward *RecoilBounds.w, input.AimPosition + b2 - 2*forward *RecoilBounds.w, Color.white, 0.1f );
-        */
-        
-        DrawRecoil( input, input.RecoilOffset);
-        
-        input.TargetRecoilValue = Vector3.MoveTowards( input.TargetRecoilValue, float3.zero, input.TimeSinceShot/2 );
-        //input.TargetRecoilValue = MoveTowards( input.TargetRecoilValue, float3.zero, input.TimeSinceShot );
-        //input.TargetRecoilValue = MoveTowards( input.TargetRecoilValue, float3.zero, 0.1f );
-        input.TimeSinceShot += DeltaTime;
-    }
-    
-    private void Iteration1(ref LocalTransform transform, ref PlayerInputs input)
-    {
-        //input.RecoilValue = new float3(-1,1,0);
-        float3 dir = math.normalizesafe(input.RecoilValue)*0.1f;
-        
-        
-        float3 forward = math.normalizesafe( transform.Position-input.AimPosition );
-
-        float3 targetPosition = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward ) * input.RecoilValue.x;
-        targetPosition -= forward * input.RecoilValue.y;
-
-        input.RecoilOffset = targetPosition;
-        
-        //input.RecoilOffset = math.rotate( quaternion.RotateZ( math.radians( 90) ), forward  ) * input.RecoilValue.x ;
-        //input.RecoilOffset -= forward * input.RecoilValue.y;
-
-        
-        
-        float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
-        Debug.DrawLine( input.AimPosition, input.AimPosition + forward, Color.green, 0.1f );
-        Debug.DrawLine( input.AimPosition, input.AimPosition + right, Color.red, 0.1f );
-        Debug.DrawLine( input.AimPosition, input.AimPosition - right, Color.blue, 0.1f );
-        DrawRecoil( input, input.RecoilOffset);
-
-        input.RecoilValue -= dir;//
-    }
-    
+*/
     private static float3 MoveTowards(
         float3 current,
         float3 target,
@@ -221,14 +148,15 @@ public partial struct RecoilJob : IJobEntity
         
     }
     
-    private void DrawAim(LocalTransform transform, PlayerInputs input)
+    private void DrawAim(LocalTransform transform, PlayerInputs input, RecoilData recoil)
     {
         float3 forward = math.normalizesafe( input.AimPosition - transform.Position );
-        float3 targetRecoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.TargetRecoilAngle ) ), forward );
-        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -input.RecoilAngle ) ), forward );
-        
+        float3 targetRecoilPos = math.rotate( quaternion.RotateZ( math.radians( -recoil.TargetRecoilAngle ) ), forward );
+        float3 recoilPos = math.rotate( quaternion.RotateZ( math.radians( -recoil.RecoilAngle ) ), forward );
         
         float3 right = math.rotate( quaternion.RotateZ( math.radians( 90 ) ), forward );
+        
+        
         Debug.DrawLine( transform.Position, transform.Position + forward * 40, Color.green);
         Debug.DrawLine( transform.Position, transform.Position + targetRecoilPos  * 40 , Color.blue);
         Debug.DrawLine( transform.Position, transform.Position + recoilPos  * 40 , Color.red);

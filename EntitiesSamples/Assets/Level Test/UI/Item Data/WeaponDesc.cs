@@ -15,6 +15,7 @@ public struct WeaponDesc : IComponentData
     public float ExplosionRadius;
     public float WeaponSpread;
     public int BulletsPerShot;
+    public RecoilProfile Recoil;
     public float Range;
     public int MaxAmmo;
     public int CurrentAmmo;

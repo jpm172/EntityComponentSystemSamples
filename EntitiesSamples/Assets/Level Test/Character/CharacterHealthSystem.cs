@@ -40,7 +40,7 @@ public partial struct CharacterHealthSystem : ISystem
         */
 
         
-        
+        //change from dynamic buffer to one component with separate structs for each limb for body
         foreach ( var (damage, wounds, character, player) in 
             SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
         {

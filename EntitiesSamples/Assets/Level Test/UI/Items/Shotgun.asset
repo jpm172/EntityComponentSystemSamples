@@ -22,6 +22,11 @@ MonoBehaviour:
   MaxAmmo: 6
   BulletsPerShot: 8
   FireRate: 2
-  WeaponSpread: 12
+  WeaponSpread: 8
+  Recoil:
+    MaxMagnitude: 8
+    MinMagnitude: 3
+    Control: 7
+    Recovery: 0.5
   Range: 10
   Penetration: 10

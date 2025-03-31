@@ -11309,7 +11309,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c68455da476903241b8a5a6f9e2096ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ActivePanel: {fileID: 1690316809}
+  ActivePanel: {fileID: 781753427}
   _gearLayer: {fileID: 781753421}
   _healthLayer: {fileID: 1690316803}
   _workbenchLayer: {fileID: 666359128}
@@ -14172,7 +14172,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1289639035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16511,9 +16511,11 @@ MonoBehaviour:
   _playerTransform: {fileID: 1458517020}
   RecoilOffset: {x: 0, y: 0, z: 0}
   Recovery: 0.5
-  Magnitude: 30
-  fullAuto: 0
-  fireRate: 5
+  MaxMagnitude: 10
+  MinMagnitude: 3
+  Control: 0
+  fullAuto: 1
+  fireRate: 15.8
   horizontalRecoil: 2
   verticalRecoil: 0.25
 --- !u!114 &1498078259

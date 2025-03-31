@@ -389,7 +389,7 @@ public class PlayerUIManager : MonoBehaviour
 #if UNITY_EDITOR
         _entityManager.SetName( itemEntity, weaponInfo.Data.ItemName );
 #endif
-
+        
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
         _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
 

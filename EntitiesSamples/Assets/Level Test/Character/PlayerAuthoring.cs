@@ -35,6 +35,7 @@ public class PlayerAuthoring : MonoBehaviour
             AddBuffer<CharacterDebuff>( entity );
 
             AddComponent<PlayerInputs>(entity);
+            AddComponent<RecoilData>(entity);
             AuthorHealth( entity, authoring );
         }
 

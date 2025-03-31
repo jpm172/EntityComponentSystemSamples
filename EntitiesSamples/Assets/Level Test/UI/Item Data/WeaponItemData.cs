@@ -21,6 +21,9 @@ public class WeaponItemData : ItemData
     
     [Tooltip("Spread")]
     public float WeaponSpread;
+
+    [Tooltip( "Recoil Profile" )] 
+    public RecoilProfile Recoil;
     
     [Tooltip("Range")]
     [Range(0.1f, 1000)]

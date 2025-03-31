@@ -23,8 +23,7 @@ public class GearPanelManager : PanelManager
 
     public override void Initialize()
     {
-        _weaponSlots = GameObject.FindGameObjectsWithTag( InventoryTag );
-        
+        //_weaponSlots = GameObject.FindGameObjectsWithTag( InventoryTag );
         InventoryManager[] managers = GetComponentsInChildren<InventoryManager>();
         _inventoryManagers = new InventoryManager[managers.Length];
         _inventoryRects = new RectTransform[managers.Length];

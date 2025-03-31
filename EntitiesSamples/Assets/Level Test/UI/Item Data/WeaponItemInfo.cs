@@ -26,6 +26,7 @@ public class WeaponItemInfo : ItemInfo
             MaxAmmo = data.MaxAmmo,
             FireRate = fireRate,
             WeaponSpread = data.WeaponSpread,
+            Recoil = data.Recoil,
             Penetration = data.Penetration,
             Range = data.Range,
         };
