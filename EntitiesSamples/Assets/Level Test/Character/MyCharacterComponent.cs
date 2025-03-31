@@ -25,6 +25,7 @@ public struct PlayerInputs : IComponentData
     public float3 AimPosition;
     public float TimeSinceShot;
     public float RecoilTimer;
+    public float RecoveryTime;
 
     public float TargetRecoilAngle;
     public float RecoilAngle;

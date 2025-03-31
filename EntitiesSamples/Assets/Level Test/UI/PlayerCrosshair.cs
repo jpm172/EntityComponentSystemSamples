@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class PlayerCrosshair : MonoBehaviour
@@ -25,6 +26,9 @@ public class PlayerCrosshair : MonoBehaviour
     private RectTransform _leftMarker,
         _rightMarker;
 
+    private Image _leftMarkerImage,
+        _rightMarkerImage;
+    
     [SerializeField]
     private Transform _playerTransform;
 
@@ -33,6 +37,9 @@ public class PlayerCrosshair : MonoBehaviour
     public float Recovery;
     public float Magnitude;
 
+    public bool fullAuto;
+    public float fireRate;
+    private float fireRateTimer;
     private EntityManager _entityManager;
     private Entity _playerEntity;
 
@@ -41,6 +48,9 @@ public class PlayerCrosshair : MonoBehaviour
     
     void Start()
     {
+        _leftMarkerImage = _leftMarker.GetComponent<Image>();
+        _rightMarkerImage = _rightMarker.GetComponent<Image>();
+        
         _camera = Camera.main;
         _entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
@@ -53,27 +63,25 @@ public class PlayerCrosshair : MonoBehaviour
 
         PlayerInputs inputs = _entityManager.GetComponentData<PlayerInputs>( _playerEntity );
 
+        inputs.RecoveryTime = Recovery;
+        _entityManager.SetComponentData( _playerEntity, inputs );
 
-        /*
-        if ( Input.mouseScrollDelta.y > 0 )
-        {
-            inputs.TargetRecoilAngle += 1;
-            _entityManager.SetComponentData( _playerEntity, inputs );
-        }
-        */
-        
-        if ( Input.GetMouseButtonDown( 0 ) )
+        if ( Input.GetMouseButtonDown( 0 ) || (Input.GetMouseButton( 0 ) && fullAuto && fireRateTimer <= 0) )
         {
 
-            //inputs.TargetRecoilAngle = 45;
+            fireRateTimer = 1 / fireRate;
             inputs.TargetRecoilAngle += AddRecoilAngle(inputs);
-           //inputs.TargetRecoilValue = CalculateRecoil( inputs );
-           inputs.TimeSinceShot = 0;
-           inputs.RecoilTimer = Recovery;
-           //inputs.TargetRecoilValue = new float3(1,1,0);
+            inputs.RecoilTimer = math.min(inputs.RecoilTimer + (7 * (10/fireRate)) * Time.deltaTime, 1);
+            
+            
+
+            inputs.TimeSinceShot = 0;
             _entityManager.SetComponentData( _playerEntity, inputs );
             
         }
+        //Debug.Log( inputs.RecoilTimer );
+
+        fireRateTimer -= Time.deltaTime;
 
         transform.position =  inputs.AimPosition;
         _crosshair.transform.position = inputs.AimPosition + inputs.RecoilOffset;
@@ -85,6 +93,12 @@ public class PlayerCrosshair : MonoBehaviour
         Vector3 inverse = _markers.InverseTransformPoint( inputs.AimPosition + inputs.RecoilOffset );
         _leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), 0);
         _rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), 0);
+
+        
+        Color lerpColor = Color.Lerp( Color.black, Color.white, inputs.RecoilTimer );
+        _leftMarkerImage.color = lerpColor;
+        _rightMarkerImage.color = lerpColor;
+        
         //_leftMarker.transform.localPosition = new Vector3(-25 + math.min( 0, inverse.x ), _leftMarker.transform.position.y);
         //_rightMarker.transform.localPosition = new Vector3(25 + math.max( 0, inverse.x ), _rightMarker.transform.position.y,0);
 
@@ -94,16 +108,13 @@ public class PlayerCrosshair : MonoBehaviour
     {
         float recoil = Magnitude;
 
-        if ( inputs.RecoilTimer > 0 )
-        {
-            recoil *= 0.25f;
-        }
-        
-        if ( inputs.TargetRecoilAngle + Magnitude > 45 )
+        recoil = math.lerp( Magnitude, .01f, inputs.RecoilTimer );
+        Debug.Log( $"{inputs.RecoilTimer} -> {recoil} " );
+        if ( inputs.TargetRecoilAngle + recoil > 45 )
         {
             recoil *= -1;
         }
-        else if ( inputs.TargetRecoilAngle - Magnitude >= -45 )
+        else if ( inputs.TargetRecoilAngle - recoil >= -45 )
         {
             recoil *= math.@select( 1, -1, Random.Range( 0, 2 ) == 1 );
         }
