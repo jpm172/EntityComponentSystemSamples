@@ -6,10 +6,31 @@ using Unity.Mathematics;
 [Serializable]
 public struct MyCharacterComponent : IComponentData
 {
+    
     public float MovementSpeed;
     public float Health;
     public float MaxHealth;
+    
 
+}
+
+
+public struct BaseStats : IComponentData
+{
+    public CharacterStats Stats;
+}
+
+public struct TotalStats : IComponentData
+{
+    public CharacterStats Stats;
+}
+
+public struct CharacterStats
+{
+    public float MoveSpeed;
+    public float Health;
+    public float MaxHealth;
+    public float Armor;
 }
 
 [Serializable]

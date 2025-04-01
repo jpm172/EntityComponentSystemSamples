@@ -8,5 +8,5 @@ public struct CharacterDebuff : IBufferElementData
 {
     public BodyPart AffectedPart;
     public Entity DebuffEntity;
-
+    
 }

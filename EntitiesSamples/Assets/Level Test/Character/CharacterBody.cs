@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -12,6 +13,17 @@ public struct CharacterBody : IComponentData
     public CharacterLimb LeftLeg;
     public CharacterLimb RightLeg;
 
+
+    public float ArmsCondition()
+    {
+        return ( LeftArm.Condition + RightArm.Condition ) / 2;
+    }
+
+    public float LegsCondition()
+    {
+        return ( LeftLeg.Condition + RightLeg.Condition ) / 2;
+    }
+    
 
     public CharacterLimb GetLimb( BodyPart limb )
     {
@@ -30,7 +42,7 @@ public struct CharacterBody : IComponentData
             case BodyPart.RightLeg:
                 return RightLeg;
             default:
-                return Chest;
+                throw new ArgumentOutOfRangeException($"Invalid Limb: {(int)limb}");
         }
     }
 }

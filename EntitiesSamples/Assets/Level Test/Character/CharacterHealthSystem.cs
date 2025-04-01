@@ -40,6 +40,7 @@ public partial struct CharacterHealthSystem : ISystem
         */
 
         
+        
         //change from dynamic buffer to one component with separate structs for each limb for body
         foreach ( var (damage, wounds, character, player) in 
             SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
@@ -47,6 +48,10 @@ public partial struct CharacterHealthSystem : ISystem
             if(damage.IsEmpty)
                 continue;
 
+            //
+            DynamicBuffer<CharacterDebuff> buffs = state.EntityManager.GetBuffer<CharacterDebuff>( player );
+            //
+            
             DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
 
             for ( int i = damage.Length - 1; i >= 0; i-- )

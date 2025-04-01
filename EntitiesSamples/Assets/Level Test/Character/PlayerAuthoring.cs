@@ -21,6 +21,16 @@ public class PlayerAuthoring : MonoBehaviour
                 Health = authoring.Health,
                 MaxHealth = authoring.Health,
             });
+            CharacterStats baseStats = new CharacterStats
+            {
+                Armor = 0,
+                Health = authoring.Health,
+                MaxHealth = authoring.Health,
+                MoveSpeed = authoring.MoveSpeed
+            };
+            
+            AddComponent(entity, new BaseStats{Stats = baseStats});
+            AddComponent(entity, new TotalStats());
 
             DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
 

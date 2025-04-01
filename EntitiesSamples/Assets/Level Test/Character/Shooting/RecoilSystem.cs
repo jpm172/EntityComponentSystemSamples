@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -28,9 +29,9 @@ public partial struct RecoilSystem : ISystem
     }
 }
 
+[BurstCompile]
 public partial struct RecoilJob : IJobEntity
 {
-    
     public float DeltaTime;
 
     private void Execute( in PlayerInputs input, ref LocalTransform transform, ref RecoilData recoil )
