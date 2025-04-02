@@ -56,7 +56,7 @@ public partial struct PlayerMoveJob : IJobEntity
         BelongsTo = ~(uint)( 1 << 6 )
     };
 
-    private void Execute( ref LocalTransform transform, in PlayerInputs input, MyCharacterComponent attributes,
+    private void Execute( ref LocalTransform transform, in PlayerInputs input, TotalStats stats,
         PhysicsCollider col, DynamicBuffer<CharacterLimb> limbs )
     {
         float legCondition = GetLegCondition( limbs );
@@ -67,7 +67,7 @@ public partial struct PlayerMoveJob : IJobEntity
         transform.Rotation = rotation;
         transform = transform.RotateZ( AngleAdjust );
 
-        float2 targetMove = input.MoveInput * (attributes.MovementSpeed*legCondition) * DeltaTime;
+        float2 targetMove = input.MoveInput * (stats.Stats.MoveSpeed*legCondition) * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
 
         float3 result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel );

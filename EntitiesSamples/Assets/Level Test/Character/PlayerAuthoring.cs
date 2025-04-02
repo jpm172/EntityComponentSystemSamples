@@ -14,13 +14,14 @@ public class PlayerAuthoring : MonoBehaviour
         public override void Bake(PlayerAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            
+            /*
             AddComponent(entity, new MyCharacterComponent
             {
                 MovementSpeed = authoring.MoveSpeed,
                 Health = authoring.Health,
                 MaxHealth = authoring.Health,
             });
+            */
             CharacterStats baseStats = new CharacterStats
             {
                 Armor = 0,
