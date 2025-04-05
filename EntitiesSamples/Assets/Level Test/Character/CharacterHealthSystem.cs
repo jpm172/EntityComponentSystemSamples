@@ -27,19 +27,6 @@ public partial struct CharacterHealthSystem : ISystem
     {
         
         //ApplyBleedDamage( ref state );
-        /*
-        foreach ( var (damage, wounds, inputs, player) in
-            SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<PlayerInputs>>()
-                .WithEntityAccess() )
-        {
-            if ( inputs.ValueRO.AltFire )
-            {
-                damage.Add( new DamageInfo( 10, 1 ) );
-            }
-        }
-        */
-
-        
         
         //change from dynamic buffer to one component with separate structs for each limb for body
         foreach ( var (damage, wounds, character, player) in 
@@ -48,18 +35,14 @@ public partial struct CharacterHealthSystem : ISystem
             if(damage.IsEmpty)
                 continue;
 
-            //
-            DynamicBuffer<CharacterDebuff> buffs = state.EntityManager.GetBuffer<CharacterDebuff>( player );
-            //
-            
             DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
 
             for ( int i = damage.Length - 1; i >= 0; i-- )
             {
                 CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm);
                 AddWound( newWound, wounds, body, character );
-                damage.RemoveAt( i );
             }
+            damage.Clear();
         }
 
 

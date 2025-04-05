@@ -59,7 +59,6 @@ public partial struct PlayerMoveJob : IJobEntity
     private void Execute( ref LocalTransform transform, in PlayerInputs input, TotalStats stats,
         PhysicsCollider col, DynamicBuffer<CharacterLimb> limbs )
     {
-        float legCondition = GetLegCondition( limbs );
         //rotate the character to look at the mouse
         float3 forward = input.AimPosition - transform.Position;
         quaternion rotation = quaternion.LookRotationSafe(transform.Forward(), forward );
@@ -67,7 +66,9 @@ public partial struct PlayerMoveJob : IJobEntity
         transform.Rotation = rotation;
         transform = transform.RotateZ( AngleAdjust );
 
-        float2 targetMove = input.MoveInput * (stats.Stats.MoveSpeed*legCondition) * DeltaTime;
+        float finalSpeed = math.clamp( stats.Stats.MoveSpeed * GetLegCondition( limbs ), 1, 10 );
+        
+        float2 targetMove = input.MoveInput * finalSpeed * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
 
         float3 result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel );

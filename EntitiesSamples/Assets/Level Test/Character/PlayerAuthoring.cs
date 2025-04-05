@@ -14,20 +14,23 @@ public class PlayerAuthoring : MonoBehaviour
         public override void Bake(PlayerAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
-            /*
+            
             AddComponent(entity, new MyCharacterComponent
             {
-                MovementSpeed = authoring.MoveSpeed,
                 Health = authoring.Health,
                 MaxHealth = authoring.Health,
             });
-            */
+            
             CharacterStats baseStats = new CharacterStats
             {
                 Armor = 0,
-                Health = authoring.Health,
-                MaxHealth = authoring.Health,
-                MoveSpeed = authoring.MoveSpeed
+                MoveSpeed = authoring.MoveSpeed,
+                HeadStats = new LimbStats(1,1),
+                ChestStats = new LimbStats(1,1),
+                LeftArmStats = new LimbStats(1,1),
+                RightArmStats = new LimbStats(1,1),
+                LeftLegStats = new LimbStats(1,1),
+                RightLegStats = new LimbStats(1,1),
             };
             
             AddComponent(entity, new BaseStats{Stats = baseStats});
@@ -43,7 +46,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new CharacterInventory { });
             
-            AddBuffer<CharacterDebuff>( entity );
+            AddBuffer<TimedStatusEffect>( entity );
 
             AddComponent<PlayerInputs>(entity);
             AddComponent<RecoilData>(entity);

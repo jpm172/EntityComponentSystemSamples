@@ -6,13 +6,11 @@ using Unity.Mathematics;
 [Serializable]
 public struct MyCharacterComponent : IComponentData
 {
-    /*
-    public float MovementSpeed;
+    
+    //public float MovementSpeed;
+    
     public float Health;
     public float MaxHealth;
-    */
-    
-
 }
 
 
@@ -29,9 +27,28 @@ public struct TotalStats : IComponentData
 public struct CharacterStats
 {
     public float MoveSpeed;
-    public float Health;
-    public float MaxHealth;
     public float Armor;
+
+    public LimbStats HeadStats;
+    public LimbStats ChestStats;
+    public LimbStats LeftArmStats;
+    public LimbStats RightArmStats;
+    public LimbStats LeftLegStats;
+    public LimbStats RightLegStats;
+
+}
+
+public struct LimbStats
+{
+    public float Condition;
+    public float BleedResist;
+
+    public LimbStats(float condition, float bleedResist)
+    {
+        Condition = condition;
+        BleedResist = bleedResist;
+    }
+    
 }
 
 [Serializable]

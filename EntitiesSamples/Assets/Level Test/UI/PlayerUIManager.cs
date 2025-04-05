@@ -102,9 +102,15 @@ public class PlayerUIManager : MonoBehaviour
 
     public void BreakLimb()
     { 
-       Entity breakDebuff =  _entityManager.CreateEntity();
-       DynamicBuffer<CharacterDebuff> debuffs = _entityManager.GetBuffer<CharacterDebuff>( _playerEntity );
-       debuffs.Add( new CharacterDebuff {AffectedPart = BodyPart.LeftArm, DebuffEntity = breakDebuff} );
+       //Entity breakDebuff =  _entityManager.CreateEntity();
+       DynamicBuffer<TimedStatusEffect> effects = _entityManager.GetBuffer<TimedStatusEffect>( _playerEntity );
+       effects.Add( new TimedStatusEffect
+       {
+           AffectedStat = StatType.MoveSpeed, 
+           ModType = StatModType.Multiply,
+           Value = -0.25f,
+           Timer =  5,
+       } );
     }
     
     private void Awake()
