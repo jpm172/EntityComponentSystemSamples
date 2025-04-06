@@ -101,16 +101,45 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     public void BreakLimb()
-    { 
-       //Entity breakDebuff =  _entityManager.CreateEntity();
-       DynamicBuffer<TimedStatusEffect> effects = _entityManager.GetBuffer<TimedStatusEffect>( _playerEntity );
-       effects.Add( new TimedStatusEffect
-       {
-           AffectedStat = StatType.MoveSpeed, 
-           ModType = StatModType.Multiply,
-           Value = -0.25f,
-           Timer =  5,
-       } );
+    {
+        /*
+        for ( int i = 0; i < 500; i++ )
+        {
+            Entity breakDebuff =  _entityManager.CreateEntity();
+       
+            BasicStatStatusEffect se = new BasicStatStatusEffect
+            {
+                AffectedStat = StatType.MoveSpeed,
+                ModType = StatModType.Add,
+                Value = 3
+            };
+
+
+            _entityManager.AddComponentData( breakDebuff, se );
+            DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
+            effects.Add( new StatusEffect
+            {
+                EffectEntity = breakDebuff,
+                Type = StatusEffectType.BasicStats
+            } );
+        }
+        */
+        
+        
+        for ( int i = 0; i < 500; i++ )
+        {
+            DynamicBuffer<TimedStatusEffect> effects = _entityManager.GetBuffer<TimedStatusEffect>( _playerEntity );
+            effects.Add( new TimedStatusEffect
+            {
+                AffectedStat = StatType.MoveSpeed, 
+                ModType = StatModType.Add,
+                Value = 3,
+                Timer =  5,
+            } );
+        }
+        
+       
+       
     }
     
     private void Awake()

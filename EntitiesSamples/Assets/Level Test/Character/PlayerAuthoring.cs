@@ -46,6 +46,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new CharacterInventory { });
             
+            //AddBuffer<StatusEffect>(entity);
             AddBuffer<TimedStatusEffect>( entity );
 
             AddComponent<PlayerInputs>(entity);
