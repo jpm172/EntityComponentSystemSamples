@@ -102,44 +102,26 @@ public class PlayerUIManager : MonoBehaviour
 
     public void BreakLimb()
     {
-        /*
-        for ( int i = 0; i < 500; i++ )
+        Entity breakDebuff =  _entityManager.CreateEntity();
+   
+        BasicStatStatusEffect se = new BasicStatStatusEffect
         {
-            Entity breakDebuff =  _entityManager.CreateEntity();
-       
-            BasicStatStatusEffect se = new BasicStatStatusEffect
-            {
-                AffectedStat = StatType.MoveSpeed,
-                ModType = StatModType.Add,
-                Value = 3
-            };
+            AffectedStat = StatType.MoveSpeed,
+            ModType = StatModType.Add,
+            Value = 3
+        };
 
 
-            _entityManager.AddComponentData( breakDebuff, se );
-            DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
-            effects.Add( new StatusEffect
-            {
-                EffectEntity = breakDebuff,
-                Type = StatusEffectType.BasicStats
-            } );
-        }
-        */
+        _entityManager.AddComponentData( breakDebuff, se );
+        _entityManager.AddComponentData( breakDebuff, new StatusEffectInfo() );//
+        //_entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );//
         
-        
-        for ( int i = 0; i < 500; i++ )
+        DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
+        effects.Add( new StatusEffect
         {
-            DynamicBuffer<TimedStatusEffect> effects = _entityManager.GetBuffer<TimedStatusEffect>( _playerEntity );
-            effects.Add( new TimedStatusEffect
-            {
-                AffectedStat = StatType.MoveSpeed, 
-                ModType = StatModType.Add,
-                Value = 3,
-                Timer =  5,
-            } );
-        }
-        
-       
-       
+            EffectEntity = breakDebuff,
+            Type = StatusEffectType.BasicStats
+        } );
     }
     
     private void Awake()

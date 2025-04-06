@@ -23,9 +23,8 @@ public partial struct StatusEffectSystem : ISystem
     public void OnUpdate( ref SystemState state )
     {
         //SystemAPI.Query<>().WithOptions( EntityQueryOptions.FilterWriteGroup )
-    
-        //float startTime = Time.realtimeSinceStartup; 
-        /*
+        EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
+        
         foreach ( var (statusEffects, baseStats, totalStats) in
             SystemAPI.Query<DynamicBuffer<StatusEffect>, RefRO<BaseStats>, RefRW<TotalStats>>() )
         {
@@ -33,52 +32,32 @@ public partial struct StatusEffectSystem : ISystem
             for ( int i = statusEffects.Length - 1; i >= 0; i-- )
             {
                 StatusEffect baseEffect = statusEffects[i];
-
+                StatusEffectInfo info =
+                    state.EntityManager.GetComponentData<StatusEffectInfo>( baseEffect.EffectEntity );
+                if ( info.Remove )
+                {
+                    ecb.DestroyEntity( baseEffect.EffectEntity );
+                    statusEffects.RemoveAt( i );
+                    continue;
+                }
+                
                 if ( baseEffect.Type == StatusEffectType.BasicStats )
                 {
                     BasicStatStatusEffect effect =
                         state.EntityManager.GetComponentData<BasicStatStatusEffect>( baseEffect.EffectEntity );
                     
                     modifiedStats = effect.ApplyEffect( baseStats.ValueRO.Stats, modifiedStats );
-                    
                 }
-                //modifiedStats = d.ApplyEffect( baseStats.ValueRO.Stats, modifiedStats );
-                
             }
+            //Debug.Log( $"{statusEffects.Capacity}, {statusEffects.Length}" ); //TrimExcess
             totalStats.ValueRW.Stats = modifiedStats;
         }
-        */
-        
-        //Debug.Log( "done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-        
-        
-        //float startTime = Time.realtimeSinceStartup; 
-        foreach ( var (statusEffects, baseStats, totalStats) in
-            SystemAPI.Query<DynamicBuffer<TimedStatusEffect>, RefRO<BaseStats>, RefRW<TotalStats>>() )
-        {
-            CharacterStats modifiedStats = baseStats.ValueRO.Stats;
-            for ( int i = statusEffects.Length - 1; i >= 0; i-- )
-            {
-                ref TimedStatusEffect d = ref statusEffects.ElementAt( i );
-                modifiedStats = d.ApplyEffect( baseStats.ValueRO.Stats, modifiedStats );
-                /*
-                d.Timer -= SystemAPI.Time.DeltaTime;
-                if ( d.Timer <= 0 )
-                {
-                    statusEffects.RemoveAt( i );
-                }
-                */
-                
-            }
-            totalStats.ValueRW.Stats = modifiedStats;
-        }
-        //Debug.Log( "done: " +  (Time.realtimeSinceStartup - startTime)*1000f + " ms" );
-        
     }
 }
 
-[UpdateInGroup(typeof(StatusEffectsGroup))]
-public partial struct BodyStatusEffectSystem : ISystem
+
+[UpdateInGroup(typeof(StatusEffectsGroup), OrderFirst = true)]
+public partial struct StatusEffectTimerSystem :ISystem
 {
     public void OnCreate( ref SystemState state )
     {
@@ -87,12 +66,18 @@ public partial struct BodyStatusEffectSystem : ISystem
 
     public void OnDestroy( ref SystemState state )
     {
-
+        
     }
 
     public void OnUpdate( ref SystemState state )
     {
-      
+        foreach ( var (effectInfo, effectTimer) in
+            SystemAPI.Query<RefRW<StatusEffectInfo>, RefRW<StatusEffectTimer>>() )
+        {
+            effectTimer.ValueRW.TimeRemaining -= SystemAPI.Time.DeltaTime;
+            if(effectTimer.ValueRW.TimeRemaining <= 0)
+                effectInfo.ValueRW.Remove = true;
+        }
     }
 }
 

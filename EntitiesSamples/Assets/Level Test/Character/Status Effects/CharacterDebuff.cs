@@ -6,7 +6,7 @@ using Unity.Entities;
 using UnityEngine;
 
 
-[InternalBufferCapacity(30)]
+[InternalBufferCapacity(20)]
 public struct StatusEffect : IBufferElementData
 {
     public StatusEffectType Type;
@@ -50,43 +50,18 @@ public struct BasicStatStatusEffect : IComponentData
     }
 }
 
-[InternalBufferCapacity(30)]
-public struct TimedStatusEffect : IBufferElementData
+public struct StatusEffectInfo : IComponentData
 {
-    //public Entity DebuffEntity;
-    public StatType AffectedStat;
-    public StatModType ModType;
-    public float Value;
-    public float Timer;
+    public bool Remove;
+}
 
-    public CharacterStats ApplyEffect(CharacterStats baseStats, CharacterStats totalStats)
-    {
-        switch ( AffectedStat )
-        {
-            case StatType.Armor:
-                totalStats.Armor = CalculateMod( baseStats.Armor, totalStats.Armor );
-                return totalStats;
-            case StatType.MoveSpeed:
-                totalStats.MoveSpeed = CalculateMod( baseStats.MoveSpeed, totalStats.MoveSpeed );
-                return totalStats;
-            default:
-                throw new IndexOutOfRangeException($"invalid AffectedStat: {(int) AffectedStat}");
-        }
-    }
+public struct StatusEffectTimer : IComponentData
+{
+    public float TimeRemaining;
 
-    private float CalculateMod( float baseValue, float totalValue )
+    public StatusEffectTimer( float timer )
     {
-        switch ( ModType )
-        {
-            case StatModType.Add:
-                return totalValue + Value;
-            case StatModType.Multiply:
-                return totalValue + ( baseValue * Value );
-            case StatModType.Absolute:
-                return Value;
-            default:
-                throw new IndexOutOfRangeException($"invalid StatModType: {(int) ModType}");
-        }
+        TimeRemaining = timer;
     }
 }
 
