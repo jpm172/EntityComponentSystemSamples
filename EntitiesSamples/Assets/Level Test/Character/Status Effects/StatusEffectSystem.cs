@@ -11,7 +11,7 @@ public partial struct StatusEffectSystem : ISystem
 
     public void OnCreate( ref SystemState state )
     {
-        
+        //state.RequireForUpdate<StatusEffectInfo>();
     }
 
     public void OnDestroy( ref SystemState state )
@@ -37,11 +37,12 @@ public partial struct StatusEffectSystem : ISystem
                 if ( info.Remove )
                 {
                     ecb.DestroyEntity( baseEffect.EffectEntity );
+                    PlayerUIManager.Instance.RemovedStatusEffectECS( i );
                     statusEffects.RemoveAt( i );
                     continue;
                 }
                 
-                if ( baseEffect.Type == StatusEffectType.BasicStats )
+                if ( info.Type == StatusEffectType.BasicStats )
                 {
                     BasicStatStatusEffect effect =
                         state.EntityManager.GetComponentData<BasicStatStatusEffect>( baseEffect.EffectEntity );
@@ -61,7 +62,7 @@ public partial struct StatusEffectTimerSystem :ISystem
 {
     public void OnCreate( ref SystemState state )
     {
-        
+        state.RequireForUpdate<StatusEffectTimer>();
     }
 
     public void OnDestroy( ref SystemState state )
@@ -77,6 +78,38 @@ public partial struct StatusEffectTimerSystem :ISystem
             effectTimer.ValueRW.TimeRemaining -= SystemAPI.Time.DeltaTime;
             if(effectTimer.ValueRW.TimeRemaining <= 0)
                 effectInfo.ValueRW.Remove = true;
+        }
+    }
+}
+
+[UpdateInGroup(typeof(StatusEffectsGroup), OrderFirst = true)]
+public partial struct StatusEffectBodyListenerSystem :ISystem
+{
+    public void OnCreate( ref SystemState state )
+    {
+        state.RequireForUpdate<StatusEffectBodyListener>();
+    }
+
+    public void OnDestroy( ref SystemState state )
+    {
+        
+    }
+
+    public void OnUpdate( ref SystemState state )
+    {
+        foreach ( var (effectInfo, bodyListener) in
+            SystemAPI.Query<RefRW<StatusEffectInfo>, RefRW<StatusEffectBodyListener>>() )
+        {
+            if(effectInfo.ValueRW.Remove)
+                continue;
+
+            DynamicBuffer<CharacterLimb> body =
+                state.EntityManager.GetBuffer<CharacterLimb>( bodyListener.ValueRO.Owner );
+
+            CharacterLimb limb = body[(int) bodyListener.ValueRO.TargetLimb];
+            effectInfo.ValueRW.Remove = bodyListener.ValueRO.CheckLimb( limb );
+
+
         }
     }
 }

@@ -111,17 +111,20 @@ public class PlayerUIManager : MonoBehaviour
             Value = 3
         };
 
+        StatusEffectInfo info = new StatusEffectInfo
+            {Type = StatusEffectType.BasicStats, Quality = StatusEffectQuality.Buff};
 
         _entityManager.AddComponentData( breakDebuff, se );
-        _entityManager.AddComponentData( breakDebuff, new StatusEffectInfo() );//
-        //_entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );//
+        _entityManager.AddComponentData( breakDebuff, info );
+        _entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );
+        //_entityManager.AddComponentData( breakDebuff, new StatusEffectBodyListener( _playerEntity, BodyPart.LeftArm, 10, true ) );
         
         DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
         effects.Add( new StatusEffect
         {
-            EffectEntity = breakDebuff,
-            Type = StatusEffectType.BasicStats
+            EffectEntity = breakDebuff
         } );
+        _bodyManager.AddStatusEffect( breakDebuff );
     }
     
     private void Awake()
@@ -241,6 +244,11 @@ public class PlayerUIManager : MonoBehaviour
     public void HealedWoundECS(int woundIndex)
     {
         _bodyManager.RemoveWoundECS( woundIndex );
+    }
+
+    public void RemovedStatusEffectECS( int effectIndex )
+    {
+        _bodyManager.RemoveStatusEffectECS( effectIndex );
     }
     
     public void EquipSlot( int equipIndex )

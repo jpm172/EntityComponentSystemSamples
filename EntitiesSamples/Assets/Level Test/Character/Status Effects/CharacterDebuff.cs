@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 
 [InternalBufferCapacity(20)]
 public struct StatusEffect : IBufferElementData
 {
-    public StatusEffectType Type;
+    
     public Entity EffectEntity;
 }
 
@@ -52,6 +53,8 @@ public struct BasicStatStatusEffect : IComponentData
 
 public struct StatusEffectInfo : IComponentData
 {
+    public StatusEffectType Type;
+    public StatusEffectQuality Quality;
     public bool Remove;
 }
 
@@ -63,6 +66,32 @@ public struct StatusEffectTimer : IComponentData
     {
         TimeRemaining = timer;
     }
+}
+
+public struct StatusEffectBodyListener : IComponentData
+{
+    public Entity Owner;
+    public BodyPart TargetLimb;
+    public float Threshold;
+    public bool LessThan;
+
+
+    public StatusEffectBodyListener( Entity owner, BodyPart targetLimb, float threshold, bool lessThan )
+    {
+        Owner = owner;
+        TargetLimb = targetLimb;
+        Threshold = threshold;
+        LessThan = lessThan;
+    }
+    
+    public readonly bool CheckLimb( CharacterLimb limb )
+    {
+        if ( LessThan )
+            return limb.CurrentHealth < Threshold;
+
+        return limb.CurrentHealth > Threshold;
+    }
+    
 }
 
 
@@ -79,6 +108,13 @@ public enum StatusEffectType
 {
     BasicStats,
     BodyStats
+}
+
+public enum StatusEffectQuality
+{
+    Buff,
+    Neutral,
+    Debuff
 }
 
 public enum StatType

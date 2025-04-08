@@ -36,12 +36,14 @@ public class BodyHealthManager : MonoBehaviour
     public Sprite[] WoundSprites;
 
     public GameObject WoundPrefab;
+    public GameObject StatusEffectPrefab;
+
+    [SerializeField]
+    private Transform _genericStatusEffectsContainer;
 
     private int _woundCount;
 
     private Dictionary<BodyPart, Limb> _bodyParts;
-
-    private Dictionary<int, Wound> _playerWounds;
 
     private readonly BodyPart[] _bodyPartLabels =
     {
@@ -58,12 +60,17 @@ public class BodyHealthManager : MonoBehaviour
     [SerializeField]
     private List<GameObject> _wounds;
 
+    [SerializeField]
+    private List<GameObject> _statusEffects;
+
     public Limb[] SerializedLimbs;
-    // Start is called before the first frame update
+    
+    //DEBUFF COLOR - FF848E
+    //BUFF COLOR - 85FF84
+    
     void Start()
     {
         _manager = PlayerUIManager.Instance;
-        _playerWounds = new Dictionary<int, Wound>();
         InitializeLimbs();
         SerializedLimbs = _bodyParts.Values.ToArray();
         _wounds = new List<GameObject>();
@@ -132,9 +139,21 @@ public class BodyHealthManager : MonoBehaviour
     }
 
 
+
+    public void AddStatusEffect(Entity effectEntity)
+    {
+        StatusEffectInfo info = _entityManager.GetComponentData<StatusEffectInfo>( effectEntity );
+        GameObject newEffect = InstantiateStatusEffect( effectEntity, info );
+
+        StatusEffectLayout effectLayout = newEffect.GetComponent<StatusEffectLayout>();
+        effectLayout.Initialize( info );
+        
+        _statusEffects.Add( newEffect );
+    }
+    
     public void AddWoundECS(CharacterWound newWound)
     {
-        GameObject newWoundObj = InstansiateWound( newWound.AffectedPart );
+        GameObject newWoundObj = InstantiateWound( newWound.AffectedPart );
         _wounds.Add( newWoundObj );
     }
     
@@ -146,7 +165,6 @@ public class BodyHealthManager : MonoBehaviour
         
         
         _entityManager.GetBuffer<DamageInfo>( _playerEntity ).Add( new DamageInfo( damage, bleed ) );
-
     }
 
     public void RemoveWoundECS( int index )
@@ -154,20 +172,11 @@ public class BodyHealthManager : MonoBehaviour
         Destroy( _wounds[index] );
         _wounds.RemoveAt( index );
     }
-    
-    public void AddWound()
-    {
-        int bodyPartIndex = Random.Range( 0, _bodyPartLabels.Length );
 
-        //int damage = Random.Range( 2, 30 );
-        int damage = 10;
-        float bleed = Random.Range( 0f, 12f );
-        //float bleed = 0.5f;
-        WoundInfo info = new WoundInfo(damage, bleed);
-        
-        AddRandomWound( _bodyPartLabels[bodyPartIndex], info );
-        _manager.PlayerBleedRate = GetTotalBleedRate();
-        _woundCount++;
+    public void RemoveStatusEffectECS( int index )
+    {
+        Destroy( _statusEffects[index] );
+        _statusEffects.RemoveAt( index );
     }
 
     public void HealWounds( int value )
@@ -419,25 +428,7 @@ public class BodyHealthManager : MonoBehaviour
 
         return healed;
     }
-
-    private Limb GetMostBleedingLimb(bool ignoreChest)
-    {
-        Limb result = null;
-        float highest = 0;
-        foreach ( Limb limb in _bodyParts.Values )
-        {
-            if(ignoreChest && limb.BodyPart == BodyPart.Chest)
-                continue;
-
-            if ( limb.Bleed > highest )
-            {
-                highest = limb.Bleed;
-                result = limb;
-            }
-        }
-
-        return result;
-    }
+    
 
     private void UseSpecialHealingItem(BodyPart bodyPart, HealthItemInfo usedItem)
     {
@@ -489,28 +480,6 @@ public class BodyHealthManager : MonoBehaviour
         return true;
     }
 
-    private void AddRandomWound( BodyPart woundedBodyPart, WoundInfo info )
-    {
-        
-        if ( _bodyParts[woundedBodyPart].ShouldSpreadDamage(info.Damage) )
-        {
-            SpreadDamage( woundedBodyPart, info );
-            info.Damage = (int)_bodyParts[woundedBodyPart].CurrentHealth;
-        }
-        
-        if ( _bodyParts[woundedBodyPart].Destroyed )
-            return;
-
-        GameObject newWoundObj = InstansiateWound( woundedBodyPart );
-
-        
-        Wound newWound = new Wound( info, woundedBodyPart, newWoundObj );
-        //_bodyParts[woundedBodyPart].Damage( newWound.HealingNeeded );
-        _bodyParts[woundedBodyPart].Damage( info );
-        _bodyParts[woundedBodyPart].Wounds.Add( newWound );
-        
-    }
-
 
     private float GetTotalBleedRate()
     {
@@ -522,30 +491,8 @@ public class BodyHealthManager : MonoBehaviour
 
         return result;
     }
-    
 
-    private void SpreadDamage( BodyPart woundedBodyPart, WoundInfo info )
-    {
-        info.Damage /= 2;
-        info.Bleed /= 2;
-        
-        foreach ( BodyPart part in _bodyPartLabels )
-        {
-            if ( part != woundedBodyPart && !_bodyParts[part].Destroyed )
-            {
-                GameObject newWoundObj = InstansiateWound( part );
-                
-                Wound newWound = new Wound( info, part, newWoundObj );
-                _bodyParts[part].Damage( info );
-                _bodyParts[part].Wounds.Add( newWound );
-                
-            }
-        }
-        _manager.PlayerBleedRate = GetTotalBleedRate();
-        
-    }
-    
-    private GameObject InstansiateWound(BodyPart bodyPart)
+    private GameObject InstantiateWound(BodyPart bodyPart)
     {
         Image bodyPartImg = _bodyParts[bodyPart].Image;
 
@@ -567,6 +514,22 @@ public class BodyHealthManager : MonoBehaviour
         newWoundObj.GetComponent<Image>().sprite = WoundSprites[Random.Range( 0, WoundSprites.Length )];
 
         return newWoundObj;
+    }
+
+    private GameObject InstantiateStatusEffect(Entity effectEntity, StatusEffectInfo info)
+    {
+        GameObject newEffectObj = Instantiate( StatusEffectPrefab );
+        
+        if ( info.Type == StatusEffectType.BasicStats )
+        {
+            newEffectObj.transform.SetParent( _genericStatusEffectsContainer, false );
+        }
+        else if(info.Type == StatusEffectType.BodyStats)
+        {
+            //BodyStatusEffect bodyEffect = _entityManager.GetComponentData<BodyStatusEffect>( effectEntity );//
+        }
+        
+        return newEffectObj;
     }
 
     private void AddRandomWoundDebug( BodyPart woundedBodyPart, int damage )
