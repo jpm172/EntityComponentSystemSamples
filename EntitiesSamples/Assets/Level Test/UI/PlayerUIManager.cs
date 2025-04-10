@@ -104,15 +104,24 @@ public class PlayerUIManager : MonoBehaviour
     {
         Entity breakDebuff =  _entityManager.CreateEntity();
    
+        /*
         BasicStatStatusEffect se = new BasicStatStatusEffect
         {
             AffectedStat = StatType.MoveSpeed,
             ModType = StatModType.Add,
             Value = 3
         };
+        */
+
+        BodyStatusEffect se = new BodyStatusEffect
+        {
+            AffectedLimb = BodyPart.LeftArm,
+            ModType = StatModType.Add,
+            Value = 1
+        };//
 
         StatusEffectInfo info = new StatusEffectInfo
-            {Type = StatusEffectType.BasicStats, Quality = StatusEffectQuality.Buff};
+            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Buff};
 
         _entityManager.AddComponentData( breakDebuff, se );
         _entityManager.AddComponentData( breakDebuff, info );

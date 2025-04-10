@@ -41,6 +41,8 @@ public class BodyHealthManager : MonoBehaviour
     [SerializeField]
     private Transform _genericStatusEffectsContainer;
 
+    [SerializeField] private Transform[] _limbStatusEffectConainers;
+
     private int _woundCount;
 
     private Dictionary<BodyPart, Limb> _bodyParts;
@@ -526,7 +528,8 @@ public class BodyHealthManager : MonoBehaviour
         }
         else if(info.Type == StatusEffectType.BodyStats)
         {
-            //BodyStatusEffect bodyEffect = _entityManager.GetComponentData<BodyStatusEffect>( effectEntity );//
+            BodyStatusEffect bodyEffect = _entityManager.GetComponentData<BodyStatusEffect>( effectEntity );
+            newEffectObj.transform.SetParent( _limbStatusEffectConainers[(int)bodyEffect.AffectedLimb], false );
         }
         
         return newEffectObj;

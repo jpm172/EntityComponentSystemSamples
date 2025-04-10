@@ -51,6 +51,15 @@ public struct BasicStatStatusEffect : IComponentData
     }
 }
 
+//[WriteGroup(typeof(TimedStatusEffect))]
+public struct BodyStatusEffect : IComponentData
+{
+    public BodyPart AffectedLimb;
+    public StatModType ModType;
+    public float Value;
+}
+
+
 public struct StatusEffectInfo : IComponentData
 {
     public StatusEffectType Type;
@@ -95,13 +104,7 @@ public struct StatusEffectBodyListener : IComponentData
 }
 
 
-//[WriteGroup(typeof(TimedStatusEffect))]
-public struct BodyStatusEffect : IBufferElementData
-{
-    public BodyPart AffectedLimb;
-    public StatModType ModType;
-    public float Value;
-}
+
 
 
 public enum StatusEffectType
