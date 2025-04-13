@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
 using Random = System.Random;
 
@@ -22,18 +23,19 @@ public class InventoryItemLayout : MonoBehaviour
     [SerializeField]
     protected Image _transferingImage;
 
+    [SerializeField]
     private bool _initialized = false;
     
     private void Start()
     {
-        Initialize();
-        _initialized = true;
+        //Initialize();
+        //_initialized = true;
     }
 
     private void OnEnable()
     {
         PlayerUIManager.Instance.ItemUpdateEvent.AddListener( ReloadItem );
-        if(_initialized)
+        if(_initialized) 
             ReloadItem();
     }
 
@@ -42,7 +44,14 @@ public class InventoryItemLayout : MonoBehaviour
         PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
     }
 
-    public virtual void Initialize()
+    public void Initialize()
+    {
+        _initialized = true;
+        _item = GetComponent<ItemContainer>();
+        UpdateLayout();
+    }
+
+    protected virtual void UpdateLayout()
     {
     }
 
@@ -57,7 +66,7 @@ public class InventoryItemLayout : MonoBehaviour
         else
         {
             transform.SetSiblingIndex( PlayerUIManager.Instance.AllItems[_item.Key].Order );
-            Initialize();
+            UpdateLayout();
         }
     }
 
@@ -82,10 +91,15 @@ public class InventoryItemLayout : MonoBehaviour
         Destroy( gameObject );
     }
 
+    public void RemoveCallback()
+    {
+        RemoveItem();
+    }
+
     protected void RemoveItem()
     {
         GetComponentInParent<InventoryManager>().RemovedItem();
-        PlayerUIManager.Instance.RemoveItem( _item.Key, false );
+        PlayerUIManager.Instance.RemoveItem( _item.Key, false );//
         Destroy( gameObject );
     }
 

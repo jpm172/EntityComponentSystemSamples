@@ -15,6 +15,9 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
     public delegate void UpdateCallbackDelegate();
     public UpdateCallbackDelegate UpdateCallback;
     
+    public delegate void RemoveCallbackDelegate();
+    public RemoveCallbackDelegate RemoveCallback;
+    
     public delegate void CallbackDelegate();
     public CallbackDelegate Callback;
 
@@ -63,7 +66,7 @@ public class DragObject : MonoBehaviour, IPointerDownHandler
         transfer.SwapCallback = SwapCallback;
         transfer.TransferFromContainer = TransferFromContainer;
         transfer.SourceObject = SourceObject;
-        //_manager.PickUpItem(this);
+        transfer.RemoveCallback = RemoveCallback;
     }
     
 }

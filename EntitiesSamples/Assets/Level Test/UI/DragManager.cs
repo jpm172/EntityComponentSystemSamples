@@ -69,16 +69,22 @@ public class DragManager : MonoBehaviour
         
         if(!TryPutIntoHotbar( drag, drag._worldCenterPoint ))
             PlayerUIManager.Instance.ActivePanel.DropItem( drag );
-        
-        /*
-        if(!TryPutIntoHotbar( drag, drag._worldCenterPoint ))
-            TryPutIntoSlot( drag, drag._worldCenterPoint );
-            */
 
         Destroy( _currentDraggedObject.gameObject );
         _currentDraggedObject = null;
     }
 
+    private bool TryRemoveItem(DragObject drag, Vector3 position)
+    {
+        if ( !GetBoundingBoxRect( _dragLayer ).Contains( position ) )
+        {
+            drag.RemoveCallback();
+            return true;
+        }
+
+        return false;
+    }
+    
     private bool TryPutIntoHotbar(DragObject drag, Vector2 position)
     {
         if ( GetBoundingBoxRect( _hotBarRect ).Contains( position ) )

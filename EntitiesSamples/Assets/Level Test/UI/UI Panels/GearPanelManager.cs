@@ -41,7 +41,7 @@ public class GearPanelManager : PanelManager
         if ( !GetBoundingBoxRect(_dragLayer).Contains(position) )
         {
             //TODO implement dropping items onto ground
-            drag.Callback();
+            drag.RemoveCallback();
             return;
         }
 

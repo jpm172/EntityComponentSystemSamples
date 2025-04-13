@@ -20,11 +20,9 @@ public class HealthItemLayout : InventoryItemLayout
     private TextMeshProUGUI _quantityText;
     
     
-    public override void Initialize()
+    protected override void UpdateLayout()
     {
         
-        if(_item == null)
-            _item = GetComponent<ItemContainer>();
         
         if ( _item.Item.Data.Stackable )
         { 

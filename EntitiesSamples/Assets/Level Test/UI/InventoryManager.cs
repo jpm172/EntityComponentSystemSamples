@@ -44,22 +44,7 @@ public class InventoryManager : MonoBehaviour
     private bool _collapsed;
 
     private RectTransform _rectTransform;
-
-    /*
-    private void Awake()
-    {
-        _manager = GetComponentInParent<PlayerUIManager>();
-        _rectTransform = GetComponent<RectTransform>();
-        
-        _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
-    }
-
-    private void Start()
-    {
-        LoadItems();
-        UpdateInventoryLayout();
-    }
-    */
+    
 
     public void Initialize()
     {
@@ -101,19 +86,16 @@ public class InventoryManager : MonoBehaviour
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
         
+        
         //newContainer.ItemKey = data.Key;
         newContainer.Set( item );
         newContainer.transform.SetAsFirstSibling();
         newContainer.transform.SetSiblingIndex( item.Order );
+        layout.Initialize();
 
         DragObject drag = newContainer.GetComponent<DragObject>();
-        drag.Initialize();
-        drag.Callback = layout.CallBack;
-        drag.UpdateCallback = layout.UpdateCallBack;
-        drag.SwapCallback = layout.SwapCallback;
-        drag.TransferFromContainer = newContainer;
-        drag.SourceObject = gameObject;
-        
+        ConnectDragObject( drag, layout, newContainer );
+
     }
     
     
@@ -124,19 +106,23 @@ public class InventoryManager : MonoBehaviour
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
         
         newContainer.Set( item );
-        //newContainer.ItemKey = item.Key;
         newContainer.transform.SetAsFirstSibling();
         
         DragObject drag = newContainer.GetComponent<DragObject>();
+        ConnectDragObject( drag, layout, newContainer );
+
+        _itemCount++;
+        UpdateInventoryLayout();
+    }
+
+    private void ConnectDragObject( DragObject drag, InventoryItemLayout layout, ItemContainer newContainer )
+    {
         drag.Initialize();
+        drag.RemoveCallback = layout.RemoveCallback;
         drag.Callback = layout.CallBack;
         drag.SwapCallback = layout.SwapCallback;
         drag.TransferFromContainer = newContainer;
         drag.SourceObject = gameObject;
-        
-        _itemCount++;
-        UpdateInventoryLayout();
-        
     }
 
     public void TryAddItem(ItemInfo item)

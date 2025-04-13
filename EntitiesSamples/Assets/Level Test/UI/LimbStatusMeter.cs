@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -9,6 +10,9 @@ public class LimbStatusMeter : MonoBehaviour
 
     private static Color _green = new Color(0.03921569f, 0.8352941f, 0.03921569f);
     private static Color _red = new Color(0.8352941f, 0.07843138f, 0.03529412f);
+
+    [SerializeField]
+    private Image _mainImage;
     
     [SerializeField]
     private TextMeshProUGUI _healthText;
@@ -30,7 +34,7 @@ public class LimbStatusMeter : MonoBehaviour
         _meterImage.color = ( limb.BodyPart == BodyPart.Chest ) ? _red : _green; 
         UpdateStatus( limb );
     }
-    
+
     //0AD50A - green
     //D51409 - red
     
@@ -41,17 +45,10 @@ public class LimbStatusMeter : MonoBehaviour
             UpdateChestStatus( limb );
             return;
         }
+        
+        UpdateBleedIndicator( limb );
+        
         _healthText.text = $"{limb.CurrentHealth:0}|{limb.MaxHealth:0}";
-        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
-        if ( limb.Bleed <= Mathf.Epsilon )
-        {
-            _canvasGroup.alpha = 0.5f;
-        }
-        else
-        {
-            _canvasGroup.alpha = 1;
-        }
-
         _meterImage.fillAmount = (float)limb.CurrentHealth / limb.MaxHealth;
 
         if ( limb.CurrentHealth <= 0 )
@@ -63,7 +60,30 @@ public class LimbStatusMeter : MonoBehaviour
             _destroyedImage.enabled = false;
         }
     }
-    
+
+
+    private void UpdateBleedIndicator(CharacterLimb limb)
+    {
+        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
+        if ( limb.Bleed <= Mathf.Epsilon )
+        {
+            _canvasGroup.alpha = 0.5f;
+        }
+        else
+        {
+            _canvasGroup.alpha = 1;
+        }
+        
+        float transition = Mathf.Clamp(limb.Bleed / 5, 0, 1);
+        if ( transition < 0.5f )
+        {
+            _mainImage.color = Color.Lerp( Color.white, Color.yellow, transition * 2 );
+        }
+        else
+        {
+            _mainImage.color = Color.Lerp( Color.yellow, Color.red, (transition-0.5f)*2 );
+        }
+    }
     
     public void UpdateStatus(Limb limb)
     {
@@ -99,15 +119,7 @@ public class LimbStatusMeter : MonoBehaviour
     private void UpdateChestStatus( CharacterLimb limb )
     {
         _healthText.text = $"{Mathf.Abs(limb.CurrentHealth):0}";
-        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
-        if ( limb.Bleed <= Mathf.Epsilon )
-        {
-            _canvasGroup.alpha = 0.5f;
-        }
-        else
-        {
-            _canvasGroup.alpha = 1;
-        }
+        UpdateBleedIndicator( limb );
     }
     
     private void UpdateChestStatus( Limb limb )

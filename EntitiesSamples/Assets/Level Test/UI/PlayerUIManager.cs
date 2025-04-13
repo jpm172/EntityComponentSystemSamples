@@ -121,7 +121,7 @@ public class PlayerUIManager : MonoBehaviour
         };//
 
         StatusEffectInfo info = new StatusEffectInfo
-            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Buff};
+            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff};
 
         _entityManager.AddComponentData( breakDebuff, se );
         _entityManager.AddComponentData( breakDebuff, info );
@@ -455,8 +455,8 @@ public class PlayerUIManager : MonoBehaviour
         if ( removedItem.GetType() == typeof(HealthItemInfo) )
         {
             _healthItemKeys.Remove( removedItem.Key );
-            _allItemsDict.Remove( removedItem.Key );
         }
+        _allItemsDict.Remove( removedItem.Key );
         
         if(update)
             ItemUpdateEvent.Invoke();

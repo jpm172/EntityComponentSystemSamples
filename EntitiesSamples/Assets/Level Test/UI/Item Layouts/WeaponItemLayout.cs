@@ -12,9 +12,8 @@ public class WeaponItemLayout : InventoryItemLayout
     
     [SerializeField]
     private Image _ammoCounter;
-    public override void Initialize()
+    protected override void UpdateLayout()
     {
-        _item = GetComponent<ItemContainer>();
         //_maxAmmo = ( (WeaponItemData) _item.Data ).MaxAmmo;
         _maxAmmo = ( (WeaponItemInfo) _item.Item ).Weapon.MaxAmmo;
         //_currentAmmo = UnityEngine.Random.Range( 0, _maxAmmo + 1 );
