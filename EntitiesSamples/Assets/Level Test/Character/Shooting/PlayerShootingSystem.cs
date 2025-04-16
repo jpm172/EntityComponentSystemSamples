@@ -186,16 +186,6 @@ public partial struct PlayerShootingSystem : ISystem
         state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
 
-    /*
-    private ref WeaponDesc GetEquippedWeapon(RefRW<CharacterInventory> inv)
-    {
-        if(inv.ValueRO.Equipped == 1)
-            return ref inv.ValueRW.PrimaryWeapon;
-        
-        return ref inv.ValueRW.SecondaryWeapon;
-    }
-    */
-    
     public void OnUpdate( ref SystemState state )
     {
         state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
@@ -237,7 +227,7 @@ public partial struct PlayerShootingSystem : ISystem
 
             weapon.Timer -= SystemAPI.Time.DeltaTime;
             
-            if ( !input.ValueRO.Shoot || weapon.Timer > 0 )
+            if ( !input.ValueRO.Shoot || weapon.Timer > 0 || weapon.CurrentAmmo <= 0 )
             {
                 state.EntityManager.SetComponentData( equippedItem, weapon );
                 continue;

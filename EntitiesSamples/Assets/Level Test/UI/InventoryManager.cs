@@ -50,7 +50,6 @@ public class InventoryManager : MonoBehaviour
     {
         _manager = GetComponentInParent<PlayerUIManager>();
         _rectTransform = GetComponent<RectTransform>();
-        
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
         
         LoadItems();

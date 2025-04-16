@@ -31,6 +31,7 @@ public partial class GetPlayerInputSystem : SystemBase
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
+        bool reload = _inputActions.DemoMap.Reload.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
         bool altFire = _inputActions.DemoMap.AlternateFire.IsPressed();
         altFire = _inputActions.DemoMap.AlternateFire.WasPerformedThisFrame(); //DEBUG FOR HEALTH!!!
@@ -52,6 +53,7 @@ public partial class GetPlayerInputSystem : SystemBase
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;
             playerInputs.ValueRW.AltFire = altFire;
+            playerInputs.ValueRW.Reload = reload;
         }
         
         //Debug.Log( mousePosition );

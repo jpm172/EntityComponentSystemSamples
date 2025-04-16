@@ -44,7 +44,7 @@ public class PlayerAuthoring : MonoBehaviour
             }
             
             
-            AddComponent(entity, new CharacterInventory { });
+            AddComponent(entity, new CharacterInventory { Ammo = new AmmoInfo(100,100,50,20)});
             
             AddBuffer<StatusEffect>(entity);
             //AddBuffer<TimedStatusEffect>( entity );

@@ -67,7 +67,8 @@ public class PlayerUIManager : MonoBehaviour
     public Dictionary<int, WeaponItemInfo> WeaponItems => _weaponDict;
     //public Dictionary<int, HealthItemInfo> HealthItems => _healthItemDict;
     public List<int> HealthItemKeys => _healthItemKeys;
-    
+
+    public Entity PlayerEntity => _playerEntity;
 
     public float PlayerCurrentHealth
     {

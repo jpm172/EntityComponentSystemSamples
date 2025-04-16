@@ -64,6 +64,15 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Reload"",
+                    ""type"": ""Button"",
+                    ""id"": ""3f6646ea-4871-44e2-8ee7-97b9d906febc"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Inventory"",
                     ""type"": ""Button"",
                     ""id"": ""65d16dc9-1e93-46fe-8727-9cd429ae37b2"",
@@ -352,6 +361,17 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Alternate Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c09a8d36-359e-4aff-aafa-b952a683503f"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Reload"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -364,6 +384,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         m_DemoMap_Interact = m_DemoMap.FindAction("Interact", throwIfNotFound: true);
         m_DemoMap_Shoot = m_DemoMap.FindAction("Shoot", throwIfNotFound: true);
         m_DemoMap_AlternateFire = m_DemoMap.FindAction("Alternate Fire", throwIfNotFound: true);
+        m_DemoMap_Reload = m_DemoMap.FindAction("Reload", throwIfNotFound: true);
         m_DemoMap_Inventory = m_DemoMap.FindAction("Inventory", throwIfNotFound: true);
         m_DemoMap_Primary = m_DemoMap.FindAction("Primary", throwIfNotFound: true);
         m_DemoMap_Secondary = m_DemoMap.FindAction("Secondary", throwIfNotFound: true);
@@ -439,6 +460,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_DemoMap_Interact;
     private readonly InputAction m_DemoMap_Shoot;
     private readonly InputAction m_DemoMap_AlternateFire;
+    private readonly InputAction m_DemoMap_Reload;
     private readonly InputAction m_DemoMap_Inventory;
     private readonly InputAction m_DemoMap_Primary;
     private readonly InputAction m_DemoMap_Secondary;
@@ -457,6 +479,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         public InputAction @Interact => m_Wrapper.m_DemoMap_Interact;
         public InputAction @Shoot => m_Wrapper.m_DemoMap_Shoot;
         public InputAction @AlternateFire => m_Wrapper.m_DemoMap_AlternateFire;
+        public InputAction @Reload => m_Wrapper.m_DemoMap_Reload;
         public InputAction @Inventory => m_Wrapper.m_DemoMap_Inventory;
         public InputAction @Primary => m_Wrapper.m_DemoMap_Primary;
         public InputAction @Secondary => m_Wrapper.m_DemoMap_Secondary;
@@ -488,6 +511,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @AlternateFire.started += instance.OnAlternateFire;
             @AlternateFire.performed += instance.OnAlternateFire;
             @AlternateFire.canceled += instance.OnAlternateFire;
+            @Reload.started += instance.OnReload;
+            @Reload.performed += instance.OnReload;
+            @Reload.canceled += instance.OnReload;
             @Inventory.started += instance.OnInventory;
             @Inventory.performed += instance.OnInventory;
             @Inventory.canceled += instance.OnInventory;
@@ -534,6 +560,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @AlternateFire.started -= instance.OnAlternateFire;
             @AlternateFire.performed -= instance.OnAlternateFire;
             @AlternateFire.canceled -= instance.OnAlternateFire;
+            @Reload.started -= instance.OnReload;
+            @Reload.performed -= instance.OnReload;
+            @Reload.canceled -= instance.OnReload;
             @Inventory.started -= instance.OnInventory;
             @Inventory.performed -= instance.OnInventory;
             @Inventory.canceled -= instance.OnInventory;
@@ -587,6 +616,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         void OnInteract(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
         void OnAlternateFire(InputAction.CallbackContext context);
+        void OnReload(InputAction.CallbackContext context);
         void OnInventory(InputAction.CallbackContext context);
         void OnPrimary(InputAction.CallbackContext context);
         void OnSecondary(InputAction.CallbackContext context);

@@ -190,11 +190,11 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         DragObject transfer = _dragManager.SpawnItem( _container.Item, GetComponent<RectTransform>().position );
         transfer.TransferFromContainer = _container;
         transfer.SourceObject = gameObject;
-        transfer.Callback = Callback;
+        transfer.RemoveCallback = RemoveCallback;
         transfer.BlockAdd = BlockAdd;
     }
 
-    private void Callback()
+    private void RemoveCallback()
     {
         ClearSlot( true );
         //ClearFromLinkedSlot();

@@ -12,6 +12,8 @@ public struct CharacterInventory : IComponentData
     public EquippingData SwitchToItem;
     public EquippingData SwitchToBuffer;
 
+    public AmmoInfo Ammo;
+    
     public float Timer;
     public float Remaining;
 
@@ -32,8 +34,83 @@ public struct CharacterInventory : IComponentData
     {
         return EquippedItem == entity || IsSwitchingTo( entity );
     }
-    
+}
 
+public struct AmmoInfo
+{
+    public int MaxPistolAmmo;
+    public int MaxRifleAmmo;
+    public int MaxShotgunAmmo;
+    public int MaxSpecialAmmo;
+    
+    public int CurrentPistolAmmo;
+    public int CurrentRifleAmmo;
+    public int CurrentShotgunAmmo;
+    public int CurrentSpecialAmmo;
+
+    public AmmoInfo(int maxPistol, int maxRifle, int maxShotgun, int maxSpecial)
+    {
+        CurrentPistolAmmo = MaxPistolAmmo = maxPistol;
+        CurrentRifleAmmo = MaxRifleAmmo = maxRifle;
+        CurrentShotgunAmmo = MaxShotgunAmmo = maxShotgun;
+        CurrentSpecialAmmo = MaxSpecialAmmo = maxSpecial;
+    }
+
+    public int GetAmmo( AmmoType type )
+    {
+        switch ( type )
+        {
+            case AmmoType.Pistol:
+                return CurrentPistolAmmo;
+            case AmmoType.Rifle:
+                return CurrentRifleAmmo;
+            case AmmoType.Shotgun:
+                return CurrentShotgunAmmo;
+            case AmmoType.Special:
+                return CurrentSpecialAmmo;
+            default:
+                throw new ArgumentOutOfRangeException($"Invalid Ammo type: {(ushort)type}");
+        }
+    }
+
+    public void RemoveAmmo( AmmoType type, int amount )
+    {
+        switch ( type )
+        {
+            case AmmoType.Pistol:
+                CurrentPistolAmmo -= amount;
+                break;
+            case AmmoType.Rifle:
+                CurrentRifleAmmo -= amount;
+                break;
+            case AmmoType.Shotgun:
+                CurrentShotgunAmmo -= amount;
+                break;
+            case AmmoType.Special:
+                CurrentSpecialAmmo -= amount;
+                break;
+        }
+    }
+    
+    public void AddAmmo( AmmoType type, int amount )
+    {
+        switch ( type )
+        {
+            case AmmoType.Pistol:
+                CurrentPistolAmmo += amount;
+                break;
+            case AmmoType.Rifle:
+                CurrentRifleAmmo += amount;
+                break;
+            case AmmoType.Shotgun:
+                CurrentShotgunAmmo += amount;
+                break;
+            case AmmoType.Special:
+                CurrentSpecialAmmo += amount;
+                break;
+        }
+    }
+    
 }
 
 
