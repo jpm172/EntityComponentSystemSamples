@@ -9,8 +9,7 @@ using UnityEngine;
 public struct WeaponDesc : IComponentData
 {
     public WeaponType Type;
-
-    public bool Null;
+    
     public bool IsExplosion;
     public float ThrowForce;
     public float ExplosionRadius;
@@ -18,6 +17,7 @@ public struct WeaponDesc : IComponentData
     public int BulletsPerShot;
     
     public AmmoType AmmoType;
+    public ReloadProfile ReloadProfile;
     public int MaxAmmo;
     public int CurrentAmmo;
     
@@ -30,10 +30,31 @@ public struct WeaponDesc : IComponentData
     public float StructureDamage;
 }
 
+[Serializable]
+public struct ReloadProfile
+{
+    public ReloadType ReloadType;
+    public ReloadState ReloadState;
+    public float ReloadTimer;
+    public float ReloadRemaining;
+}
+
 public enum WeaponType : ushort
 {
     Gun = 0,
     Throwable = 1
+}
+
+public enum ReloadType : ushort
+{
+    Magazine,
+    Manual,
+}
+
+public enum ReloadState : ushort
+{
+    Ready,
+    Reloading
 }
 
 public enum AmmoType : ushort

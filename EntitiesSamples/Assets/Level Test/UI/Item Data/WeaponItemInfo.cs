@@ -22,6 +22,8 @@ public class WeaponItemInfo : ItemInfo
         WeaponDesc newWeapon = new WeaponDesc
         {
             Type = WeaponType.Gun,
+            AmmoType = data.AmmoType,
+            ReloadProfile = data.ReloadProfile,
             BulletsPerShot = data.BulletsPerShot,
             MaxAmmo = data.MaxAmmo,
             FireRate = fireRate,

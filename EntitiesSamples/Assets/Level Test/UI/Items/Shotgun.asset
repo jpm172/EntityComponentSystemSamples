@@ -19,7 +19,13 @@ MonoBehaviour:
   Stackable: 0
   EquipTime: 1
   HolsterTime: 0
+  AmmoType: 2
   MaxAmmo: 6
+  ReloadProfile:
+    ReloadType: 1
+    ReloadState: 0
+    ReloadTimer: 0.25
+    ReloadRemaining: 0
   BulletsPerShot: 12
   FireRate: 2
   WeaponSpread: 8

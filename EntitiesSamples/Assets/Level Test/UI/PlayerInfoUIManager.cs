@@ -26,9 +26,9 @@ public class PlayerInfoUIManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if ( HasWeaponEquipped( out WeaponDesc weapon ) )
+        if ( HasWeaponEquipped( out WeaponDesc weapon, out int maxAmmo ) )
         {
-            _ammoText.text = $"{weapon.CurrentAmmo}/{weapon.MaxAmmo}";
+            _ammoText.text = $"{weapon.CurrentAmmo}/{maxAmmo}";
         }
         else
         {
@@ -37,8 +37,9 @@ public class PlayerInfoUIManager : MonoBehaviour
     }
 
 
-    private bool HasWeaponEquipped(out WeaponDesc weapon)
+    private bool HasWeaponEquipped(out WeaponDesc weapon, out int maxAmmo)
     {
+        maxAmmo = 0;
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _manager.PlayerEntity );
         weapon = new WeaponDesc();
         if ( inventory.EquippedItem == Entity.Null )
@@ -46,8 +47,10 @@ public class PlayerInfoUIManager : MonoBehaviour
 
         if ( !_entityManager.HasComponent( inventory.EquippedItem, typeof( WeaponDesc ) ) )
             return false;
-
+        
         weapon = _entityManager.GetComponentData<WeaponDesc>( inventory.EquippedItem );
+        maxAmmo = _entityManager.GetComponentData<CharacterInventory>( _manager.PlayerEntity ).Ammo.GetAmmo( weapon.AmmoType );
+        
         
         return true;
 

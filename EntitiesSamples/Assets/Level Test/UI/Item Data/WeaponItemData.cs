@@ -6,9 +6,15 @@ using UnityEngine;
 public class WeaponItemData : ItemData
 {
 
+    [Tooltip("Ammo Type")]
+    public AmmoType AmmoType;
+    
     [Tooltip("Ammo Capacity")]
     [Range(1, 1000)]
     public int MaxAmmo;
+    
+    [Tooltip("Reload Profile")]
+    public ReloadProfile ReloadProfile;
     
     [Tooltip("Bullets Per Shot")]
     [Range(1, 100)]

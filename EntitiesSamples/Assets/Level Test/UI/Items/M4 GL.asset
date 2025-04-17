@@ -19,9 +19,15 @@ MonoBehaviour:
   Stackable: 0
   EquipTime: 1
   HolsterTime: 0
+  AmmoType: 1
   MaxAmmo: 30
   BulletsPerShot: 1
   FireRate: 11.66
   WeaponSpread: 1
+  Recoil:
+    MaxMagnitude: 0
+    MinMagnitude: 0
+    Control: 0
+    Recovery: 0
   Range: 30
   Penetration: 5

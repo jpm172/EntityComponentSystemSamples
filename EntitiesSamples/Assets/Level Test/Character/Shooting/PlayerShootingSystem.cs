@@ -227,7 +227,7 @@ public partial struct PlayerShootingSystem : ISystem
 
             weapon.Timer -= SystemAPI.Time.DeltaTime;
             
-            if ( !input.ValueRO.Shoot || weapon.Timer > 0 || weapon.CurrentAmmo <= 0 )
+            if ( !input.ValueRO.Shoot || weapon.Timer > 0 || weapon.CurrentAmmo <= 0 || weapon.ReloadProfile.ReloadState != ReloadState.Ready )
             {
                 state.EntityManager.SetComponentData( equippedItem, weapon );
                 continue;

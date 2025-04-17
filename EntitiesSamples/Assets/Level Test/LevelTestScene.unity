@@ -7454,6 +7454,7 @@ GameObject:
   - component: {fileID: 639195952}
   - component: {fileID: 639195954}
   - component: {fileID: 639195953}
+  - component: {fileID: 639195955}
   m_Layer: 5
   m_Name: Ammo Status
   m_TagString: Untagged
@@ -7524,6 +7525,22 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &639195955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 639195951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6296c67f4163bf44f967b7cb42f1d669, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pistolAmmo: {fileID: 796030173}
+  _rifleAmmo: {fileID: 342406205}
+  _shotgunAmmo: {fileID: 723324180}
+  _specialAmmo: {fileID: 1408037363}
 --- !u!1 &645453358
 GameObject:
   m_ObjectHideFlags: 0
