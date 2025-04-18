@@ -134,7 +134,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
     {
         _displayImage.sprite = null;
         _displayImage.gameObject.SetActive( false );
-        //_hasItem = false;
         _container.Clear();
         
         int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
@@ -147,7 +146,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         _displayImage.sprite = null;
         _displayImage.gameObject.SetActive( false );
         _container.Clear();
-        //_hasItem = false;
     }
     
 

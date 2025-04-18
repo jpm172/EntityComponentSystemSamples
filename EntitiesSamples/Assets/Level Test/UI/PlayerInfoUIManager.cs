@@ -13,9 +13,15 @@ public class PlayerInfoUIManager : MonoBehaviour
 
     [SerializeField]
     private TextMeshProUGUI _ammoText;
+    
+    [SerializeField]
+    private TextMeshProUGUI _bleedText;
 
     [SerializeField]
     private Image _healthMeter;
+    
+    private static Color _green = new Color(0.03921569f, 0.8352941f, 0.03921569f);
+    private static Color _red = new Color(0.8352941f, 0.07843138f, 0.03529412f);
     
     void Start()
     {
@@ -34,6 +40,12 @@ public class PlayerInfoUIManager : MonoBehaviour
         {
             _ammoText.text = String.Empty;
         }
+
+        float transition = _manager.PlayerCurrentHealth / _manager.PlayerMaxHealth;
+        _healthMeter.color = Color.Lerp( _green, _red, 1-transition );
+        _healthMeter.fillAmount = transition;
+        _bleedText.text = MyExtensionMethods.GetBleedCategory( _manager.PlayerBleedRate ).ToString();
+
     }
 
 

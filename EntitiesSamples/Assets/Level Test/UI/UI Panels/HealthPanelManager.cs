@@ -73,7 +73,7 @@ public class HealthPanelManager : PanelManager
                 
                 //_bodyManager.HealBodyPart( bodyLabel.BodyPart, (HealthItemInfo)drag.Container.Item );
                 _bodyManager.HealBodyPartECS( bodyLabel.BodyPart, (HealthItemInfo)drag.Container.Item );
-                drag.UpdateCallback();
+                //drag.UpdateCallback();
                 return;
             }
         }

@@ -11,9 +11,10 @@ public class PlayerActionTracker : MonoBehaviour
     [SerializeField]
     private Image _equippingMeter,
         _indicator;
+    
 
-    //[SerializeField]
-    //private RectTransform _indicatorRect;
+    private bool equipActive;
+    private bool reloadActive;
     
     private EntityManager _entityManager;
     private Entity _playerEntity;
@@ -30,6 +31,43 @@ public class PlayerActionTracker : MonoBehaviour
     {
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         
+        ItemSwitchIndicator( inventory );
+        ReloadIndicator( inventory );
+        
+    }
+
+    private void ReloadIndicator( CharacterInventory inventory )
+    {
+        if ( inventory.EquippedItem == Entity.Null )
+        {
+            reloadActive = false;
+            return;
+        }
+
+
+        if ( !_entityManager.HasComponent( inventory.EquippedItem, typeof( WeaponDesc ) ) )
+        {
+            reloadActive = false;
+            return;
+        }
+            
+
+        WeaponDesc weapon = _entityManager.GetComponentData<WeaponDesc>( inventory.EquippedItem );
+
+        if ( weapon.ReloadProfile.ReloadState == ReloadState.Ready )
+        {
+            reloadActive = false;
+            return;
+        }
+
+        reloadActive = true;
+        _equippingMeter.color = Color.red;
+        _equippingMeter.fillAmount = 1- (weapon.ReloadProfile.ReloadRemaining / weapon.ReloadProfile.ReloadTimer);
+
+    }
+
+    private void ItemSwitchIndicator(CharacterInventory inventory)
+    {
         if( inventory.SwitchToItem != EquippingData.Null)
         {
             if ( !_indicator.enabled )
@@ -42,7 +80,6 @@ public class PlayerActionTracker : MonoBehaviour
                 _indicator.enabled = false;
             _equippingMeter.fillAmount = 0;
         }
-        
     }
 
     private void UpdateMeterEvenSplit(CharacterInventory inventory)
@@ -50,7 +87,7 @@ public class PlayerActionTracker : MonoBehaviour
 
         float holsterTime = GetItemEquipTime( inventory.EquippedItem );
         float equipTime = GetItemEquipTime( inventory.SwitchToItem.SwitchTo );
-        
+        _equippingMeter.color = Color.white;
         
         if (  inventory.Remaining < holsterTime )
         {

@@ -106,6 +106,7 @@ public class InventoryManager : MonoBehaviour
         
         newContainer.Set( item );
         newContainer.transform.SetAsFirstSibling();
+        layout.Initialize();
         
         DragObject drag = newContainer.GetComponent<DragObject>();
         ConnectDragObject( drag, layout, newContainer );

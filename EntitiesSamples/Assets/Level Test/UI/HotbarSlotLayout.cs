@@ -183,7 +183,7 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
         if ( eventData.button == PointerEventData.InputButton.Right )
         {
-            //todo: options menu for hotbar
+            //todo: options menu for hotbar (if necessary)
             return;
         }
         

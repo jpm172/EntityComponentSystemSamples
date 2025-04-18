@@ -67,6 +67,7 @@ public class SubMenuManager : MonoBehaviour
         _menu.AddOption( new SubMenuOption("Equip Primary", 0) );    
         _menu.AddOption( new SubMenuOption("Equip Secondary", 1) );    
         _menu.AddOption( new SubMenuOption("Modify", 2) );
+        _menu.AddOption( new SubMenuOption("Unload", 3) );
         _menu.OnSelected = WeaponSubMenuOnSelect;
     }
 
@@ -82,9 +83,16 @@ public class SubMenuManager : MonoBehaviour
             case 2:
                 ModifyWeapon();
                 break;
+            case 3:
+                UnloadWeapon();
+                break;
         }
     }
 
+    private void UnloadWeapon()
+    {
+        AmmoType type =( (WeaponItemInfo) _menu.RelatedItem ).Weapon.AmmoType;
+    }
 
     private void ModifyWeapon()
     {

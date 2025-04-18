@@ -55,7 +55,7 @@ public class WeaponHotBarSlotLayout : HotbarSlotLayout
         if ( HasItem )
         {
             _linkedSlot.RemoveItemFromHotBar();
-            //_linkedInventory.TryAddItem( _container.Item );
+            _linkedInventory.TryAddItem( _container.Item );
         }
 
         base.ClearSlot( deleteEntity );

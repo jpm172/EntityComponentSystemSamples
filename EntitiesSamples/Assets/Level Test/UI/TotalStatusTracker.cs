@@ -36,34 +36,9 @@ public class TotalStatusTracker : MonoBehaviour
         
         float bleedRate = _manager.PlayerBleedRate;
         _bleedRateText.text = $"{bleedRate:0.00}";
-        _bleedCategoryText.text = GetBleedCategory( bleedRate ).ToString();
+        _bleedCategoryText.text = MyExtensionMethods.GetBleedCategory( bleedRate ).ToString(); 
     }
-
-    private BleedCategory GetBleedCategory( float bleedRate )
-    {
-        if ( bleedRate <= Mathf.Epsilon)
-        {
-            return BleedCategory.None;
-        }
-        else if ( bleedRate <= 1 )
-        {
-            return BleedCategory.Trickle;
-        }
-        else if ( bleedRate <= 5 )
-        {
-            return BleedCategory.SlowBleed;
-        }
-        else if ( bleedRate <= 15 )
-        {
-            return BleedCategory.HeavyBleed;
-        }
-        else if ( bleedRate <= 30 )
-        {
-            return BleedCategory.Hemorrhage;
-        }
-
-        return BleedCategory.Exodus;
-    }
+    
 }
 
 

@@ -40,8 +40,15 @@ public partial struct ReloadWeaponSystem : ISystem
             
             if(weapon.ReloadProfile.ReloadState == ReloadState.Ready)
                 continue;
-            
-            AmmoInfo ammo = inventory.ValueRW.Ammo;
+
+            //cancel reload
+            if ( input.ValueRO.Shoot || inventory.ValueRO.Switching )//
+            {
+                weapon.ReloadProfile.ReloadRemaining = 0;
+                weapon.ReloadProfile.ReloadState = ReloadState.Ready;
+                state.EntityManager.SetComponentData( inventory.ValueRW.EquippedItem, weapon );
+                continue;
+            }
 
             switch ( weapon.ReloadProfile.ReloadType )
             {
@@ -49,7 +56,7 @@ public partial struct ReloadWeaponSystem : ISystem
                     ReloadMaganize(weapon, inventory, ref state);
                     break;
                 case ReloadType.Manual:
-                    ReloadManual(weapon, ammo, ref state);
+                    ReloadManual(weapon, inventory, ref state);
                     break;
             }
         }
@@ -85,12 +92,13 @@ public partial struct ReloadWeaponSystem : ISystem
         
     }
 
-    private void ReloadManual(WeaponDesc weapon, AmmoInfo ammo, ref SystemState state)
+    private void ReloadManual(WeaponDesc weapon, RefRW<CharacterInventory> inventory, ref SystemState state)
     {
         weapon.ReloadProfile.ReloadRemaining -= SystemAPI.Time.DeltaTime;
 
         if ( weapon.ReloadProfile.ReloadRemaining <= 0 )
         {
+            AmmoInfo ammo = inventory.ValueRW.Ammo;
             if ( ammo.GetAmmo( weapon.AmmoType ) == 0 )
             {
                 weapon.ReloadProfile.ReloadState = ReloadState.Ready;
@@ -103,8 +111,16 @@ public partial struct ReloadWeaponSystem : ISystem
             {
                 weapon.ReloadProfile.ReloadState = ReloadState.Ready;
             }
+            else
+            {
+                weapon.ReloadProfile.ReloadRemaining = weapon.ReloadProfile.ReloadTimer;
+            }
+            
+            inventory.ValueRW.Ammo = ammo;
             
         }
+        
+        state.EntityManager.SetComponentData( inventory.ValueRW.EquippedItem, weapon );
     }
     
 }

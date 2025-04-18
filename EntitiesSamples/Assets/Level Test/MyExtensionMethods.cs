@@ -9,6 +9,34 @@ public static class MyExtensionMethods
     private static readonly int4 ExpandHorizontal = new int4(-1,0,1,0);
     private static readonly int4 ExpandVertical = new int4(0,-1,0,1);
 
+    
+    public static BleedCategory GetBleedCategory( float bleedRate )
+    {
+        if ( bleedRate <= Mathf.Epsilon)
+        {
+            return BleedCategory.None;
+        }
+        else if ( bleedRate <= 1 )
+        {
+            return BleedCategory.Trickle;
+        }
+        else if ( bleedRate <= 5 )
+        {
+            return BleedCategory.SlowBleed;
+        }
+        else if ( bleedRate <= 15 )
+        {
+            return BleedCategory.HeavyBleed;
+        }
+        else if ( bleedRate <= 30 )
+        {
+            return BleedCategory.Hemorrhage;
+        }
+
+        return BleedCategory.Exodus;
+    }
+    
+    
     public static bool Overlaps( this int4 bounds, int4 otherBounds )
     {
         if ( bounds.x > otherBounds.z || bounds.y > otherBounds.w )
