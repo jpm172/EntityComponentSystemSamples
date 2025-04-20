@@ -212,8 +212,8 @@ public partial struct PlayerShootingSystem : ISystem
             
         }
 
-        foreach ( var (transform, input, recoil, body, inventory, player) 
-            in SystemAPI.Query<RefRO<LocalTransform>, RefRW<PlayerInputs>, RefRW<RecoilData>, DynamicBuffer<CharacterLimb>, RefRW<CharacterInventory>>().WithEntityAccess())
+        foreach ( var (transform, input, recoil, stats, inventory, player) 
+            in SystemAPI.Query<RefRO<LocalTransform>, RefRW<PlayerInputs>, RefRW<RecoilData>, RefRO<CharacterStats>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
             Entity equippedItem = inventory.ValueRW.EquippedItem;
             if(!state.EntityManager.HasComponent( equippedItem,typeof(WeaponDesc) ))
@@ -248,7 +248,7 @@ public partial struct PlayerShootingSystem : ISystem
             //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon.ValueRO);
             NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon, recoil.ValueRO);
             
-            ApplyRecoil( ref recoil.ValueRW, weapon.Recoil, body );
+            ApplyRecoil( ref recoil.ValueRW, weapon.Recoil, stats.ValueRO );
 
             if ( !entityHitMap.IsEmpty )
             {
@@ -350,20 +350,19 @@ public partial struct PlayerShootingSystem : ISystem
         }   
     }
 
-    private void ApplyRecoil(ref RecoilData recoil, RecoilProfile profile, DynamicBuffer<CharacterLimb> body)
+    private void ApplyRecoil(ref RecoilData recoil, RecoilProfile profile, CharacterStats stats)
     {
         recoil.RecoveryTime = profile.Recovery; //should only need to update once
-        recoil.TargetRecoilAngle += AddRecoilAngle(recoil, profile, body);
+        recoil.TargetRecoilAngle += AddRecoilAngle(recoil, profile, stats);
         
         recoil.RecoilTimer = math.min(recoil.RecoilTimer + profile.Control * Time.deltaTime, 1);
         recoil.TimeSinceShot = 0;
     }
     
-    private float AddRecoilAngle(RecoilData recoil, RecoilProfile profile, DynamicBuffer<CharacterLimb> body)
+    private float AddRecoilAngle(RecoilData recoil, RecoilProfile profile, CharacterStats stats)
     {
         float recoilValue = math.lerp( profile.MaxMagnitude, profile.MinMagnitude, recoil.RecoilTimer );
-        float armCondition = ( body[(int) BodyPart.LeftArm].Condition + body[(int) BodyPart.RightArm].Condition ) / 2;
-        recoilValue *= 1 + ( 1 - armCondition );
+        recoilValue *= 1 + ( 1 - stats.TotalStats.ArmsCondition() );
         
         //Debug.Log( $"{armCondition} -> {recoilValue} " );
         

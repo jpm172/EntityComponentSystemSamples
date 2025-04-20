@@ -9,33 +9,61 @@ public struct MyCharacterComponent : IComponentData
     
     //public float MovementSpeed;
     
+}
+
+public struct CharacterStats : IComponentData
+{
+    public StatInfo BaseStats;
+    public StatInfo TotalStats;
+}
+
+public struct StatInfo
+{
     public float Health;
     public float MaxHealth;
-}
-
-
-public struct BaseStats : IComponentData
-{
-    public CharacterStats Stats;
-}
-
-public struct TotalStats : IComponentData
-{
-    public CharacterStats Stats;
-}
-
-public struct CharacterStats
-{
+    
     public float MoveSpeed;
     public float Armor;
 
-    public LimbStats HeadStats;
-    public LimbStats ChestStats;
-    public LimbStats LeftArmStats;
-    public LimbStats RightArmStats;
-    public LimbStats LeftLegStats;
-    public LimbStats RightLegStats;
+    public CharacterLimb HeadStats;
+    public CharacterLimb ChestStats;
+    public CharacterLimb LeftArmStats;
+    public CharacterLimb RightArmStats;
+    public CharacterLimb LeftLegStats;
+    public CharacterLimb RightLegStats;
 
+    
+    public CharacterLimb GetLimb( BodyPart limb )
+    {
+        switch ( limb )
+        {
+            case BodyPart.Head:
+                return HeadStats;
+            case BodyPart.Chest:
+                return ChestStats;
+            case BodyPart.LeftArm:
+                return LeftArmStats;
+            case BodyPart.RightArm:
+                return RightArmStats;
+            case BodyPart.LeftLeg:
+                return LeftLegStats;
+            case BodyPart.RightLeg:
+                return RightLegStats;
+            default:
+                throw new ArgumentOutOfRangeException($"Invalid Limb: {(int)limb}");
+        }
+    }
+    
+    public float ArmsCondition()
+    {
+        return ( LeftArmStats.Condition + RightArmStats.Condition ) / 2;
+    }
+
+    public float LegsCondition()
+    {
+        return ( LeftLegStats.Condition + RightLegStats.Condition ) / 2;
+    }
+    
 }
 
 public struct LimbStats
@@ -43,8 +71,11 @@ public struct LimbStats
     public float Condition;
     public float BleedResist;
 
+
+
     public LimbStats(float condition, float bleedResist)
     {
+
         Condition = condition;
         BleedResist = bleedResist;
     }

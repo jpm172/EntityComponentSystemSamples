@@ -127,8 +127,8 @@ public class PlayerUIManager : MonoBehaviour
 
         _entityManager.AddComponentData( breakDebuff, se );
         _entityManager.AddComponentData( breakDebuff, info );
-        //_entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );
-        _entityManager.AddComponentData( breakDebuff, new StatusEffectBodyListener( _playerEntity, BodyPart.LeftArm, 0, false ) );
+        _entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );
+        //_entityManager.AddComponentData( breakDebuff, new StatusEffectBodyListener( _playerEntity, BodyPart.LeftArm, 0, false ) );
         
         DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
         effects.Add( new StatusEffect

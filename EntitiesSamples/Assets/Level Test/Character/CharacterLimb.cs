@@ -4,15 +4,13 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
-[InternalBufferCapacity(6)]
-public struct CharacterLimb : IBufferElementData
+public struct CharacterLimb
 {
     public BodyPart Part;
     public float MaxHealth;
     public float CurrentHealth;
     public float Bleed;
     public float Condition;
-
 
     public float MissingHealth => GetMissingHealth();
 

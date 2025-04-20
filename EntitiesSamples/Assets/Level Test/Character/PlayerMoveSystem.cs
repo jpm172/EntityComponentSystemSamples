@@ -56,8 +56,7 @@ public partial struct PlayerMoveJob : IJobEntity
         BelongsTo = ~(uint)( 1 << 6 )
     };
 
-    private void Execute( ref LocalTransform transform, in PlayerInputs input, TotalStats stats,
-        PhysicsCollider col, DynamicBuffer<CharacterLimb> limbs )
+    private void Execute( ref LocalTransform transform, in PlayerInputs input, CharacterStats stats, PhysicsCollider col )
     {
         //rotate the character to look at the mouse
         float3 forward = input.AimPosition - transform.Position;
@@ -66,29 +65,12 @@ public partial struct PlayerMoveJob : IJobEntity
         transform.Rotation = rotation;
         transform = transform.RotateZ( AngleAdjust );
 
-        float finalSpeed = math.clamp( stats.Stats.MoveSpeed * GetLegCondition( limbs ), 1, 10 );
+        float finalSpeed = math.clamp( stats.TotalStats.MoveSpeed * stats.TotalStats.LegsCondition(), 1, 10 );
         
         float2 targetMove = input.MoveInput * finalSpeed * DeltaTime;
         float3 vel = new float3( targetMove, 0 );
 
         float3 result = CollideAndSlide( col, vel, transform.Position, transform, 0, vel );
-        
-        /*
-        if ( PhysicsCheck( input.MoveInput, transform, col, targetMove, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits ) )
-        {
-            float2 relativeHit = transform.Position.xy - hit.Position.xy;
-
-            
-            if ( GetClosestPoint( transform, col, hit, castHits, out RaycastHit rayHit, out float2 adjust ) )
-            {
-                transform.Position.xy -=  adjust;
-                
-            }
-
-            castHits.Dispose();
-            return;
-        }
-        */
 
         transform.Position.xy += result.xy;
     }
@@ -148,85 +130,5 @@ public partial struct PlayerMoveJob : IJobEntity
     {
         return vector - math.project(vector, planeNormal);
     }
-
-    private float GetLegCondition(DynamicBuffer<CharacterLimb> limbs)
-    {
-        CharacterLimb leftLeg = limbs[(int) BodyPart.LeftLeg];
-        CharacterLimb rightLeg = limbs[(int) BodyPart.RightLeg];
-
-        return ( leftLeg.Condition + rightLeg.Condition ) / 2;
-    }
     
-    private bool PhysicsCheck(float2 input, LocalTransform transform, PhysicsCollider col, float2 end, out ColliderCastHit hit, out NativeList<ColliderCastHit> castHits)
-    {
-
-        /*
-        float3 offset = new float3(input.x, input.y, 0)/GameSettings.PixelsPerUnit;
-        ColliderCastInput cast = new ColliderCastInput(col.Value, transform.Position + offset, transform.Position + new float3(end.x, end.y, 0),
-            transform.Rotation);
-            */
-        
-        ColliderCastInput cast = new ColliderCastInput(col.Value, transform.Position, transform.Position + new float3(end.x, end.y, 0),
-            transform.Rotation);
-        
-        castHits = new NativeList<ColliderCastHit>(Allocator.Temp);
-        bool result = PhysicsWorld.CastCollider( cast, ref castHits );
-
-        PhysicsWorld.CastCollider( cast, out hit );
-        
-        return result;
-    }
-
-    private bool GetClosestPoint( LocalTransform transform, PhysicsCollider col, ColliderCastHit hit, NativeList<ColliderCastHit> castHits, out RaycastHit rayHit, out float2 adjust )
-    {
-        uint mask = 1 << 6;
-        mask = ~mask;
-        adjust = new float2();
-        bool result = false;
-
-        CollisionFilter filter = new CollisionFilter
-        {
-            CollidesWith = mask,
-            BelongsTo = mask
-        };
-        
-        Debug.Log( castHits.Length );
-        foreach ( ColliderCastHit cHit in castHits )
-        {
-            RaycastInput rayInput = new RaycastInput
-            {
-                Start = transform.Position,
-                End = cHit.Position + (cHit.Position - transform.Position),
-                Filter = filter
-            };
-
-            if ( PhysicsWorld.CastRay( rayInput, out rayHit ) )
-            {
-                result = true;
-                adjust += ( cHit.Position - rayHit.Position ).xy;
-            } 
-        }
-        
-
-        rayHit = new RaycastHit(); //temp debug
-        
-        /*
-        NativeList<RaycastHit> hits = new NativeList<RaycastHit>(Allocator.Temp);
-        PhysicsWorld.CastRay( rayInput, ref hits );
-        foreach ( RaycastHit rHit in hits )
-        {
-            adjust += ( hit.Position - rHit.Position ).xy;
-        }
-        
-        hits.Dispose();
-        */
-        if ( result )
-        {
-            //Debug.DrawLine( rayInput.Start, rayHit.Position, Color.blue, .1f );
-            //Debug.Log( rayHit.Fraction + ", " + transform.Position );
-        }
-
-        return result;
-
-    }
 }

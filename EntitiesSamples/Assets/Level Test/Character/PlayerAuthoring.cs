@@ -17,24 +17,26 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new MyCharacterComponent
             {
-                Health = authoring.Health,
-                MaxHealth = authoring.Health,
+                //Health = authoring.Health,
+                //MaxHealth = authoring.Health,
             });
             
-            CharacterStats baseStats = new CharacterStats
+            
+            StatInfo baseStats = new StatInfo
             {
+                Health = authoring.Health,
+                MaxHealth = authoring.Health,
                 Armor = 0,
                 MoveSpeed = authoring.MoveSpeed,
-                HeadStats = new LimbStats(1,1),
-                ChestStats = new LimbStats(1,1),
-                LeftArmStats = new LimbStats(1,1),
-                RightArmStats = new LimbStats(1,1),
-                LeftLegStats = new LimbStats(1,1),
-                RightLegStats = new LimbStats(1,1),
+                HeadStats = new CharacterLimb( BodyPart.Head, 50 ),
+                ChestStats = new CharacterLimb( BodyPart.Chest, 0 ),
+                LeftArmStats = new CharacterLimb( BodyPart.LeftArm, 50 ),
+                RightArmStats = new CharacterLimb( BodyPart.RightArm, 50 ),
+                LeftLegStats = new CharacterLimb( BodyPart.LeftLeg, 50 ),
+                RightLegStats = new CharacterLimb( BodyPart.RightLeg, 50 ),
             };
             
-            AddComponent(entity, new BaseStats{Stats = baseStats});
-            AddComponent(entity, new TotalStats());
+            AddComponent(entity, new CharacterStats{BaseStats = baseStats, TotalStats = baseStats});
 
             DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
 
@@ -61,7 +63,7 @@ public class PlayerAuthoring : MonoBehaviour
             AddBuffer<DamageInfo>( entity );
             AddBuffer<CharacterWound>( entity );
             
-            
+            /*
             DynamicBuffer<CharacterLimb> invBuffer = AddBuffer<CharacterLimb>( entity );
             invBuffer.Add( new CharacterLimb( BodyPart.Head, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.Chest, 0 ) );
@@ -69,6 +71,7 @@ public class PlayerAuthoring : MonoBehaviour
             invBuffer.Add( new CharacterLimb( BodyPart.RightArm, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.LeftLeg, 50 ) );
             invBuffer.Add( new CharacterLimb( BodyPart.RightLeg, 50 ) );
+            */
         }
         
     }

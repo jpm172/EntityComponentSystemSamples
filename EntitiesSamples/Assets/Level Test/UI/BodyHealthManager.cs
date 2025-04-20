@@ -89,6 +89,7 @@ public class BodyHealthManager : MonoBehaviour
         if ( _playerEntity == Entity.Null )
             return;
 
+        /*
         DynamicBuffer<CharacterLimb> limbs = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
         MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
         float bleedRate = 0;
@@ -99,8 +100,8 @@ public class BodyHealthManager : MonoBehaviour
         }
 
         _manager.PlayerBleedRate = bleedRate;
-        _manager.PlayerCurrentHealth = character.Health;
-
+        //_manager.PlayerCurrentHealth = character.Health;
+        */
 
     }
 
@@ -215,8 +216,8 @@ public class BodyHealthManager : MonoBehaviour
         
         MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
         DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
-        DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
-
+        //DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
+        /*
         while ( wounds.Length> 0 && hasItem )
         {
             for ( int i = 0; i < wounds.Length; i++ )
@@ -243,6 +244,7 @@ public class BodyHealthManager : MonoBehaviour
                 _manager.ItemUpdateEvent.Invoke();
             }
         }
+        */
         
         _entityManager.SetComponentData( _playerEntity, character );
     }
@@ -312,31 +314,6 @@ public class BodyHealthManager : MonoBehaviour
         */
 
         _manager.QuickUseItem(usedItem, bodyPart);
-        return;
-        
-        MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
-        DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
-        DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
-        
-        for ( int i = wounds.Length - 1; i >= 0; i-- )
-        {
-            ref CharacterWound wound = ref wounds.ElementAt( i );
-            if ( wound.AffectedPart == bodyPart )
-            {
-                float2 healResult = wound.Heal(ref usedItem.HealthItem);
-                ref CharacterLimb limb = ref body.ElementAt( (int) wound.AffectedPart );
-                character.Health += limb.Heal( healResult.x, healResult.y );
-                
-                if ( wound.Healed )
-                {
-                    wounds.RemoveAt( i );
-                    RemoveWoundECS( i );
-                }
-            }
-            _entityManager.SetComponentData( _playerEntity, character );
-        }
-        _manager.AllItems[usedItem.Key] = usedItem;
-        
     }
 
     public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )

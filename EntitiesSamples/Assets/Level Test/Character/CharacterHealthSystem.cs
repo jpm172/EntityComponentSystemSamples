@@ -30,8 +30,8 @@ public partial struct CharacterHealthSystem : ISystem
         
         //change from dynamic buffer to one component with separate structs for each limb for body
         foreach ( var (damage, wounds, character, player) in 
-            SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
-        {
+            SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<CharacterStats>>().WithEntityAccess() )
+        {/*
             if(damage.IsEmpty)
                 continue;
 
@@ -43,12 +43,13 @@ public partial struct CharacterHealthSystem : ISystem
                 AddWound( newWound, wounds, body, character );
             }
             damage.Clear();
+            */
         }
 
 
-        UseHealingItem( ref state );
+        //UseHealingItem( ref state );
     }
-
+/*
     private void ApplyBleedDamage(ref SystemState state)
     {
         foreach ( var (body, character, player) in SystemAPI.Query<DynamicBuffer<CharacterLimb>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
@@ -170,14 +171,6 @@ public partial struct CharacterHealthSystem : ISystem
                 
                 
         }
-
-        /*
-        while ( removedItems.TryDequeue( out Entity removed ) )
-        {
-            CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( removed );
-            PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
-        }
-        */
     }
 
 
@@ -343,4 +336,5 @@ public partial struct CharacterHealthSystem : ISystem
     {
         return Interlocked.Increment(ref _lastWoundId);
     }
+    */
 }
