@@ -49,6 +49,11 @@ public partial struct StatusEffectSystem : ISystem
                     
                     modifiedStats = effect.ApplyEffect( baseStats.ValueRO.Stats, modifiedStats );
                 }
+                else if ( info.Type == StatusEffectType.BodyStats )
+                {
+                    BodyStatusEffect effect = state.EntityManager.GetComponentData<BodyStatusEffect>( baseEffect.EffectEntity );
+                    modifiedStats = effect.ApplyEffect( baseStats.ValueRO.Stats, modifiedStats );
+                }
             }
             //Debug.Log( $"{statusEffects.Capacity}, {statusEffects.Length}" ); //TrimExcess
             totalStats.ValueRW.Stats = modifiedStats;

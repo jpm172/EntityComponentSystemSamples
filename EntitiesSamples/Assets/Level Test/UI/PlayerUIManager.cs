@@ -117,9 +117,10 @@ public class PlayerUIManager : MonoBehaviour
         BodyStatusEffect se = new BodyStatusEffect
         {
             AffectedLimb = BodyPart.LeftArm,
-            ModType = StatModType.Add,
-            Value = 1
-        };//
+            AffectedStat = BodyStatType.Condition,
+            ModType = StatModType.Multiply,
+            Value = -1
+        };
 
         StatusEffectInfo info = new StatusEffectInfo
             {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff};

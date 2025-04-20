@@ -55,8 +55,67 @@ public struct BasicStatStatusEffect : IComponentData
 public struct BodyStatusEffect : IComponentData
 {
     public BodyPart AffectedLimb;
+    public BodyStatType AffectedStat;
     public StatModType ModType;
     public float Value;
+    
+    public CharacterStats ApplyEffect(CharacterStats baseStats, CharacterStats totalStats)
+    {
+        switch ( AffectedLimb)
+        {
+            case BodyPart.Head:
+                totalStats.HeadStats = ModLimb( baseStats.HeadStats, totalStats.HeadStats );
+                return totalStats;
+            case BodyPart.Chest:
+                totalStats.ChestStats = ModLimb(baseStats.ChestStats, totalStats.ChestStats);
+                return totalStats;
+            case BodyPart.LeftArm:
+                totalStats.LeftArmStats = ModLimb( baseStats.LeftArmStats, totalStats.LeftArmStats );
+                return totalStats;
+            case BodyPart.RightArm:
+                totalStats.RightArmStats = ModLimb( baseStats.RightArmStats, totalStats.RightArmStats );
+                return totalStats;
+            case BodyPart.LeftLeg:
+                totalStats.LeftLegStats = ModLimb( baseStats.LeftLegStats, totalStats.LeftLegStats );
+                return totalStats;
+            case BodyPart.RightLeg :
+                totalStats.RightLegStats = ModLimb( baseStats.RightLegStats, totalStats.RightLegStats );
+                return totalStats;
+            default:
+                throw new IndexOutOfRangeException($"invalid AffectedLimb: {(int) AffectedLimb}");
+        }
+    }
+
+    private LimbStats ModLimb(LimbStats baseLimb, LimbStats totalLimb)
+    {
+        switch ( AffectedStat )
+        {
+            case BodyStatType.Condition:
+                totalLimb.Condition = CalculateMod( baseLimb.Condition, totalLimb.Condition );
+                return totalLimb;
+            case BodyStatType.BleedResist:
+                totalLimb.BleedResist = CalculateMod( baseLimb.BleedResist, totalLimb.BleedResist );
+                return totalLimb;
+            default:
+                throw new IndexOutOfRangeException($"invalid AffectedBodyStat: {(int) AffectedStat}");
+        }
+    }
+    
+    private float CalculateMod( float baseValue, float totalValue )
+    {
+        switch ( ModType )
+        {
+            case StatModType.Add:
+                return totalValue + Value;
+            case StatModType.Multiply:
+                return totalValue + ( baseValue * Value );
+            case StatModType.Absolute:
+                return Value;
+            default:
+                throw new IndexOutOfRangeException($"invalid StatModType: {(int) ModType}");
+        }
+    }
+    
 }
 
 
