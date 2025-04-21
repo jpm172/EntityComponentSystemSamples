@@ -92,12 +92,13 @@ public class BodyHealthManager : MonoBehaviour
         
         CharacterStats stats = _entityManager.GetComponentData<CharacterStats>( _playerEntity );
         float bleedRate = 0;
-        bleedRate += stats.BaseStats.HeadStats.Bleed;
-        bleedRate += stats.BaseStats.ChestStats.Bleed;
-        bleedRate += stats.BaseStats.LeftArmStats.Bleed;
-        bleedRate += stats.BaseStats.RightArmStats.Bleed;
-        bleedRate += stats.BaseStats.LeftLegStats.Bleed;
-        bleedRate += stats.BaseStats.RightLegStats.Bleed;
+
+        for ( int i = 0; i < _bodyPartLabels.Length; i++ )
+        {
+            CharacterLimb limb = stats.BaseStats.GetLimb( _bodyPartLabels[i] );
+            bleedRate += limb.Bleed;
+            _meters[i].UpdateStatus( limb );
+        }
 
         _manager.PlayerBleedRate = bleedRate;
         //_manager.PlayerCurrentHealth = character.Health;
