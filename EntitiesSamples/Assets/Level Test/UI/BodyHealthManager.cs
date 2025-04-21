@@ -89,45 +89,21 @@ public class BodyHealthManager : MonoBehaviour
         if ( _playerEntity == Entity.Null )
             return;
 
-        /*
-        DynamicBuffer<CharacterLimb> limbs = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
-        MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
+        
+        CharacterStats stats = _entityManager.GetComponentData<CharacterStats>( _playerEntity );
         float bleedRate = 0;
-        foreach ( CharacterLimb limb in limbs )
-        {
-            bleedRate += limb.Bleed;
-            _meters[(int)limb.Part].UpdateStatus( limb );
-        }
+        bleedRate += stats.BaseStats.HeadStats.Bleed;
+        bleedRate += stats.BaseStats.ChestStats.Bleed;
+        bleedRate += stats.BaseStats.LeftArmStats.Bleed;
+        bleedRate += stats.BaseStats.RightArmStats.Bleed;
+        bleedRate += stats.BaseStats.LeftLegStats.Bleed;
+        bleedRate += stats.BaseStats.RightLegStats.Bleed;
 
         _manager.PlayerBleedRate = bleedRate;
         //_manager.PlayerCurrentHealth = character.Health;
-        */
+        
 
     }
-
-    /*
-    private void FixedUpdate()
-    {
-        return;
-        foreach ( Limb limb in _bodyParts.Values )
-        {
-            limb.CumulativeDamage += limb.Bleed * Time.fixedDeltaTime;
-            if ( limb.CumulativeDamage >= 1 )
-            {
-                int damage = (int)limb.CumulativeDamage;
-                if ( limb.Destroyed )
-                {
-                    _bodyParts[BodyPart.Chest].Damage( damage );
-                }
-                else
-                {
-                    limb.Damage( damage );
-                }
-                
-                limb.CumulativeDamage -= damage;
-            }
-        }
-    }*/
 
     private void InitializeLimbs()
     {

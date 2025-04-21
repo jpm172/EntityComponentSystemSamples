@@ -53,6 +53,34 @@ public struct StatInfo
                 throw new ArgumentOutOfRangeException($"Invalid Limb: {(int)limb}");
         }
     }
+
+
+    public void SetLimb( CharacterLimb limb )
+    {
+        switch ( limb.Part )
+        {
+            case BodyPart.Head:
+                HeadStats = limb;
+                break;
+            case BodyPart.Chest:
+                ChestStats = limb;
+                break;
+            case BodyPart.LeftArm:
+                LeftArmStats = limb;
+                break;
+            case BodyPart.RightArm:
+                RightArmStats = limb;
+                break;
+            case BodyPart.LeftLeg:
+                LeftLegStats = limb;
+                break;
+            case BodyPart.RightLeg:
+                RightLegStats = limb;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException($"Invalid Limb: {(int)limb.Part}");
+        }
+    }
     
     public float ArmsCondition()
     {

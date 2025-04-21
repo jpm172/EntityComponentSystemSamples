@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,17 +11,21 @@ public partial struct CharacterHealthSystem : ISystem
 {
 
     private static int _lastWoundId = 0;
+
+    private NativeArray<BodyPart> _bodyParts;
     //private EndSimulationEntityCommandBufferSystem _commandBuffer;
     public void OnCreate( ref SystemState state )
     {
         //_commandBuffer = state.World.GetOrCreateSystemManaged<EndSimulationEntityCommandBufferSystem>();
-        
+        _bodyParts = new NativeArray<BodyPart>(
+            new []{BodyPart.Head, BodyPart.Chest, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg}
+            , Allocator.Persistent);
         _lastWoundId = 0;
     }
 
     public void OnDestroy( ref SystemState state )
     {
-        
+        _bodyParts.Dispose();
     }
 
     public void OnUpdate( ref SystemState state )
@@ -31,54 +36,57 @@ public partial struct CharacterHealthSystem : ISystem
         //change from dynamic buffer to one component with separate structs for each limb for body
         foreach ( var (damage, wounds, character, player) in 
             SystemAPI.Query<DynamicBuffer<DamageInfo>, DynamicBuffer<CharacterWound>, RefRW<CharacterStats>>().WithEntityAccess() )
-        {/*
+        {
             if(damage.IsEmpty)
                 continue;
 
-            DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
+            //DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
 
             for ( int i = damage.Length - 1; i >= 0; i-- )
             {
                 CharacterWound newWound = new CharacterWound(damage[i], BodyPart.LeftArm);
-                AddWound( newWound, wounds, body, character );
+                AddWound( newWound, wounds, character );
             }
             damage.Clear();
-            */
+            
         }
 
 
         //UseHealingItem( ref state );
     }
-/*
+
     private void ApplyBleedDamage(ref SystemState state)
     {
-        foreach ( var (body, character, player) in SystemAPI.Query<DynamicBuffer<CharacterLimb>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
+        foreach ( var (stats, character, player) in SystemAPI.Query<RefRW<CharacterStats>, RefRW<MyCharacterComponent>>().WithEntityAccess() )
         {
-            for ( int i = 0; i < body.Length; i++ )
+            
+            for ( int i = 0; i < _bodyParts.Length; i++ )
             {
-                ref CharacterLimb limb = ref body.ElementAt( i ); 
+                CharacterLimb limb = stats.ValueRW.BaseStats.GetLimb( _bodyParts[i] ); 
                 float bleedDmg = limb.Bleed * SystemAPI.Time.DeltaTime;
             
                 
                 if ( limb.Destroyed )
                 {
-                    ref CharacterLimb chest = ref body.ElementAt( (int)BodyPart.Chest );
-                    character.ValueRW.Health -= chest.Damage( bleedDmg );
+                    CharacterLimb chest = stats.ValueRW.BaseStats.GetLimb( BodyPart.Chest );
+                    stats.ValueRW.BaseStats.Health -= chest.Damage( bleedDmg );
+                    stats.ValueRW.BaseStats.SetLimb( chest );
                     continue;
                 }
 
-                character.ValueRW.Health -= limb.Damage( bleedDmg );
+                stats.ValueRW.BaseStats.Health -= limb.Damage( bleedDmg );
+                stats.ValueRW.BaseStats.SetLimb( limb );
             }
 
 
-            if ( character.ValueRW.Health <= 0 )
+            if ( stats.ValueRW.BaseStats.Health <= 0 )
             {
                 //TODO: die
             }
             
         }
     }
-    
+    /*
     private void UseHealingItem(ref SystemState state)
     {
         EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
@@ -304,37 +312,47 @@ public partial struct CharacterHealthSystem : ISystem
             }
         }
     }
-    
+    */
 
-    private void AddWound(CharacterWound newWound,  DynamicBuffer<CharacterWound> wounds,DynamicBuffer<CharacterLimb> body, RefRW<MyCharacterComponent> character)
+    private void AddWound(CharacterWound newWound,  DynamicBuffer<CharacterWound> wounds, RefRW<CharacterStats> character)
     {
-        int limbIndex = (int)newWound.AffectedPart;
-        ref CharacterLimb limb = ref body.ElementAt(limbIndex);
+        //int limbIndex = (int)newWound.AffectedPart;
+        //ref CharacterLimb limb = ref body.ElementAt(limbIndex);
+        CharacterLimb limb = character.ValueRW.BaseStats.GetLimb( newWound.AffectedPart );
 
+        
         if ( limb.Destroyed )
         {
-            for ( int i = 0; i < body.Length; i++ )
+            
+            for ( int i = 0; i < _bodyParts.Length; i++ )
             {
-                ref CharacterLimb spreadLimb = ref body.ElementAt( i ); 
-                if ( spreadLimb.Part != limb.Part && !spreadLimb.Destroyed )
+                BodyPart part = _bodyParts[i];
+                if ( part == limb.Part )
+                    continue;
+
+                CharacterLimb spreadLimb = character.ValueRW.BaseStats.GetLimb( part );
+                if(!spreadLimb.Destroyed)
                 {
                     CharacterWound spreadWound = new CharacterWound(newWound, spreadLimb.Part );
                     PlayerUIManager.Instance.NewWoundECS(spreadWound);
-                    character.ValueRW.Health -= spreadLimb.Damage( spreadWound );
+                    character.ValueRW.BaseStats.Health -= spreadLimb.Damage( spreadWound );
+                    character.ValueRW.BaseStats.SetLimb( spreadLimb );
                     wounds.Add( spreadWound );
                 }
             }
+            
 
             return;
         }
         PlayerUIManager.Instance.NewWoundECS(newWound);
         wounds.Add( newWound );
-        character.ValueRW.Health -= limb.Damage( newWound );
+        character.ValueRW.BaseStats.Health -= limb.Damage( newWound );
+        character.ValueRW.BaseStats.SetLimb( limb );
     }
     
     private static int GenerateId()
     {
         return Interlocked.Increment(ref _lastWoundId);
     }
-    */
+    
 }
