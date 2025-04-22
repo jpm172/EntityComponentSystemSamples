@@ -19,5 +19,6 @@ MonoBehaviour:
   Stackable: 0
   EquipTime: 1
   HolsterTime: 0
-  MaxCharges: 100
+  MaxCharges: 10
+  HealRate: 50
   Type: 0

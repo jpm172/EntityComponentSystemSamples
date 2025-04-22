@@ -325,43 +325,14 @@ public class PlayerUIManager : MonoBehaviour
         
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
-        Entity removedItem = invBuffer.ElementAt( removeIndex ).Item;
         invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
         
-        _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
         if ( unequip )
         {
             playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
             _entityManager.SetComponentData( _playerEntity, playerInv );
         }
         
-        
-        
-        
-        /*
-        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
-        Entity removedItem = invBuffer.ElementAt( removeIndex ).Item;
-        
-        if ( unequip )
-        {
-            playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
-            _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
-            _entityManager.SetComponentData( _playerEntity, playerInv );
-        }
-        else
-        {
-            if ( playerInv.IsInPipeline( removedItem ) )
-            {
-                _entityManager.AddComponentData( removedItem, new DestroyOnUnequip() );
-            }
-            else
-            {
-                invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
-                _entityManager.DestroyEntity( removedItem );
-            }
-        }
-        */
 
     }
 

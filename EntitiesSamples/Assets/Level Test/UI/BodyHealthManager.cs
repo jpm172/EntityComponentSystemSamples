@@ -101,7 +101,7 @@ public class BodyHealthManager : MonoBehaviour
         }
 
         _manager.PlayerBleedRate = bleedRate;
-        //_manager.PlayerCurrentHealth = character.Health;
+        _manager.PlayerCurrentHealth = stats.TotalStats.Health;
         
 
     }
@@ -177,10 +177,6 @@ public class BodyHealthManager : MonoBehaviour
         {
             HealBody(WoundType.Minor);
         }
-        
-        
-        
-        _manager.PlayerBleedRate = GetTotalBleedRate();
     }
 
     
@@ -191,7 +187,7 @@ public class BodyHealthManager : MonoBehaviour
         if ( !hasItem )
             return;
         
-        MyCharacterComponent character = _entityManager.GetComponentData<MyCharacterComponent>( _playerEntity );
+        CharacterStats character = _entityManager.GetComponentData<CharacterStats>( _playerEntity );
         DynamicBuffer<CharacterWound> wounds = _entityManager.GetBuffer<CharacterWound>( _playerEntity );
         //DynamicBuffer<CharacterLimb> body = _entityManager.GetBuffer<CharacterLimb>( _playerEntity );
         /*

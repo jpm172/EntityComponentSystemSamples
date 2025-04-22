@@ -10,6 +10,10 @@ public class HealthItemData : ItemData
     [Range(1, 10000)]
     public int MaxCharges;
 
+    [Tooltip("Heal Rate")]
+    [Range(0.1f, 1000)]
+    public float HealRate;
+
     [Tooltip( "Health Item Type" )] 
     public HealthItemType Type;
 

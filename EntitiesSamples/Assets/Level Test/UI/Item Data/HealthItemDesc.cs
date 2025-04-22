@@ -7,6 +7,8 @@ public struct HealthItemDesc : IComponentData
 {
     public int MaxCharges;
     public int CurrentCharges;
+    public float HealRate;
+    public float HealTimer;
     public HealthItemType Type;
 }
 

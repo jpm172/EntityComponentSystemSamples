@@ -57,6 +57,7 @@ public struct CharacterWound : IBufferElementData
         return new float2(healAmount, bleedHealAmount);
     }
     
+    /*
     public float2 Heal(ref HealthItemDesc item)
     {
         float healAmount = math.min(HealingNeeded, item.CurrentCharges);
@@ -71,7 +72,37 @@ public struct CharacterWound : IBufferElementData
         
         return new float2(healAmount, bleedingHealed);
     }
+    */
 
+    public HealResult Heal(ref HealthItemDesc item, int healCharges)
+    {
+        float healAmount = math.min(HealingNeeded, math.min(item.CurrentCharges, healCharges));
+        HealingNeeded -= healAmount;
+        
+        float bleedingHealed = Bleed - (MaxBleed * (HealingNeeded/MaxHealing));
+        Bleed -= bleedingHealed;
+
+        //Debug.Log( $"healed {healAmount}, used {(int)math.ceil( healAmount )} charges" );
+        int chargesUsed = (int) math.ceil( healAmount );
+        item.CurrentCharges -= chargesUsed;
+        
+        return new HealResult(healAmount, bleedingHealed, chargesUsed);
+    }
     
+    
+}
+
+public struct HealResult
+{
+    public float AmountHealed;
+    public float BleedingHealed;
+    public int ChargesUsed;
+
+    public HealResult( float amountHealed, float bleedingHealed, int chargesUsed )
+    {
+        AmountHealed = amountHealed;
+        BleedingHealed = bleedingHealed;
+        ChargesUsed = chargesUsed;
+    }
     
 }
