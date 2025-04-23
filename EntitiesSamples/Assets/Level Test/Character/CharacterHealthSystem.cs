@@ -103,11 +103,17 @@ public partial struct CharacterHealthSystem : ISystem
                 quickData = state.EntityManager.GetComponentData<QuickUseData>( equippedItem );
                 quickUse = true;
             }
-                
-            if(!input.ValueRO.Shoot && !quickUse)
-                continue;
-            
+
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
+            if ( !input.ValueRO.Shoot && !quickUse )
+            {
+                healthItem.HealTimer = 0;
+                state.EntityManager.SetComponentData( equippedItem, healthItem );
+                continue;
+            }
+                
+            
+            
             CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
             
             if ( healthItem.Type == HealthItemType.HealthKit )
