@@ -75,7 +75,6 @@ public partial struct CharacterInventorySystem : ISystem
         inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
         inventory.ValueRW.Remaining = 0;
         inventory.ValueRW.Timer = 0;
-        
     }
     
     private float GetItemEquipTime( Entity entity, ref SystemState state )

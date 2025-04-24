@@ -261,13 +261,27 @@ public class PlayerUIManager : MonoBehaviour
     {
         _bodyManager.RemoveStatusEffectECS( effectIndex );
     }
+
+    public void QuickSwitch()
+    {
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        if ( inventory.LastEquipIndex < 0 )
+            return;
+        
+        _hotBar.EquipSlot( inventory.LastEquipIndex );
+    }
     
-    public void EquipSlot( int equipIndex )
+    public void EquipSlot( int equipIndex, int previousIndex )
     {
         
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
+        if ( equipIndex != previousIndex && previousIndex >= 0 )
+        {
+            inventory.LastEquipIndex = previousIndex;
+        }
+        
         if ( invBuffer[equipIndex].Item == Entity.Null )
         {
             inventory.SwitchToBuffer = new EquippingData(Entity.Null);
@@ -381,6 +395,7 @@ public class PlayerUIManager : MonoBehaviour
             Part = healPart,
             InHotBar = inHotBar
         };
+        _entityManager.AddComponentData( itemEntity, new UseOnEquip() );
         _entityManager.AddComponentData( itemEntity, quickData );
         
          

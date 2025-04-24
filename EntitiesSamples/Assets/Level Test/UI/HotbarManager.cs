@@ -29,6 +29,8 @@ public class HotbarManager : MonoBehaviour
     [SerializeField]
     private float _openTimer;
 
+    
+    
     public bool HoldOpen
     {
         get => _holdOpen;
@@ -211,16 +213,29 @@ public class HotbarManager : MonoBehaviour
         _slots[slotIndex].ClearFromLinkedSlot();
     }
     
-    private void EquipSlot( int slotIndex )
+    
+    
+    public void EquipSlot( int slotIndex )
     {
+
+        if ( slotIndex >= _slots.Length )
+        {
+            throw new IndexOutOfRangeException($"Invalid Slot Index {slotIndex}");
+        }
+        
         EquipHighlight.transform.SetParent( _slots[slotIndex].transform, false );
         
         _slots[slotIndex].Equipped = true;
-        if(_currentEquipped != null)
+        int previousIndex = -1;
+        if ( _currentEquipped != null )
+        {
             _currentEquipped.Equipped = false;
+            previousIndex = _currentEquipped.SlotIndex;
+        }
+            
         _currentEquipped = _slots[slotIndex];
         
-        _manager.EquipSlot( slotIndex );
+        _manager.EquipSlot( slotIndex, previousIndex );
         
         if(!_open)
             RevealHotBar();

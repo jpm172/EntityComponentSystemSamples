@@ -95,17 +95,10 @@ public partial struct CharacterHealthSystem : ISystem
             
             if(!state.EntityManager.HasComponent( equippedItem,typeof(HealthItemDesc) ))
                 continue;
-
-            QuickUseData quickData = new QuickUseData();
-            bool quickUse = false;
-            if ( state.EntityManager.HasComponent<QuickUseData>( equippedItem ) )
-            {
-                quickData = state.EntityManager.GetComponentData<QuickUseData>( equippedItem );
-                quickUse = true;
-            }
+            
 
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
-            if ( healthItem.State == ItemState.Ready && input.ValueRO.Shoot )
+            if ( healthItem.State == ItemState.Ready && (input.ValueRO.Shoot || IsQuickUse( equippedItem, ref state )) )
             {
                 healthItem.TimerRemaining = healthItem.HealTime;
                 healthItem.State = ItemState.Using;
@@ -125,21 +118,7 @@ public partial struct CharacterHealthSystem : ISystem
             
             if ( healthItem.Type == HealthItemType.HealthKit )
             {
-                if ( quickUse )
-                {
-                    //UseHealthKit(player,character, ref healthItem, quickData, ref state );
-                    if ( quickData.PreviousEquipped != Entity.Null )
-                    {
-                        inventory.ValueRW.SwitchToBuffer = new EquippingData(quickData.PreviousEquipped);
-                    }
-                    inventory.ValueRW.EquippedItem = Entity.Null;
-
-                }
-                else
-                {
-                    UseHealthKit(player,character, ref healthItem, ref state );
-                }
-                
+                UseHealthKit(player,character, ref healthItem, ref state );
             }
             /*
             else if ( healthItem.Type == HealthItemType.Tourniquet )
@@ -168,6 +147,7 @@ public partial struct CharacterHealthSystem : ISystem
             {
                 PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
 
+                /*
                 if ( quickUse )
                 {
                     if ( quickData.InHotBar )
@@ -179,6 +159,7 @@ public partial struct CharacterHealthSystem : ISystem
                         ecb.DestroyEntity( equippedItem );
                     }
                 }
+                */
                 
             }
             else
@@ -190,6 +171,11 @@ public partial struct CharacterHealthSystem : ISystem
                 
                 
         }
+    }
+
+    private bool IsQuickUse(Entity item, ref SystemState state)
+    {
+        return state.EntityManager.HasComponent<UseOnEquip>( item );
     }
 
 /*

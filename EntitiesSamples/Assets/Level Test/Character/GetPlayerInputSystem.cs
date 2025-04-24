@@ -34,6 +34,7 @@ public partial class GetPlayerInputSystem : SystemBase
         bool reload = _inputActions.DemoMap.Reload.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
         bool altFire = _inputActions.DemoMap.AlternateFire.IsPressed();
+        bool quickSwitch = _inputActions.DemoMap.QuickSwitch.WasPerformedThisFrame();
         altFire = _inputActions.DemoMap.AlternateFire.WasPerformedThisFrame(); //DEBUG FOR HEALTH!!!
 
 
@@ -48,12 +49,18 @@ public partial class GetPlayerInputSystem : SystemBase
             {
                 PlayerUIManager.Instance.ToggleInventory();
             }
+
+            if ( quickSwitch )
+            {
+                PlayerUIManager.Instance.QuickSwitch(); 
+            }
             
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;
             playerInputs.ValueRW.AltFire = altFire;
             playerInputs.ValueRW.Reload = reload;
+            playerInputs.ValueRW.QuickSwitch = quickSwitch;
         }
         
         //Debug.Log( mousePosition );

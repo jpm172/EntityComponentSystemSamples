@@ -161,6 +161,15 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Quick Switch"",
+                    ""type"": ""Button"",
+                    ""id"": ""3cfbf1aa-57ef-4d30-b5ec-290c9ff4a461"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -372,6 +381,17 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
                     ""action"": ""Reload"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0cfe798a-483e-47f2-b777-e649db83ddcf"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Quick Switch"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -395,6 +415,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         m_DemoMap_Hotbar7 = m_DemoMap.FindAction("Hotbar 7", throwIfNotFound: true);
         m_DemoMap_Hotbar8 = m_DemoMap.FindAction("Hotbar 8", throwIfNotFound: true);
         m_DemoMap_Hotbar9 = m_DemoMap.FindAction("Hotbar 9", throwIfNotFound: true);
+        m_DemoMap_QuickSwitch = m_DemoMap.FindAction("Quick Switch", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -471,6 +492,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_DemoMap_Hotbar7;
     private readonly InputAction m_DemoMap_Hotbar8;
     private readonly InputAction m_DemoMap_Hotbar9;
+    private readonly InputAction m_DemoMap_QuickSwitch;
     public struct DemoMapActions
     {
         private @DemoInputActions m_Wrapper;
@@ -490,6 +512,7 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         public InputAction @Hotbar7 => m_Wrapper.m_DemoMap_Hotbar7;
         public InputAction @Hotbar8 => m_Wrapper.m_DemoMap_Hotbar8;
         public InputAction @Hotbar9 => m_Wrapper.m_DemoMap_Hotbar9;
+        public InputAction @QuickSwitch => m_Wrapper.m_DemoMap_QuickSwitch;
         public InputActionMap Get() { return m_Wrapper.m_DemoMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -544,6 +567,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Hotbar9.started += instance.OnHotbar9;
             @Hotbar9.performed += instance.OnHotbar9;
             @Hotbar9.canceled += instance.OnHotbar9;
+            @QuickSwitch.started += instance.OnQuickSwitch;
+            @QuickSwitch.performed += instance.OnQuickSwitch;
+            @QuickSwitch.canceled += instance.OnQuickSwitch;
         }
 
         private void UnregisterCallbacks(IDemoMapActions instance)
@@ -593,6 +619,9 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
             @Hotbar9.started -= instance.OnHotbar9;
             @Hotbar9.performed -= instance.OnHotbar9;
             @Hotbar9.canceled -= instance.OnHotbar9;
+            @QuickSwitch.started -= instance.OnQuickSwitch;
+            @QuickSwitch.performed -= instance.OnQuickSwitch;
+            @QuickSwitch.canceled -= instance.OnQuickSwitch;
         }
 
         public void RemoveCallbacks(IDemoMapActions instance)
@@ -627,5 +656,6 @@ public partial class @DemoInputActions: IInputActionCollection2, IDisposable
         void OnHotbar7(InputAction.CallbackContext context);
         void OnHotbar8(InputAction.CallbackContext context);
         void OnHotbar9(InputAction.CallbackContext context);
+        void OnQuickSwitch(InputAction.CallbackContext context);
     }
 }

@@ -12,6 +12,8 @@ public struct CharacterInventory : IComponentData
     public EquippingData SwitchToItem;
     public EquippingData SwitchToBuffer;
 
+    public int LastEquipIndex;
+    
     public AmmoInfo Ammo;
     
     public float Timer;
