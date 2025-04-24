@@ -32,19 +32,35 @@ public class PlayerActionTracker : MonoBehaviour
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         
         ItemSwitchIndicator( inventory );
-        ReloadIndicator( inventory );
+        if ( inventory.EquippedItem != Entity.Null )
+        {
+            ReloadIndicator( inventory );
+            HealIndicator( inventory );
+        }
+        
         
     }
 
-    private void ReloadIndicator( CharacterInventory inventory )
+    private void HealIndicator( CharacterInventory inventory )
     {
-        if ( inventory.EquippedItem == Entity.Null )
+
+        if ( !_entityManager.HasComponent( inventory.EquippedItem, typeof( HealthItemDesc ) ) )
         {
-            reloadActive = false;
             return;
         }
+        
+        HealthItemDesc healthItem =  _entityManager.GetComponentData<HealthItemDesc>( inventory.EquippedItem );
 
+        if ( healthItem.State == ItemState.Ready )
+            return;
+        
+        _equippingMeter.color = Color.green;
+        _equippingMeter.fillAmount = 1- (healthItem.TimerRemaining / healthItem.HealTime);
 
+    }
+    
+    private void ReloadIndicator( CharacterInventory inventory )
+    {
         if ( !_entityManager.HasComponent( inventory.EquippedItem, typeof( WeaponDesc ) ) )
         {
             reloadActive = false;

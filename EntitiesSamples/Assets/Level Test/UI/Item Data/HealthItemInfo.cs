@@ -24,7 +24,8 @@ public class HealthItemInfo : ItemInfo
         HealthItemDesc newHealthItem = new HealthItemDesc
         {
             MaxCharges = data.MaxCharges,
-            HealRate = data.HealRate,
+            HealTime = data.HealTime,
+            ChargesPerHeal = data.ChargesPerHeal,
             Type = data.Type
         };
         

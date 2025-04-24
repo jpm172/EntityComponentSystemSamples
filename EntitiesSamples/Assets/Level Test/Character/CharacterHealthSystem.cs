@@ -105,13 +105,20 @@ public partial struct CharacterHealthSystem : ISystem
             }
 
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
-            if ( !input.ValueRO.Shoot && !quickUse )
+            if ( healthItem.State == ItemState.Ready && input.ValueRO.Shoot )
             {
-                healthItem.HealTimer = 0;
-                state.EntityManager.SetComponentData( equippedItem, healthItem );
-                continue;
+                healthItem.TimerRemaining = healthItem.HealTime;
+                healthItem.State = ItemState.Using;
             }
-                
+
+            if ( inventory.ValueRO.Switching )
+            {
+                healthItem.State = ItemState.Ready;
+                state.EntityManager.SetComponentData( equippedItem, healthItem );
+            }
+            
+            if(healthItem.State == ItemState.Ready)
+                continue;
             
             
             CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( equippedItem );
@@ -265,12 +272,13 @@ public partial struct CharacterHealthSystem : ISystem
     private void UseHealthKit( Entity player, RefRW<CharacterStats> character, ref HealthItemDesc healthItem, ref SystemState state )
     {
         
-        healthItem.HealTimer += SystemAPI.Time.DeltaTime*healthItem.HealRate;
-        if ( healthItem.HealTimer < 1 )
+        healthItem.TimerRemaining -= SystemAPI.Time.DeltaTime;
+        if ( healthItem.TimerRemaining > 0 )
             return;
 
-        int healCharges = (int)healthItem.HealTimer;
-        healthItem.HealTimer = 0;
+        int healCharges = healthItem.ChargesPerHeal;
+        healthItem.TimerRemaining = 0;
+        healthItem.State = ItemState.Ready;
         
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
         
