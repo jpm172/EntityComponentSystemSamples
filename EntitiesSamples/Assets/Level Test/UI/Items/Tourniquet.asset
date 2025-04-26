@@ -20,4 +20,6 @@ MonoBehaviour:
   EquipTime: 0.4
   HolsterTime: 0
   MaxCharges: 1
+  HealTime: 1
+  ChargesPerHeal: 1
   Type: 1
