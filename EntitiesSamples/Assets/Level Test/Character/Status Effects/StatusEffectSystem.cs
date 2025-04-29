@@ -22,7 +22,11 @@ public partial struct StatusEffectSystem : ISystem
     [BurstCompile]
     public void OnUpdate( ref SystemState state )
     {
-        //SystemAPI.Query<>().WithOptions( EntityQueryOptions.FilterWriteGroup )
+
+        InitializeStatusEffects(ref state);
+
+
+
         EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
         
         foreach ( var (statusEffects, stats) in
@@ -59,6 +63,22 @@ public partial struct StatusEffectSystem : ISystem
             //stats.ValueRW = modifiedStats;
         }
     }
+
+
+    private void InitializeStatusEffects(ref SystemState state)
+    {
+        foreach ( var (info, init, entity) in
+            SystemAPI.Query<RefRO<StatusEffectInfo>, EnabledRefRW<InitializeStatusEffect>>().WithEntityAccess())
+        {
+            if ( init.ValueRW )
+            {
+                PlayerUIManager.Instance.AddedStatusEffect( entity );
+                init.ValueRW = false;
+            }
+            
+        }
+    }
+    
 }
 
 

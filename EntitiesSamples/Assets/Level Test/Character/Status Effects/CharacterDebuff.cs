@@ -1,10 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Mathematics;
-using UnityEngine;
 
 
 [InternalBufferCapacity(20)]
@@ -121,9 +117,22 @@ public struct BodyStatusEffect : IComponentData
 
 public struct StatusEffectInfo : IComponentData
 {
+    public StatsuEffectID ID;
     public StatusEffectType Type;
     public StatusEffectQuality Quality;
     public bool Remove;
+}
+
+public struct NameInfo
+{
+    public string FullName;
+    public string DisplayName;
+
+    public NameInfo( string fullName, string displayName )
+    {
+        FullName = fullName;
+        DisplayName = displayName;
+    }
 }
 
 public struct StatusEffectTimer : IComponentData
@@ -162,9 +171,16 @@ public struct StatusEffectBodyListener : IComponentData
     
 }
 
+public struct InitializeStatusEffect : IComponentData, IEnableableComponent
+{
+}
 
-
-
+public enum StatsuEffectID : int
+{
+    Tourniquet = 0,
+    Broken = 1,
+    
+}
 
 public enum StatusEffectType
 {

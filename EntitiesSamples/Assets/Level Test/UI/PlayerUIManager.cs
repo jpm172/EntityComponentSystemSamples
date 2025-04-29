@@ -123,7 +123,7 @@ public class PlayerUIManager : MonoBehaviour
         };
 
         StatusEffectInfo info = new StatusEffectInfo
-            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff};
+            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff, ID = StatsuEffectID.Tourniquet};
 
         _entityManager.AddComponentData( breakDebuff, se );
         _entityManager.AddComponentData( breakDebuff, info );
@@ -192,7 +192,7 @@ public class PlayerUIManager : MonoBehaviour
                 if ( !foundItem )
                 {
                     HealthItemInfo newHealth = new HealthItemInfo( _loadHealthItems[i], _itemKey );
-                    newHealth.HealthItem.CurrentCharges =  UnityEngine.Random.Range( 0, newHealth.HealthItem.MaxCharges + 1 );
+                    newHealth.HealthItem.CurrentCharges =  newHealth.HealthItem.MaxCharges;
                     newHealth.Order = i;
             
                     //_healthItemDict.Add( _itemKey, newHealth );
@@ -257,6 +257,11 @@ public class PlayerUIManager : MonoBehaviour
         _bodyManager.RemoveWoundECS( woundIndex );
     }
 
+
+    public void AddedStatusEffect( Entity debuffEntity )
+    {
+        _bodyManager.AddStatusEffect( debuffEntity );
+    }
     public void RemovedStatusEffectECS( int effectIndex )
     {
         _bodyManager.RemoveStatusEffectECS( effectIndex );

@@ -124,7 +124,7 @@ public partial struct CharacterHealthSystem : ISystem
             }
             else if ( healthItem.Type == HealthItemType.Tourniquet )
             {
-                UseTourniquet( player,character, ref healthItem, ref itemData, ref state );
+                UseTourniquet( player,character, ecb, ref healthItem, ref itemData, ref state );
             }
             
 
@@ -134,21 +134,6 @@ public partial struct CharacterHealthSystem : ISystem
             if ( healthItem.CurrentCharges > 0 )
             {
                 PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
-
-                /*
-                if ( quickUse )
-                {
-                    if ( quickData.InHotBar )
-                    {
-                        ecb.RemoveComponent<QuickUseData>( equippedItem );
-                    }
-                    else
-                    {
-                        ecb.DestroyEntity( equippedItem );
-                    }
-                }
-                */
-                
             }
             else
             {
@@ -179,12 +164,24 @@ public partial struct CharacterHealthSystem : ISystem
     
     private bool IsQuickUse(Entity item, ref SystemState state)
     {
-        return state.EntityManager.HasComponent<UseOnEquip>( item );//
+        return state.EntityManager.HasComponent<UseOnEquip>( item );
     }
 
 
-    private void UseTourniquet(Entity player, RefRW<CharacterStats> stats, ref HealthItemDesc healthItem, ref CharacterItemData itemData, ref SystemState state)
+    private void UseTourniquet(Entity player, RefRW<CharacterStats> stats, EntityCommandBuffer ecb,
+        ref HealthItemDesc healthItem, ref CharacterItemData itemData, ref SystemState state)
     {
+        
+        healthItem.TimerRemaining -= SystemAPI.Time.DeltaTime;
+        if ( healthItem.TimerRemaining > 0 )
+            return;
+        
+        
+        
+        
+        healthItem.TimerRemaining = 0;
+        healthItem.State = ItemState.Ready;
+
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
 
         BodyPart maxBleedPart = BodyPart.Chest;
@@ -204,6 +201,44 @@ public partial struct CharacterHealthSystem : ISystem
 
         if ( maxBleedPart == BodyPart.Chest )
             return;
+
+        Entity effect = ecb.CreateEntity();
+        BodyStatusEffect se = new BodyStatusEffect
+        {
+            AffectedLimb = maxBleedPart,
+            AffectedStat = BodyStatType.Condition,
+            ModType = StatModType.Multiply,
+            Value = -1
+        };
+        StatusEffectInfo info = new StatusEffectInfo
+            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Neutral, ID = StatsuEffectID.Tourniquet};
+        
+        EntityArchetype ea = new EntityArchetype();
+        
+        ecb.AddComponent( effect, se  );
+        ecb.AddComponent( effect, info  );
+        ecb.AddComponent( effect, new StatusEffectTimer(5)  );
+        ecb.AppendToBuffer( player, new StatusEffect{EffectEntity = effect} );
+        ecb.AddComponent<InitializeStatusEffect>( effect );
+
+
+        /*
+        //check to see if already has tourniquet 
+        DynamicBuffer<StatusEffect> effects = state.EntityManager.GetBuffer<StatusEffect>( player );
+        foreach ( StatusEffect effect in effects )
+        {
+            StatusEffectInfo info = state.EntityManager.GetComponentData<StatusEffectInfo>( effect.EffectEntity );
+            if(info.ID != StatsuEffectID.Tourniquet)
+                continue;
+
+            BodyStatusEffect bodyEffect = state.EntityManager.GetComponentData<BodyStatusEffect>( effect.EffectEntity );
+            if ( bodyEffect.AffectedLimb == maxBleedPart )
+            {
+                //todo: prevent using item
+            }
+        }
+        */
+        
 
         CharacterLimb mostBleeding = stats.ValueRO.BaseStats.GetLimb( maxBleedPart );
         for ( int i = 0; i < wounds.Length; i++ )
@@ -229,6 +264,8 @@ public partial struct CharacterHealthSystem : ISystem
         }
 
     }
+
+
     /*
     private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, QuickUseData quickData, ref SystemState state)
     {

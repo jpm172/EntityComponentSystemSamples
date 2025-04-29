@@ -16,4 +16,11 @@ public static class GameSettings
         get => _dimensions;
         set => _dimensions = value;
     }
+
+
+    public static Dictionary<StatsuEffectID, NameInfo> StatusEffectNames = new Dictionary<StatsuEffectID, NameInfo>{
+        { StatsuEffectID.Tourniquet, new NameInfo("Tourniquet", "Turnqt") },
+        { StatsuEffectID.Broken, new NameInfo("Broken", "Broken") },
+    };
+
 }

@@ -32,6 +32,9 @@ public class StatusEffectLayout : MonoBehaviour
                 _background.color = _neutralColor;
                 break;
         }
+
+        _displayText.text = GameSettings.StatusEffectNames[effectInfo.ID].DisplayName;
+
     }
 
 }
