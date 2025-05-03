@@ -202,24 +202,7 @@ public partial struct CharacterHealthSystem : ISystem
         if ( maxBleedPart == BodyPart.Chest )
             return;
 
-        Entity effect = ecb.CreateEntity();
-        BodyStatusEffect se = new BodyStatusEffect
-        {
-            AffectedLimb = maxBleedPart,
-            AffectedStat = BodyStatType.Condition,
-            ModType = StatModType.Multiply,
-            Value = -1
-        };
-        StatusEffectInfo info = new StatusEffectInfo
-            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Neutral, ID = StatsuEffectID.Tourniquet};
-        
-        EntityArchetype ea = new EntityArchetype();
-        
-        ecb.AddComponent( effect, se  );
-        ecb.AddComponent( effect, info  );
-        ecb.AddComponent( effect, new StatusEffectTimer(5)  );
-        ecb.AppendToBuffer( player, new StatusEffect{EffectEntity = effect} );
-        ecb.AddComponent<InitializeStatusEffect>( effect );
+        AddTourniquetStatus( ecb, maxBleedPart, player );
 
 
         /*
@@ -239,19 +222,6 @@ public partial struct CharacterHealthSystem : ISystem
         }
         */
         
-
-        CharacterLimb mostBleeding = stats.ValueRO.BaseStats.GetLimb( maxBleedPart );
-        for ( int i = 0; i < wounds.Length; i++ )
-        {
-            ref CharacterWound wound = ref wounds.ElementAt( i );
-            if ( wound.AffectedPart == mostBleeding.Part )
-            {
-                mostBleeding.Bleed -= wound.Bleed;
-                wound.Bleed = 0;
-            }
-        }
-        
-        stats.ValueRW.BaseStats.SetLimb( mostBleeding );
         
         healthItem.CurrentCharges--;
         if ( healthItem.CurrentCharges <= 0 )
@@ -265,6 +235,48 @@ public partial struct CharacterHealthSystem : ISystem
 
     }
 
+
+    private void AddTourniquetStatus(EntityCommandBuffer ecb, BodyPart affectedLimb, Entity player)
+    {
+        Entity effect = ecb.CreateEntity();
+        BodyStatusEffect se = new BodyStatusEffect
+        {
+            AffectedLimb = affectedLimb,
+            AffectedStat = BodyStatType.BleedMod,
+            ModType = StatModType.Multiply,
+            Value = -10
+        };
+        StatusEffectInfo info = new StatusEffectInfo
+            {IsParent = true, Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Neutral, ID = StatsuEffectID.Tourniquet};
+        
+        
+        ecb.AddComponent( effect, se  );
+        ecb.AddComponent( effect, info  );
+        ecb.AddComponent( effect, new StatusEffectTimer(5)  );
+        ecb.AppendToBuffer( player, new StatusEffect{EffectEntity = effect} );
+        ecb.AddComponent<InitializeStatusEffect>( effect );
+        
+        effect = ecb.CreateEntity();
+        se = new BodyStatusEffect
+        {
+            AffectedLimb = affectedLimb,
+            AffectedStat = BodyStatType.Condition,
+            ModType = StatModType.Add,
+            Value = -0.1f
+        };
+        info = new StatusEffectInfo
+            {IsParent = false, Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff, ID = StatsuEffectID.Tourniquet};
+        
+        
+        ecb.AddComponent( effect, se  );
+        ecb.AddComponent( effect, info  );
+        ecb.AddComponent( effect, new StatusEffectTimer(5)  );
+        ecb.AppendToBuffer( player, new StatusEffect{EffectEntity = effect} );
+        ecb.AddComponent<InitializeStatusEffect>( effect );
+        
+        
+    }
+    
 
     /*
     private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, QuickUseData quickData, ref SystemState state)

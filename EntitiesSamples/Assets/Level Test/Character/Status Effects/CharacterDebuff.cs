@@ -89,7 +89,8 @@ public struct BodyStatusEffect : IComponentData
             case BodyStatType.Condition:
                 totalLimb.Condition = CalculateMod( baseLimb.Condition, totalLimb.Condition );
                 return totalLimb;
-            case BodyStatType.BleedResist:
+            case BodyStatType.BleedMod:
+                totalLimb.BleedMod = CalculateMod( baseLimb.BleedMod, totalLimb.BleedMod );
                 //totalLimb.BleedResist = CalculateMod( baseLimb.BleedResist, totalLimb.BleedResist );
                 return totalLimb;
             default:
@@ -117,6 +118,7 @@ public struct BodyStatusEffect : IComponentData
 
 public struct StatusEffectInfo : IComponentData
 {
+    public bool IsParent;
     public StatsuEffectID ID;
     public StatusEffectType Type;
     public StatusEffectQuality Quality;
@@ -204,7 +206,7 @@ public enum StatType
 public enum BodyStatType
 {
     Condition,
-    BleedResist,
+    BleedMod,
     
 }
 

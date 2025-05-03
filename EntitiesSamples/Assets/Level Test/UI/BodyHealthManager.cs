@@ -95,7 +95,7 @@ public class BodyHealthManager : MonoBehaviour
 
         for ( int i = 0; i < _bodyPartLabels.Length; i++ )
         {
-            CharacterLimb limb = stats.BaseStats.GetLimb( _bodyPartLabels[i] );
+            CharacterLimb limb = stats.TotalStats.GetLimb( _bodyPartLabels[i] );
             bleedRate += limb.Bleed;
             _meters[i].UpdateStatus( limb );
         }
@@ -125,9 +125,12 @@ public class BodyHealthManager : MonoBehaviour
         StatusEffectInfo info = _entityManager.GetComponentData<StatusEffectInfo>( effectEntity );
         GameObject newEffect = InstantiateStatusEffect( effectEntity, info );
 
-        StatusEffectLayout effectLayout = newEffect.GetComponent<StatusEffectLayout>();
-        effectLayout.Initialize( info );
-        
+        if ( info.IsParent )
+        {
+            StatusEffectLayout effectLayout = newEffect.GetComponent<StatusEffectLayout>();
+            effectLayout.Initialize( info );
+        }
+
         _statusEffects.Add( newEffect );
     }
     
@@ -470,6 +473,12 @@ public class BodyHealthManager : MonoBehaviour
 
     private GameObject InstantiateStatusEffect(Entity effectEntity, StatusEffectInfo info)
     {
+
+        if ( !info.IsParent )
+        {
+            return new GameObject("Child Status Effect");
+        }
+        
         GameObject newEffectObj = Instantiate( StatusEffectPrefab );
         
         if ( info.Type == StatusEffectType.BasicStats )

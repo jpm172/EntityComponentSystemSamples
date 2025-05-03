@@ -64,8 +64,9 @@ public class LimbStatusMeter : MonoBehaviour
 
     private void UpdateBleedIndicator(CharacterLimb limb)
     {
-        _bleedText.text = $"{limb.Bleed:0.0}\nSec";
-        if ( limb.Bleed <= Mathf.Epsilon )
+        float bleedValue = limb.BleedValue;
+        _bleedText.text = $"{bleedValue:0.0}\nSec";
+        if ( bleedValue <= Mathf.Epsilon )
         {
             _canvasGroup.alpha = 0.5f;
         }
@@ -74,7 +75,7 @@ public class LimbStatusMeter : MonoBehaviour
             _canvasGroup.alpha = 1;
         }
         
-        float transition = Mathf.Clamp(limb.Bleed / 5, 0, 1);
+        float transition = Mathf.Clamp(bleedValue / 5, 0, 1);
         if ( transition < 0.5f )
         {
             _mainImage.color = Color.Lerp( Color.white, Color.yellow, transition * 2 );

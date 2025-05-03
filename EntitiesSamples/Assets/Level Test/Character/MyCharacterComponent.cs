@@ -94,22 +94,6 @@ public struct StatInfo
     
 }
 
-public struct LimbStats
-{
-    public float Condition;
-    public float BleedResist;
-
-
-
-    public LimbStats(float condition, float bleedResist)
-    {
-
-        Condition = condition;
-        BleedResist = bleedResist;
-    }
-    
-}
-
 [Serializable]
 public struct MyCharacterControl : IComponentData
 {

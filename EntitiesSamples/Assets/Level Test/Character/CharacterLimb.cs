@@ -11,6 +11,7 @@ public struct CharacterLimb
     public float CurrentHealth;
     public float Bleed;
     public float Condition;
+    public float BleedMod;
 
     public float MissingHealth => GetMissingHealth();
 
@@ -18,10 +19,15 @@ public struct CharacterLimb
     
     public bool Destroyed => IsDestroyed();
 
+    public float BleedModValue => math.max( BleedMod, 0 );
+
+    public float BleedValue => Bleed * BleedModValue;
+
     public CharacterLimb(BodyPart part, float maxHealth)
     {
         Part = part;
         Condition = 1;
+        BleedMod = 1;
         MaxHealth = maxHealth;
         CurrentHealth = maxHealth;
         if ( part == BodyPart.Chest )
