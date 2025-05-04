@@ -26,5 +26,6 @@ public enum ItemState
     Ready,
     Start,
     Using,
+    Finished,
     Cancel
 }

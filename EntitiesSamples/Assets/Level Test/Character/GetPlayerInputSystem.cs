@@ -30,6 +30,7 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnUpdate()
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
+        bool click = _inputActions.DemoMap.Shoot.WasPerformedThisFrame();
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
         bool reload = _inputActions.DemoMap.Reload.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
@@ -54,7 +55,8 @@ public partial class GetPlayerInputSystem : SystemBase
             {
                 PlayerUIManager.Instance.QuickSwitch(); 
             }
-            
+
+            playerInputs.ValueRW.Click = click;
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;

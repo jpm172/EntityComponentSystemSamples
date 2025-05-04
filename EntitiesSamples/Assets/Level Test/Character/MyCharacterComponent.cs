@@ -108,6 +108,7 @@ public struct PlayerInputs : IComponentData
 
     public bool Shoot;
     public bool AltFire;
+    public bool Click;
     public bool Reload;
     public bool QuickSwitch;
     public float Debug;

@@ -7,6 +7,7 @@ using UnityEngine;
 public class GameConfigAuthoring : MonoBehaviour
 {
     public GameObject GrenadePrefab;
+    /*
     class Baker : Baker<GameConfigAuthoring>
     {
         public override void Bake(GameConfigAuthoring authoring)
@@ -22,7 +23,7 @@ public class GameConfigAuthoring : MonoBehaviour
             });
         }
     }
-
+*/
 }
 
 
