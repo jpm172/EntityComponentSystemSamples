@@ -434,6 +434,11 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
         _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
 
+        if ( itemInfo.HealthItem.Type == HealthItemType.HealthKit )
+        {
+            _entityManager.AddComponentData( itemEntity, new HealthKitInfo() );
+        }
+        
         return itemEntity;
     }
     

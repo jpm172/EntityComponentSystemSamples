@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public struct QuickUseData : IComponentData
+public struct QuickUseData : IComponentData, IEnableableComponent
 {
     public Entity PreviousEquipped;
     public BodyPart Part;

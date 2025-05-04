@@ -12,16 +12,8 @@ public struct HealthItemDesc : IComponentData
     public int ChargesPerHeal;
     public HealthItemType Type;
     public ItemState State;
-    public HealStateData HealData;
-
 }
 
-
-public struct HealStateData
-{
-    public BodyPart TargetLimb;
-    public bool HasTarget;
-}
 
 public enum HealthItemType
 {
@@ -32,6 +24,7 @@ public enum HealthItemType
 public enum ItemState
 {
     Ready,
+    Start,
     Using,
     Cancel
 }

@@ -98,12 +98,11 @@ public partial struct CharacterHealthSystem : ISystem
             
 
             HealthItemDesc healthItem = state.EntityManager.GetComponentData<HealthItemDesc>( equippedItem );
-            //if ( healthItem.State == ItemState.Ready && (input.ValueRO.Shoot || IsQuickUse( equippedItem, ref state )) )
-            if ( healthItem.State == ItemState.Ready && input.ValueRO.Shoot )
+            if ( healthItem.State == ItemState.Ready && (input.ValueRO.Shoot || IsQuickUse( equippedItem, ref state )) )
+            //if ( healthItem.State == ItemState.Ready && input.ValueRO.Shoot )
             {
                 healthItem.TimerRemaining = healthItem.HealTime;
-                healthItem.State = ItemState.Using;
-                healthItem.HealData.TargetLimb = GetMostHurtLimb( character.ValueRO );
+                healthItem.State = ItemState.Start;
             }
 
             if ( inventory.ValueRO.Switching )
@@ -120,11 +119,11 @@ public partial struct CharacterHealthSystem : ISystem
             
             if ( healthItem.Type == HealthItemType.HealthKit )
             {
-                UseHealthKit(player,character, ref healthItem, ref state );
+                UseHealthKit(player,equippedItem, character, ref healthItem, ref state );
             }
             else if ( healthItem.Type == HealthItemType.Tourniquet )
             {
-                UseTourniquet( player,character, ecb, ref healthItem, ref itemData, ref state );
+                UseTourniquet( player,  character, ecb, ref healthItem, ref itemData, ref state );
             }
             
 
@@ -145,16 +144,19 @@ public partial struct CharacterHealthSystem : ISystem
         }
     }
 
-    private BodyPart GetMostHurtLimb(CharacterStats stats)
+    private bool HasHurtLimb(CharacterStats stats, out BodyPart mostHurtLimb)
     {
-        BodyPart result = BodyPart.Chest;
+        mostHurtLimb = BodyPart.Chest;
+        bool result = false;
         float maxDamage = Single.NegativeInfinity;
+        
         foreach ( BodyPart part in _bodyParts )
         {
             CharacterLimb limb = stats.BaseStats.GetLimb( part );
-            if ( limb.MissingHealth > maxDamage )
+            if ( !limb.Healthy && limb.MissingHealth > maxDamage )
             {
-                result = part;
+                mostHurtLimb = part;
+                result = true;
                 maxDamage = limb.MissingHealth;
             }
         }
@@ -164,7 +166,7 @@ public partial struct CharacterHealthSystem : ISystem
     
     private bool IsQuickUse(Entity item, ref SystemState state)
     {
-        return state.EntityManager.HasComponent<UseOnEquip>( item );
+        return state.EntityManager.HasComponent<QuickUseData>( item );
     }
 
 
@@ -277,56 +279,66 @@ public partial struct CharacterHealthSystem : ISystem
         
     }
     
-
-    /*
-    private void UseTourniquet(Entity player, RefRW<MyCharacterComponent> character, ref HealthItemDesc healthItem, ref CharacterItemData itemData, QuickUseData quickData, ref SystemState state)
-    {
-        DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
-        DynamicBuffer<CharacterLimb> body = state.EntityManager.GetBuffer<CharacterLimb>( player );
-        
-
-        ref CharacterLimb mostBleeding = ref body.ElementAt( (int)quickData.Part );
-        for ( int i = 0; i < wounds.Length; i++ )
-        {
-            ref CharacterWound wound = ref wounds.ElementAt( i );
-            if ( wound.AffectedPart == mostBleeding.Part )
-            {
-                mostBleeding.Bleed -= wound.Bleed;
-                wound.Bleed = 0;
-            }
-        }
-        
-        healthItem.CurrentCharges--;
-        if ( healthItem.CurrentCharges <= 0 )
-        {
-            itemData.Quantity--;
-            if ( itemData.Quantity > 0 )
-            {
-                healthItem.CurrentCharges = healthItem.MaxCharges;
-            }
-        }
-
-    }
-    */
     
 
-    private void UseHealthKit( Entity player, RefRW<CharacterStats> character, ref HealthItemDesc healthItem, ref SystemState state )
+    private void UseHealthKit( Entity player, Entity equippedItem, RefRW<CharacterStats> character, ref HealthItemDesc healthItem, ref SystemState state )
     {
         
         healthItem.TimerRemaining -= SystemAPI.Time.DeltaTime;
         if ( healthItem.TimerRemaining > 0 )
             return;
 
+        HealthKitInfo kitInfo = state.EntityManager.GetComponentData<HealthKitInfo>( equippedItem );
+
+        
+        
+        if ( healthItem.State == ItemState.Start )
+        {
+            healthItem.State = ItemState.Using;
+            
+            if ( IsQuickUse( equippedItem, ref state ) )
+            {
+                QuickUseData quickData = state.EntityManager.GetComponentData<QuickUseData>( equippedItem );
+                kitInfo.UseType = HealthKitUseType.HealLimb;
+                kitInfo.TargetLimb = quickData.Part;
+            }
+            else
+            {
+                kitInfo.UseType = HealthKitUseType.HealAll;
+            }
+            
+            state.EntityManager.SetComponentData( equippedItem, kitInfo );
+        }
+
         int healCharges = healthItem.ChargesPerHeal;
-        healthItem.TimerRemaining = 0;
-        healthItem.State = ItemState.Ready;
+        healthItem.TimerRemaining = healthItem.HealTime;
+
+        BodyPart targetLimb = kitInfo.TargetLimb;
+
+        if ( kitInfo.UseType == HealthKitUseType.HealAll )
+        {
+            if ( !HasHurtLimb( character.ValueRO, out targetLimb ) )
+            {
+                healthItem.State = ItemState.Ready;
+                return;
+            }
+        }
+        else if ( kitInfo.UseType == HealthKitUseType.HealLimb )
+        {
+            if ( character.ValueRO.BaseStats.GetLimb( targetLimb ).Healthy )
+            {
+                healthItem.State = ItemState.Ready;
+                return;
+            }
+        }
+            
         
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
         
         for ( int i = wounds.Length - 1; i >= 0; i-- )
         {
             ref CharacterWound wound = ref wounds.ElementAt( i );
-            if(wound.AffectedPart != healthItem.HealData.TargetLimb)
+            if(wound.AffectedPart != targetLimb)
                 continue;
             HealResult healResult = wound.Heal(ref healthItem, healCharges);
             healCharges -= healResult.ChargesUsed;

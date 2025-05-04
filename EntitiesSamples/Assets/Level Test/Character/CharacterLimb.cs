@@ -15,7 +15,7 @@ public struct CharacterLimb
 
     public float MissingHealth => GetMissingHealth();
 
-    public bool Healthy => GetMissingHealth() > 0;
+    public bool Healthy => GetMissingHealth() <= 0;
     
     public bool Destroyed => IsDestroyed();
 
