@@ -38,6 +38,7 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new CharacterStats{BaseStats = baseStats, TotalStats = baseStats});
 
+            AddBuffer<CharacterAction>( entity );
             DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
 
             for ( int i = 0; i < 9; i++ )

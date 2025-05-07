@@ -383,6 +383,7 @@ public class PlayerUIManager : MonoBehaviour
     {
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         Entity itemEntity;
+        
         bool inHotBar = _hotBar.ContainsItem( healthItem.Key, out int result );
         if ( inHotBar )
         {
@@ -393,7 +394,7 @@ public class PlayerUIManager : MonoBehaviour
         {
             itemEntity = CreateHealthItemEntity( healthItem );
         }
-        
+        /*
         QuickUseData quickData = new QuickUseData
         {
             PreviousEquipped = playerInv.EquippedItem,
@@ -402,10 +403,16 @@ public class PlayerUIManager : MonoBehaviour
         };
         _entityManager.AddComponentData( itemEntity, new UseOnEquip() );
         _entityManager.AddComponentData( itemEntity, quickData );
-        
-         
-        playerInv.SwitchToBuffer = new EquippingData(itemEntity);
-        _entityManager.SetComponentData( _playerEntity, playerInv );
+        */
+
+        DynamicBuffer<CharacterAction> actionQueue = _entityManager.GetBuffer<CharacterAction>( _playerEntity );
+        actionQueue.Add( new CharacterAction {Action = ActionType.EquipItem, Item = itemEntity} );
+        actionQueue.Add( new CharacterAction {Action = ActionType.Use, Item = itemEntity} );
+        actionQueue.Add( new CharacterAction {Action = ActionType.EquipSlot, EquipSlot = _hotBar.GetEquippedIndex()} );
+        actionQueue.Add( new CharacterAction {Action = ActionType.Remove, Item = itemEntity} );
+
+        //playerInv.SwitchToBuffer = new EquippingData(itemEntity);//
+        //_entityManager.SetComponentData( _playerEntity, playerInv );
         
     }
 
@@ -433,7 +440,7 @@ public class PlayerUIManager : MonoBehaviour
         
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
         _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
-
+        _entityManager.AddComponentData( itemEntity, new ItemStateInfo() );
         if ( itemInfo.HealthItem.Type == HealthItemType.HealthKit )
         {
             _entityManager.AddComponentData( itemEntity, new HealthKitInfo() );
@@ -447,6 +454,7 @@ public class PlayerUIManager : MonoBehaviour
     //it will be handled by the DragObject, and there is no need to update all the other items
     public void RemoveItem(int key, bool update)
     {
+        Debug.Log( $"remove {key}" );
         _hotBar.TryRemoveFromHotBar( key );
         
         ItemInfo removedItem = _allItemsDict[key];

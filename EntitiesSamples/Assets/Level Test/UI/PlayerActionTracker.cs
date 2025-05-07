@@ -50,8 +50,8 @@ public class PlayerActionTracker : MonoBehaviour
         }
         
         HealthItemDesc healthItem =  _entityManager.GetComponentData<HealthItemDesc>( inventory.EquippedItem );
-
-        if ( healthItem.State == ItemState.Ready )
+        ItemStateInfo itemState = _entityManager.GetComponentData<ItemStateInfo>( inventory.EquippedItem );
+        if ( itemState.State == ItemState.Ready )
             return;
         
         _equippingMeter.color = Color.green;
