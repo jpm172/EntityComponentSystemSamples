@@ -351,7 +351,7 @@ public partial struct CharacterHealthSystem : ISystem
         
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
         
-        for ( int i = wounds.Length - 1; i >= 0; i-- )
+        for ( int i = wounds.Length - 1; i >= 0 && healCharges > 0; i-- )
         {
             ref CharacterWound wound = ref wounds.ElementAt( i );
             if(wound.AffectedPart != targetLimb)
@@ -369,8 +369,10 @@ public partial struct CharacterHealthSystem : ISystem
                 wounds.RemoveAt( i );   
             }
 
-            if ( healthItem.CurrentCharges <= 0 || healCharges <= 0 )
+            if ( healthItem.CurrentCharges <= 0 )
             {
+                itemState.State = ItemState.Finished;
+                state.EntityManager.SetComponentData( equippedItem, itemState );
                 return;
             }
         }
