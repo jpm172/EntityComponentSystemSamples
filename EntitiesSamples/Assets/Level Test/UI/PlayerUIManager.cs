@@ -344,6 +344,7 @@ public class PlayerUIManager : MonoBehaviour
         
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        _entityManager.SetComponentEnabled( invBuffer.ElementAt( removeIndex ).Item, typeof(RemoveItem), true );
         invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
         
         if ( unequip )
@@ -351,6 +352,7 @@ public class PlayerUIManager : MonoBehaviour
             playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
             _entityManager.SetComponentData( _playerEntity, playerInv );
         }
+        
         
 
     }
@@ -426,7 +428,8 @@ public class PlayerUIManager : MonoBehaviour
         
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
         _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
-
+        _entityManager.AddComponentData( itemEntity, new RemoveItem() );
+        _entityManager.SetComponentEnabled( itemEntity, typeof( RemoveItem ), false );
         return itemEntity;
     }
     
@@ -441,6 +444,8 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
         _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
         _entityManager.AddComponentData( itemEntity, new ItemStateInfo() );
+        _entityManager.AddComponentData( itemEntity, new RemoveItem() );
+        _entityManager.SetComponentEnabled( itemEntity, typeof(RemoveItem), false );
         if ( itemInfo.HealthItem.Type == HealthItemType.HealthKit )
         {
             _entityManager.AddComponentData( itemEntity, new HealthKitInfo() );

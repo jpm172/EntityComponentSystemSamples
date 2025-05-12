@@ -11,7 +11,6 @@ public struct HealthItemDesc : IComponentData
     public float TimerRemaining;
     public int ChargesPerHeal;
     public HealthItemType Type;
-    public ItemState State;
 }
 
 

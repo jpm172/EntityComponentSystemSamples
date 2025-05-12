@@ -32,7 +32,7 @@ partial struct CharacterActionQueueSystem : ISystem
                     ProcessEquipSlotAction( currentAction, inventory, items, actionQueue );
                     break;
                 case ActionType.Use:
-                    ProcessUseAction(currentAction, actionQueue, ref state);
+                    ProcessUseAction(currentAction, actionQueue, inventory.ValueRO, ref state);
                     break;
                 case ActionType.Remove:
                     ProcessRemoveAction(currentAction, inventory, items, ecb, actionQueue, ref state);
@@ -45,6 +45,9 @@ partial struct CharacterActionQueueSystem : ISystem
     private void ProcessRemoveAction(CharacterAction currentAction, RefRW<CharacterInventory> inventory, 
         DynamicBuffer<InventoryElement> items, EntityCommandBuffer ecb, DynamicBuffer<CharacterAction> actionQueue, ref SystemState state)
     {
+        state.EntityManager.SetComponentEnabled( currentAction.Item, typeof(RemoveItem), true );
+        actionQueue.RemoveAt( 0 );
+        /*
         bool inHotbar = false;
         foreach ( InventoryElement item in items )
         {
@@ -58,12 +61,21 @@ partial struct CharacterActionQueueSystem : ISystem
 
         ecb.DestroyEntity( currentAction.Item );
         actionQueue.RemoveAt( 0 );
+        */
         
         
     }
 
-    private void ProcessUseAction(CharacterAction currentAction, DynamicBuffer<CharacterAction> actionQueue, ref SystemState state)
+    private void ProcessUseAction(CharacterAction currentAction, DynamicBuffer<CharacterAction> actionQueue, CharacterInventory inventory, ref SystemState state)
     {
+
+        if ( inventory.EquippedItem != currentAction.Item )
+        {
+            actionQueue.RemoveAt( 0 );
+            return;
+        }
+            
+        
         ItemStateInfo itemState = state.EntityManager.GetComponentData<ItemStateInfo>( currentAction.Item );
 
         if ( itemState.State == ItemState.Ready )

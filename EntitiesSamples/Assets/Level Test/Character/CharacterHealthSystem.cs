@@ -107,20 +107,26 @@ public partial struct CharacterHealthSystem : ISystem
                 state.EntityManager.SetComponentData( equippedItem, healthItem );
                 continue;
             }
+            */
+            if ( itemState.State == ItemState.Finished )
+            {
+                itemState.State = ItemState.Ready;
+                state.EntityManager.SetComponentData( equippedItem, itemState );
+            }
             
-            if ( healthItem.State == ItemState.Ready && input.ValueRO.Click )
+            if ( itemState.State == ItemState.Ready && input.ValueRO.Click )
             {
                 healthItem.TimerRemaining = healthItem.HealTime;
-                healthItem.State = ItemState.Start;
+                itemState.State = ItemState.Start;
             }
-            */
-
+            
             
             
             if ( inventory.ValueRO.Switching )
             {
-                healthItem.State = ItemState.Ready;
+                itemState.State = ItemState.Ready;
                 state.EntityManager.SetComponentData( equippedItem, healthItem );
+                state.EntityManager.SetComponentData( equippedItem, itemState );
             }
             
             if(itemState.State == ItemState.Ready)
@@ -130,7 +136,7 @@ public partial struct CharacterHealthSystem : ISystem
             
             if ( healthItem.Type == HealthItemType.HealthKit )
             {
-                UseHealthKit(player,equippedItem, character, ref healthItem, ref state );
+                UseHealthKit(player,equippedItem, character, ref itemState, ref healthItem, ref state );
             }
             else if ( healthItem.Type == HealthItemType.Tourniquet )
             {
@@ -140,9 +146,9 @@ public partial struct CharacterHealthSystem : ISystem
 
             state.EntityManager.SetComponentData( equippedItem, healthItem );
             state.EntityManager.SetComponentData( equippedItem, itemData );
+            state.EntityManager.SetComponentData( equippedItem, itemState );
 
-            
-            
+
             if ( healthItem.CurrentCharges > 0 )
             {
                 PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
@@ -151,7 +157,8 @@ public partial struct CharacterHealthSystem : ISystem
             else
             {
                 PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
-                ecb.AddComponent<DestroyOnUnequip>( equippedItem );
+                ecb.SetComponentEnabled( equippedItem, typeof(RemoveItem), true );
+                //ecb.AddComponent<DestroyOnUnequip>( equippedItem );
             }
                 
                 
@@ -196,7 +203,7 @@ public partial struct CharacterHealthSystem : ISystem
         
         
         healthItem.TimerRemaining = 0;
-        healthItem.State = ItemState.Ready;
+        //healthItem.State = ItemState.Ready;
 
         DynamicBuffer<CharacterWound> wounds = state.EntityManager.GetBuffer<CharacterWound>( player );
 
@@ -295,7 +302,8 @@ public partial struct CharacterHealthSystem : ISystem
     
     
 
-    private void UseHealthKit( Entity player, Entity equippedItem, RefRW<CharacterStats> character, ref HealthItemDesc healthItem, ref SystemState state )
+    private void UseHealthKit( Entity player, Entity equippedItem, RefRW<CharacterStats> character,ref ItemStateInfo itemState,
+        ref HealthItemDesc healthItem, ref SystemState state )
     {
         
         healthItem.TimerRemaining -= SystemAPI.Time.DeltaTime;
@@ -303,9 +311,8 @@ public partial struct CharacterHealthSystem : ISystem
             return;
 
         HealthKitInfo kitInfo = state.EntityManager.GetComponentData<HealthKitInfo>( equippedItem );
-        ItemStateInfo itemState = state.EntityManager.GetComponentData<ItemStateInfo>( equippedItem );
-        
-        
+
+
         if ( itemState.State == ItemState.Start )
         {
             itemState.State = ItemState.Using;
@@ -320,7 +327,6 @@ public partial struct CharacterHealthSystem : ISystem
             {
                 kitInfo.UseType = HealthKitUseType.HealAll;
             }
-            
             state.EntityManager.SetComponentData( equippedItem, kitInfo );
         }
 
@@ -334,7 +340,6 @@ public partial struct CharacterHealthSystem : ISystem
             if ( !HasHurtLimb( character.ValueRO, out targetLimb ) )
             {
                 itemState.State = ItemState.Finished;
-                state.EntityManager.SetComponentData( equippedItem, itemState );
                 return;
             }
         }
@@ -343,7 +348,6 @@ public partial struct CharacterHealthSystem : ISystem
             if ( character.ValueRO.BaseStats.GetLimb( targetLimb ).Healthy )
             {
                 itemState.State = ItemState.Finished;
-                state.EntityManager.SetComponentData( equippedItem, itemState );
                 return;
             }
         }
@@ -372,7 +376,6 @@ public partial struct CharacterHealthSystem : ISystem
             if ( healthItem.CurrentCharges <= 0 )
             {
                 itemState.State = ItemState.Finished;
-                state.EntityManager.SetComponentData( equippedItem, itemState );
                 return;
             }
         }
