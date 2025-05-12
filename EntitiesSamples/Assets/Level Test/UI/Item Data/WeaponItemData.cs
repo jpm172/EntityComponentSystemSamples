@@ -38,4 +38,7 @@ public class WeaponItemData : ItemData
     [Tooltip("Penetration")]
     public float Penetration;
     
+    [Tooltip("Attachment Slots")]
+    public List<AttachmentSlot> AttachmentSlots;
+    
 }
