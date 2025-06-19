@@ -36,3 +36,4 @@ MonoBehaviour:
     Recovery: 0.5
   Range: 10
   Penetration: 3
+  AttachmentSlots: 010000000200000003000000
