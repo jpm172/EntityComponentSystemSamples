@@ -418,7 +418,7 @@ public class PlayerUIManager : MonoBehaviour
 #endif
         
         _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, -1, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
 
         return itemEntity;
     }
@@ -432,7 +432,7 @@ public class PlayerUIManager : MonoBehaviour
         
         
         _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
+        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, -1, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
 
         if ( itemInfo.HealthItem.Type == HealthItemType.HealthKit )
         {
