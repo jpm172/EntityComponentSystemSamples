@@ -25683,6 +25683,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0f48ad2ecab8904eba707a80564a102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _itemDatabase:
+  - {fileID: 11400000, guid: 5942314f818422f44bc94350194e2305, type: 2}
+  - {fileID: 11400000, guid: 129b576b41a764847be92b80e603d23f, type: 2}
+  - {fileID: 11400000, guid: 9404829d54483994e96e98e7349dc735, type: 2}
+  - {fileID: 11400000, guid: 7169315d30170334d84e892dcb17db9f, type: 2}
+  - {fileID: 11400000, guid: db659c004b43eaf48a7fb556383d279c, type: 2}
+  - {fileID: 11400000, guid: ac47af88907ff444b98d5e912057dd20, type: 2}
+  - {fileID: 11400000, guid: 2573d80a9b8b77745998b016cfcc0743, type: 2}
+  - {fileID: 11400000, guid: 7b784e7617dd5d742bfed617f4c12c3d, type: 2}
+  - {fileID: 11400000, guid: 0e5344d45af7d6c4aabab498670c22ae, type: 2}
   _itemsToLoad:
   - {fileID: 11400000, guid: 2573d80a9b8b77745998b016cfcc0743, type: 2}
 --- !u!4 &2007560912
