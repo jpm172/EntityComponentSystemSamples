@@ -116,7 +116,15 @@ public struct AmmoInfo
 }
 
 
-public struct InventoryElement : IBufferElementData
+
+[InternalBufferCapacity(64)]
+public struct InventoryItem : IBufferElementData
+{
+    public Entity Item;
+}
+
+[InternalBufferCapacity(9)]
+public struct HotBarItem : IBufferElementData
 {
     public Entity Item;
 }

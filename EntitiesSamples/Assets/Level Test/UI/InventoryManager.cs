@@ -52,10 +52,26 @@ public class InventoryManager : MonoBehaviour
         _rectTransform = GetComponent<RectTransform>();
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
         
-        LoadItems();
+        _manager.NewItemEvent.AddListener( NewItemAdded );
+        
+        //LoadItems();
         UpdateInventoryLayout();
     }
 
+    private void NewItemAdded(int key)
+    {
+        ItemInfo newItemInfo = _manager.AllItems[key];
+
+        if ( !MatchesItemType( newItemInfo.Data.ItemType ) )
+            return;
+        
+        LoadItem( newItemInfo );
+        _itemCount++;
+        UpdateInventoryLayout();
+        
+
+    }
+    
     private void LoadItems()
     {
         foreach ( ItemType type in _itemTypeWhitelist )
@@ -85,8 +101,6 @@ public class InventoryManager : MonoBehaviour
         ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
         InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
         
-        
-        //newContainer.ItemKey = data.Key;
         newContainer.Set( item );
         newContainer.transform.SetAsFirstSibling();
         newContainer.transform.SetSiblingIndex( item.Order );
@@ -191,6 +205,17 @@ public class InventoryManager : MonoBehaviour
                 return true;
         }
 
+
+        return false;
+    }
+
+    private bool MatchesItemType(ItemType type)
+    {
+        foreach ( ItemType allowedType in _itemTypeWhitelist )
+        {
+            if ( type == allowedType )
+                return true;
+        }
 
         return false;
     }

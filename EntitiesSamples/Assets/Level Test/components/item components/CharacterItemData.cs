@@ -29,3 +29,8 @@ public struct CharacterItemData : IComponentData
         Quantity = quantity;
     }
 }
+
+public struct PlayerItemData : IComponentData, IEnableableComponent
+{
+    
+}

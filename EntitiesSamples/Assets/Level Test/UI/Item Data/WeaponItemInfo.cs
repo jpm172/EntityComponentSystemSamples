@@ -15,6 +15,14 @@ public class WeaponItemInfo : ItemInfo
         Weapon = ItemToWeapon( data );
     }
     
+    
+    public WeaponItemInfo( WeaponItemData data, WeaponDesc weaponDesc, int key )
+    {
+        Data = data;
+        Key = key;
+        Weapon = weaponDesc;
+    }
+    
     private WeaponDesc ItemToWeapon(WeaponItemData data)
     {
         

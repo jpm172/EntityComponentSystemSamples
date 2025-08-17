@@ -19,6 +19,10 @@ public class UIEditor : Editor
         {
             manager.SerializeItems();
         }
+        else if ( GUILayout.Button( "Test New Item" ) )
+        {
+            manager.NewItemEvent.Invoke(-1);
+        }
     }
 }
 

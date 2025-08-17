@@ -10,8 +10,7 @@ public class PlayerUIManager : MonoBehaviour
     public static PlayerUIManager Instance;
 
     
-
-    private int _itemKey;
+    
 
     public PanelManager ActivePanel;
 
@@ -42,12 +41,6 @@ public class PlayerUIManager : MonoBehaviour
 
     [SerializeField]
     private float _playerBleedRate;
-    
-    [SerializeField]
-    private List<WeaponItemData> _loadWeapons;
-    
-    [SerializeField]
-    private List<HealthItemData> _loadHealthItems;
 
 
     [SerializeField]
@@ -89,6 +82,7 @@ public class PlayerUIManager : MonoBehaviour
     }
 
     public UnityEvent ItemUpdateEvent;
+    public UnityEvent<int> NewItemEvent;
 
     public void SerializeItems()
     {
@@ -161,6 +155,8 @@ public class PlayerUIManager : MonoBehaviour
         _allItemsDict = new Dictionary<int, ItemInfo>();
         
         _weaponDict = new Dictionary<int, WeaponItemInfo>();
+        _healthItemKeys = new List<int>();
+        /*
         for ( int i = 0; i < _loadWeapons.Count; i++ )
         {
             WeaponItemInfo newWeapon = new WeaponItemInfo( _loadWeapons[i], _itemKey );
@@ -173,7 +169,7 @@ public class PlayerUIManager : MonoBehaviour
             _itemKey++;
         }
         
-        _healthItemKeys = new List<int>();
+        
         for ( int i = 0; i < _loadHealthItems.Count; i++ )
         {
             if ( _loadHealthItems[i].Stackable )
@@ -216,6 +212,7 @@ public class PlayerUIManager : MonoBehaviour
                 _itemKey++;
             }
         }
+        */
         
         InitializePanels();
     }
@@ -279,7 +276,7 @@ public class PlayerUIManager : MonoBehaviour
     public void EquipSlot( int equipIndex, int previousIndex )
     {
         
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
         if ( equipIndex != previousIndex && previousIndex >= 0 )
@@ -304,6 +301,24 @@ public class PlayerUIManager : MonoBehaviour
         _entityManager.SetComponentData( _playerEntity, inventory );
     }
 
+
+    public void NewItem(Entity itemEntity, CharacterItemData entityItemData)
+    {
+        ItemData itemData = ItemManager.GetItemByID( entityItemData.ID );
+        
+
+        if ( itemData.ItemType == ItemType.Weapon )
+        {
+            WeaponDesc weaponDesc = _entityManager.GetComponentData<WeaponDesc>( itemEntity );
+            WeaponItemInfo newWeapon = new WeaponItemInfo( (WeaponItemData)itemData, weaponDesc, entityItemData.Key );
+            _allItemsDict.Add( entityItemData.Key, newWeapon );
+        }
+        
+        NewItemEvent.Invoke( entityItemData.Key );
+        
+    }
+    
+    /*
     public void AddItemEntity(ItemInfo item, int equipIndex, bool equip)
     {
 
@@ -311,7 +326,7 @@ public class PlayerUIManager : MonoBehaviour
         if ( itemType == ItemType.Weapon )
         {
             Entity itemEntity = CreateWeaponEntity( (WeaponItemInfo) item );
-            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
             invBuffer.ElementAt( equipIndex ).Item = itemEntity;
 
             if ( equip )
@@ -325,7 +340,7 @@ public class PlayerUIManager : MonoBehaviour
         else if ( itemType == ItemType.Health )
         {
             Entity itemEntity = CreateHealthItemEntity( (HealthItemInfo) item );
-            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
             invBuffer.ElementAt( equipIndex ).Item = itemEntity;
             if ( equip )
             {
@@ -335,15 +350,14 @@ public class PlayerUIManager : MonoBehaviour
             }
         }
     }
+    */
 
     
     
     public void RemoveItemEntity( int removeIndex, bool unequip )
     {
-        
-        
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
         invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
         
         if ( unequip )
@@ -357,10 +371,10 @@ public class PlayerUIManager : MonoBehaviour
 
     public void SwapItemEntities( int index1, int index2 )
     {
-        DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
-        InventoryElement swap = invBuffer[index1];
+        HotBarItem swap = invBuffer[index1];
         invBuffer.ElementAt( index1 ) = invBuffer[index2];
         invBuffer.ElementAt( index2 ) = swap;
 
@@ -386,7 +400,7 @@ public class PlayerUIManager : MonoBehaviour
         bool inHotBar = _hotBar.ContainsItem( healthItem.Key, out int result );
         if ( inHotBar )
         {
-            DynamicBuffer<InventoryElement> invBuffer = _entityManager.GetBuffer<InventoryElement>( _playerEntity );
+            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
             itemEntity = invBuffer[result].Item;
         }
         else

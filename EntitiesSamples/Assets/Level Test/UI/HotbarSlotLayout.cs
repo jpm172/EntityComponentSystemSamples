@@ -79,7 +79,7 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         
         UpdateLayout( item );
 
-        PlayerUIManager.Instance.AddItemEntity( item, _slotIndex, _equipped );
+        //PlayerUIManager.Instance.AddItemEntity( item, _slotIndex, _equipped );
         
         //_hasItem = true;
     }
@@ -94,7 +94,7 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         
         UpdateLayout(item.Item);
         
-        PlayerUIManager.Instance.AddItemEntity( item.Item, _slotIndex, _equipped );
+        //PlayerUIManager.Instance.AddItemEntity( item.Item, _slotIndex, _equipped );
         
         //_hasItem = true;
     }

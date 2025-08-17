@@ -38,11 +38,12 @@ public class PlayerAuthoring : MonoBehaviour
             
             AddComponent(entity, new CharacterStats{BaseStats = baseStats, TotalStats = baseStats});
 
-            DynamicBuffer<InventoryElement> invBuffer =AddBuffer<InventoryElement>( entity );
+            DynamicBuffer<InventoryItem> inventoryBuffer = AddBuffer<InventoryItem>( entity );
+            DynamicBuffer<HotBarItem> hotbarBuffer =AddBuffer<HotBarItem>( entity );
 
             for ( int i = 0; i < 9; i++ )
             {
-                invBuffer.Add( new InventoryElement() );
+                hotbarBuffer.Add( new HotBarItem() );
             }
             
             
