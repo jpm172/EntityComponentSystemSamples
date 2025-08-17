@@ -74,6 +74,9 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
         ItemInfo item = drag.Container.Item;
         
+        UpdateLayout( item );
+        PlayerUIManager.Instance.AddToHotbar( item, _slotIndex, _equipped );
+        /*
         if(HasItem)
             PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
         
@@ -82,6 +85,7 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         //PlayerUIManager.Instance.AddItemEntity( item, _slotIndex, _equipped );
         
         //_hasItem = true;
+        */
     }
     
     public void TryPutInSlot(ItemContainer item)
@@ -89,11 +93,11 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
         if ( !CanPutInSlot( item ) )
             return;
         
-        if(HasItem)
-            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
+        //if(HasItem)
+            //PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
         
         UpdateLayout(item.Item);
-        
+        PlayerUIManager.Instance.AddToHotbar( item.Item, _slotIndex, _equipped );
         //PlayerUIManager.Instance.AddItemEntity( item.Item, _slotIndex, _equipped );
         
         //_hasItem = true;

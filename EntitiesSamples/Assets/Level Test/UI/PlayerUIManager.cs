@@ -272,6 +272,36 @@ public class PlayerUIManager : MonoBehaviour
         
         _hotBar.EquipSlot( inventory.LastEquipIndex );
     }
+
+
+    public void AddToHotbar(ItemInfo itemInfo, int equipIndex, bool equip)
+    {
+        int targetKey = itemInfo.Key;
+        DynamicBuffer<HotBarItem> hotbarBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
+        DynamicBuffer<InventoryItem> invBuffer = _entityManager.GetBuffer<InventoryItem>( _playerEntity );
+
+
+        for ( int i = 0; i < invBuffer.Length; i++ )
+        {
+            InventoryItem item = invBuffer[i];
+            CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( item.Item );
+            if ( itemData.Key == targetKey )
+            {
+                hotbarBuffer.ElementAt( equipIndex ).Item = item.Item;
+                break;
+            }
+        }
+        
+        if ( equip )
+        {
+            Debug.Log( "equip" );
+            CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+            playerInv.SwitchToBuffer = new EquippingData(hotbarBuffer[equipIndex].Item);
+            _entityManager.SetComponentData( _playerEntity, playerInv );
+        }
+        
+        
+    }
     
     public void EquipSlot( int equipIndex, int previousIndex )
     {

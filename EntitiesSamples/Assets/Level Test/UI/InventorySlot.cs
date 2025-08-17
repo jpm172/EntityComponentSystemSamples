@@ -53,14 +53,11 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler
         float xScale = rect.width  / (spriteSize.x+ _padding*2);
         float yScale = rect.height / (spriteSize.y+ _padding*2);
         float scale = Math.Min( xScale, yScale );
-        //Debug.Log( xScale + ", " + yScale + " == " + scale );
-        
+
         _displayImage.sprite = item.Data.ItemSprite;
         _displayImage.rectTransform.sizeDelta = spriteSize * scale;
         
         _container.Set( item.Item );
-        //_container.ItemKey = item.ItemKey;
-        //_hasItem = true;
 
         int slotIndex = ( _equipType == InventorySlotType.Primary ) ? 0 : 1;
         _hotBar.AddToHotBar( item, slotIndex );
