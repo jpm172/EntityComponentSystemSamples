@@ -25,23 +25,18 @@ public class InventoryItemLayout : MonoBehaviour
 
     [SerializeField]
     private bool _initialized = false;
-    
-    private void Start()
-    {
-        //Initialize();
-        //_initialized = true;
-    }
+
+    public int Key => _item.Key;
 
     private void OnEnable()
     {
-        PlayerUIManager.Instance.ItemUpdateEvent.AddListener( ReloadItem );
         if(_initialized) 
             ReloadItem();
     }
 
     private void OnDisable()
     {
-        PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
+        //PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
     }
 
     public void Initialize()
@@ -57,10 +52,13 @@ public class InventoryItemLayout : MonoBehaviour
 
     public void ReloadItem()
     {
+        transform.SetSiblingIndex( PlayerUIManager.Instance.AllItems[_item.Key].Order ); 
+        UpdateLayout();
+        /*
         if ( !PlayerUIManager.Instance.AllItems.ContainsKey( _item.Key ) )
         {
             GetComponentInParent<InventoryManager>().RemovedItem();
-            PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
+            //PlayerUIManager.Instance.ItemUpdateEvent.RemoveListener( ReloadItem );
             Destroy( gameObject );
         }
         else
@@ -68,6 +66,7 @@ public class InventoryItemLayout : MonoBehaviour
             transform.SetSiblingIndex( PlayerUIManager.Instance.AllItems[_item.Key].Order );
             UpdateLayout();
         }
+        */
     }
 
     public virtual void UpdateCallBack()
@@ -99,7 +98,7 @@ public class InventoryItemLayout : MonoBehaviour
     protected void RemoveItem()
     {
         GetComponentInParent<InventoryManager>().RemovedItem();
-        PlayerUIManager.Instance.RemoveItem( _item.Key, false );//
+        PlayerUIManager.Instance.RemoveItem( _item.Key );
         Destroy( gameObject );
     }
 

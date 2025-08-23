@@ -16,7 +16,13 @@ public class HealthItemInfo : ItemInfo
         Quantity = 1;
     }
     
-    
+    public HealthItemInfo( HealthItemData data, HealthItemDesc healthItemDesc, int key )
+    {
+        Data = data;
+        HealthItem = healthItemDesc;
+        Key = key;
+        Quantity = 1;
+    }
     
     private HealthItemDesc ItemToHealthDesc(HealthItemData data)
     {

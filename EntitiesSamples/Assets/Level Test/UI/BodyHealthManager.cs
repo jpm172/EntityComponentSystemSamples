@@ -224,33 +224,6 @@ public class BodyHealthManager : MonoBehaviour
         
         _entityManager.SetComponentData( _playerEntity, character );
     }
-    
-    private void HealBody()
-    {
-        bool hasItem = GetBestHealingItem( out HealthItemInfo bestItem );
-            
-        foreach ( BodyPart part in _bodyPartLabels )
-        {
-            if ( _bodyParts[part].Wounds.Count == 0 && _bodyParts[part].Healthy )
-                continue;
-                
-                
-            while ( _bodyParts[part].Wounds.Count > 0 && hasItem )
-            {
-                HealBodyPart( part, bestItem );
-                if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
-                {
-                    _manager.RemoveItem( bestItem.Key, true );
-                    hasItem = GetBestHealingItem( out bestItem ); 
-                    continue;
-                }
-                    
-                    
-                _manager.ItemUpdateEvent.Invoke();
-            }
-
-        }
-    }
 
     private void HealBody( WoundType targetWound )
     {
@@ -266,13 +239,13 @@ public class BodyHealthManager : MonoBehaviour
             {
                 if ( ((HealthItemInfo)_manager.AllItems[bestItem.Key]).HealthItem.CurrentCharges <= 0 )
                 {
-                    _manager.RemoveItem( bestItem.Key, true );
+                    //_manager.RemoveItem( bestItem.Key, true );
                     hasItem = GetBestHealingItem( out bestItem ); 
                     continue;
                 }
                     
                     
-                _manager.ItemUpdateEvent.Invoke();
+                //_manager.ItemUpdateEvent.Invoke();
             }
 
         }
@@ -292,49 +265,7 @@ public class BodyHealthManager : MonoBehaviour
         _manager.QuickUseItem(usedItem, bodyPart);
     }
 
-    public void HealBodyPart( BodyPart bodyPart, HealthItemInfo usedItem )
-    {
-        if ( usedItem.Data.Stackable )
-        {
-            UseSpecialHealingItem( bodyPart, usedItem );
-            return;
-        }
-        
-        Limb limb = _bodyParts[bodyPart];
-        for ( int i = limb.Wounds.Count - 1; i >= 0; i-- )
-        {
-            Wound w = limb.Wounds[i];
-            
-            int healAmount = Math.Min( w.HealingNeeded, usedItem.HealthItem.CurrentCharges );
-            usedItem.HealthItem.CurrentCharges -= healAmount;
-            w.HealingNeeded -= healAmount;
-
-            float newBleed = w.MaxBleed * w.HealProgress;
-            float bleedingHealed = w.Bleed - newBleed;
-            w.Bleed = newBleed;
-
-            _bodyParts[bodyPart].Heal( healAmount, bleedingHealed );
-            
-            if ( w.HealingNeeded <= 0 )
-            {
-                Destroy( w.WoundObj );
-                limb.Wounds.RemoveAt( i );
-            }
-            
-            if(usedItem.HealthItem.CurrentCharges <= 0)
-                break;
-        }
-
-        if ( limb.Wounds.Count == 0 && !limb.Healthy )
-        {
-            int healAmount =  (int)Math.Min( limb.MissingHealth, usedItem.HealthItem.CurrentCharges );
-            usedItem.HealthItem.CurrentCharges -= healAmount;
-            limb.Heal( healAmount );
-        }
-        
-        _manager.PlayerBleedRate = GetTotalBleedRate();
-        _manager.AllItems[usedItem.Key] = usedItem;
-    }
+   
     
     public bool HealBodyPart( BodyPart bodyPart, WoundType targetWound, HealthItemInfo usedItem )
     {

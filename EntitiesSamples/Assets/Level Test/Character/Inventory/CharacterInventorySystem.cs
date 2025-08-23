@@ -20,6 +20,8 @@ public partial struct CharacterInventorySystem : ISystem
         
         EntityCommandBuffer ecb = state.World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>().CreateCommandBuffer();
         
+        DeleteItems( ref state, ecb );
+        
         foreach ( var (input, inventory, player) in SystemAPI.Query<RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess() )
         {
             if(!inventory.ValueRW.Switching)
@@ -64,6 +66,50 @@ public partial struct CharacterInventorySystem : ISystem
                 FinishedEquip( inventory, player, ecb, ref state );
             }
 
+        }
+    }
+
+    private void DeleteItems(ref SystemState state, EntityCommandBuffer ecb)
+    {
+        foreach ( var (itemData, destroyItem, itemEntity) in SystemAPI.Query<RefRO<CharacterItemData>, EnabledRefRW<DestroyItem>>()
+            .WithEntityAccess() )
+        {
+            Entity owner = itemData.ValueRO.Owner;
+            CharacterInventory characterInventory = state.EntityManager.GetComponentData<CharacterInventory>( owner );
+
+            DynamicBuffer<InventoryItem> inventoryItems = state.EntityManager.GetBuffer<InventoryItem>( owner );
+            DynamicBuffer<HotBarItem> hotbar = state.EntityManager.GetBuffer<HotBarItem>( owner );
+
+            for ( int i = inventoryItems.Length - 1; i >= 0; i-- )
+            {
+                if ( inventoryItems[i].Item == itemEntity )
+                {
+                    inventoryItems.RemoveAt( i );
+                    break;
+                }
+            }
+
+            for ( int i = 0; i < hotbar.Length; i++ )
+            {
+                if ( hotbar[i].Item == itemEntity )
+                {
+                    hotbar.ElementAt( i ).Item = Entity.Null;
+                    break;
+                }
+            }
+
+            if ( owner == PlayerUIManager.Instance.PlayerEntity )
+            {
+                PlayerUIManager.Instance.RemoveItem( itemData.ValueRO.Key );
+            }
+            
+            if ( characterInventory.EquippedItem == itemEntity )
+            {
+                characterInventory.SwitchToBuffer = EquippingData.Null;
+                state.EntityManager.SetComponentData( owner, characterInventory );
+            }
+
+            ecb.DestroyEntity( itemEntity );
         }
     }
 

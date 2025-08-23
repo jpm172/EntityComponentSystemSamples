@@ -29,7 +29,8 @@ public partial struct CharacterInventoryCleanUpSystem : ISystem
         {
             CharacterItemData itemData = state.EntityManager.GetComponentData<CharacterItemData>( e );
             CharacterInventory inv = state.EntityManager.GetComponentData<CharacterInventory>( itemData.Owner );
-
+            
+            
             if(!inv.IsInPipeline( e ))
                 ecb.DestroyEntity( e );
         }

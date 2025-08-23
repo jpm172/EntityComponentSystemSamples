@@ -101,14 +101,14 @@ public partial struct CharacterHealthSystem : ISystem
             //if ( healthItem.State == ItemState.Ready && (input.ValueRO.Click || IsQuickUse( equippedItem, ref state )) )
             
             
-            if ( healthItem.State != ItemState.Ready && input.ValueRO.Click )
+            if ( (healthItem.State != ItemState.Ready && input.ValueRO.Click ) || healthItem.State == ItemState.Finished)
             {
                 healthItem.State = ItemState.Ready;
                 state.EntityManager.SetComponentData( equippedItem, healthItem );
                 continue;
             }
             
-            if ( healthItem.State == ItemState.Ready && input.ValueRO.Click )
+            if ( healthItem.State == ItemState.Ready && input.ValueRO.Click && CanUseItem(healthItem, character.ValueRO))
             {
                 healthItem.TimerRemaining = healthItem.HealTime;
                 healthItem.State = ItemState.Start;
@@ -144,18 +144,21 @@ public partial struct CharacterHealthSystem : ISystem
             
             if ( healthItem.CurrentCharges > 0 )
             {
-                PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
+                //PlayerUIManager.Instance.UpdateItem( healthItem, itemData );
+                PlayerUIManager.Instance.UpdateItem( itemData, equippedItem );
                 
                 if ( healthItem.State == ItemState.Finished && IsQuickUse( equippedItem, ref state ) )
                 {
-                    PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
+                    PlayerUIManager.Instance.RemoveItem( itemData.Key );
+                    state.EntityManager.SetComponentEnabled( equippedItem, typeof(DestroyItem), true );
                     ecb.AddComponent<DestroyOnUnequip>( equippedItem );
                 }
                 
             }
             else
             {
-                PlayerUIManager.Instance.RemoveItem( itemData.Key, true );
+                //PlayerUIManager.Instance.RemoveItem( itemData.Key );
+                state.EntityManager.SetComponentEnabled( equippedItem, typeof(DestroyItem), true );
                 ecb.AddComponent<DestroyOnUnequip>( equippedItem );
             }
                 
@@ -163,6 +166,13 @@ public partial struct CharacterHealthSystem : ISystem
         }
     }
 
+
+    private bool CanUseItem(HealthItemDesc healthItem, CharacterStats stats)
+    {
+
+        return true;
+    }
+    
     private bool HasHurtLimb(CharacterStats stats, out BodyPart mostHurtLimb)
     {
         mostHurtLimb = BodyPart.Chest;

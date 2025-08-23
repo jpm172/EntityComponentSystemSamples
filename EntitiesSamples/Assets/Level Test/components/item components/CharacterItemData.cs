@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Entities;
 using UnityEngine;
 
-public struct CharacterItemData : IComponentData
+public struct CharacterItemData : ICleanupComponentData
 {
     [SerializeField]
     private int _id;
@@ -34,3 +34,9 @@ public struct PlayerItemData : IComponentData, IEnableableComponent
 {
     
 }
+
+public struct DestroyItem : IComponentData, IEnableableComponent
+{
+    
+}
+

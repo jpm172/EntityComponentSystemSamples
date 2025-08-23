@@ -37,6 +37,8 @@ public class InventoryManager : MonoBehaviour
     
     [SerializeField]
     private List<ItemType> _itemTypeWhitelist;
+
+    private List<InventoryItemLayout> _heldItems;
     
     //[SerializeField]
     //private List<ItemData> _items;
@@ -51,8 +53,11 @@ public class InventoryManager : MonoBehaviour
         _manager = GetComponentInParent<PlayerUIManager>();
         _rectTransform = GetComponent<RectTransform>();
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
+        _heldItems = new List<InventoryItemLayout>();
         
         _manager.NewItemEvent.AddListener( NewItemAdded );
+        _manager.UpdateItemEvent.AddListener( ItemUpdated );
+        _manager.RemoveItemEvent.AddListener( ItemRemoved );
         
         //LoadItems();
         UpdateInventoryLayout();
@@ -68,9 +73,46 @@ public class InventoryManager : MonoBehaviour
         LoadItem( newItemInfo );
         _itemCount++;
         UpdateInventoryLayout();
-        
-
     }
+
+    private void ItemUpdated( int key )
+    {
+        ItemInfo updatedItemInfo = _manager.AllItems[key];
+
+        if ( !MatchesItemType( updatedItemInfo.Data.ItemType ) )
+            return;
+
+        foreach ( InventoryItemLayout itemLayout in _heldItems )
+        {
+            if(itemLayout.Key == key)
+            {
+                itemLayout.ReloadItem();
+                return;
+            }
+        }
+    }
+
+    private void ItemRemoved( int key )
+    {
+        ItemInfo updatedItemInfo = _manager.AllItems[key];
+
+        if ( !MatchesItemType( updatedItemInfo.Data.ItemType ) )
+            return;
+
+
+        for ( int i = _heldItems.Count - 1; i >= 0; i-- )
+        {
+            InventoryItemLayout item = _heldItems[i];
+            if ( item.Key == key )
+            {
+                _heldItems.RemoveAt( i );
+                Destroy( item.gameObject );
+                UpdateInventoryLayout();
+                return;
+            }
+        }
+    }
+    
     
     private void LoadItems()
     {
@@ -105,6 +147,8 @@ public class InventoryManager : MonoBehaviour
         newContainer.transform.SetAsFirstSibling();
         newContainer.transform.SetSiblingIndex( item.Order );
         layout.Initialize();
+
+        _heldItems.Add( layout );
 
         DragObject drag = newContainer.GetComponent<DragObject>();
         ConnectDragObject( drag, layout, newContainer );

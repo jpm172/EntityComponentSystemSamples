@@ -83,10 +83,16 @@ public class ItemManager : MonoBehaviour
        
        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, data.ItemID, data.EquipTime, 1, _itemKey));
        _entityManager.AddComponentData( itemEntity, new PlayerItemData() );
+       _entityManager.AddComponentData( itemEntity, new DestroyItem() );
+       _entityManager.SetComponentEnabled( itemEntity, typeof(DestroyItem), false );
 
        if ( data.ItemType == ItemType.Weapon )
        {
            AddWeaponComponents( data, itemEntity );
+       }
+       else if ( data.ItemType == ItemType.Health )
+       {
+           AddHealthItemComponents( data, itemEntity );
        }
 
        _itemKey++;
@@ -99,6 +105,20 @@ public class ItemManager : MonoBehaviour
        WeaponDesc weaponComponent = WeaponDataToComponent( (WeaponItemData) data );
        weaponComponent.CurrentAmmo = Random.Range( 0, weaponComponent.MaxAmmo + 1 );
        _entityManager.AddComponentData(itemEntity, weaponComponent );
+   }
+
+   private void AddHealthItemComponents( ItemData data, Entity itemEntity )
+   {
+       HealthItemData healthItemData = (HealthItemData) data;
+       
+       HealthItemDesc healthItemComponent = HealthItemDataToComponent( healthItemData);
+       healthItemComponent.CurrentCharges = healthItemComponent.MaxCharges ;
+       _entityManager.AddComponentData(itemEntity, healthItemComponent);
+       
+       if ( healthItemData.Type == HealthItemType.HealthKit )
+       {
+           _entityManager.AddComponentData( itemEntity, new HealthKitInfo() );
+       }
    }
    
    
@@ -123,6 +143,19 @@ public class ItemManager : MonoBehaviour
        return newWeapon;
    }
    
+   private HealthItemDesc HealthItemDataToComponent(HealthItemData data)
+   {
+        
+       HealthItemDesc newHealthItem = new HealthItemDesc
+       {
+           MaxCharges = data.MaxCharges,
+           HealTime = data.HealTime,
+           ChargesPerHeal = data.ChargesPerHeal,
+           Type = data.Type
+       };
+        
+       return newHealthItem;
+   }
 
    public static ItemData GetItemByID( int id )
    {

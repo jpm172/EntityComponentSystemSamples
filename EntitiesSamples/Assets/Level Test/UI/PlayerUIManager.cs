@@ -80,9 +80,10 @@ public class PlayerUIManager : MonoBehaviour
         get => _playerBleedRate;
         set => _playerBleedRate = Math.Max(0, value);
     }
-
-    public UnityEvent ItemUpdateEvent;
+    
     public UnityEvent<int> NewItemEvent;
+    public UnityEvent<int> UpdateItemEvent;
+    public UnityEvent<int> RemoveItemEvent;
 
     public void SerializeItems()
     {
@@ -294,7 +295,6 @@ public class PlayerUIManager : MonoBehaviour
         
         if ( equip )
         {
-            Debug.Log( "equip" );
             CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
             playerInv.SwitchToBuffer = new EquippingData(hotbarBuffer[equipIndex].Item);
             _entityManager.SetComponentData( _playerEntity, playerInv );
@@ -343,6 +343,12 @@ public class PlayerUIManager : MonoBehaviour
             WeaponItemInfo newWeapon = new WeaponItemInfo( (WeaponItemData)itemData, weaponDesc, entityItemData.Key );
             _allItemsDict.Add( entityItemData.Key, newWeapon );
         }
+        else if ( itemData.ItemType == ItemType.Health )
+        {
+            HealthItemDesc healthItemDesc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+            HealthItemInfo newHealthItem = new HealthItemInfo( (HealthItemData)itemData, healthItemDesc, entityItemData.Key );
+            _allItemsDict.Add( entityItemData.Key, newHealthItem );
+        }
         
         NewItemEvent.Invoke( entityItemData.Key );
         
@@ -386,6 +392,8 @@ public class PlayerUIManager : MonoBehaviour
     
     public void RemoveItemEntity( int removeIndex, bool unequip )
     {
+        Debug.Log( "remove item entity" );
+        /*
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
         DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
         invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
@@ -395,6 +403,7 @@ public class PlayerUIManager : MonoBehaviour
             playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
             _entityManager.SetComponentData( _playerEntity, playerInv );
         }
+        */
         
 
     }
@@ -489,29 +498,50 @@ public class PlayerUIManager : MonoBehaviour
     //set update == true whenever using them internally (like the Heal All action) so that
     //all items are properly updated, but when using items directly (drag and drop), 
     //it will be handled by the DragObject, and there is no need to update all the other items
-    public void RemoveItem(int key, bool update)
+    public void RemoveItem(int key)
     {
+        Debug.Log( "remove" );
         _hotBar.TryRemoveFromHotBar( key );
         
+        RemoveItemEvent.Invoke( key );
         ItemInfo removedItem = _allItemsDict[key];
-        if ( removedItem.GetType() == typeof(HealthItemInfo) )
-        {
-            _healthItemKeys.Remove( removedItem.Key );
-        }
         _allItemsDict.Remove( removedItem.Key );
         
-        if(update)
-            ItemUpdateEvent.Invoke();
     }
 
+
+
+    public void UpdateItem( CharacterItemData entityItemData, Entity itemEntity )
+    {
+        ItemData itemData = ItemManager.GetItemByID( entityItemData.ID );
+        
+
+        if ( itemData.ItemType == ItemType.Weapon )
+        {
+            WeaponDesc weaponDesc = _entityManager.GetComponentData<WeaponDesc>( itemEntity );
+            _allItemsDict[entityItemData.Key] = new WeaponItemInfo( (WeaponItemData)itemData, weaponDesc, entityItemData.Key );
+        }
+        else if ( itemData.ItemType == ItemType.Health )
+        {
+            HealthItemDesc healthItemDesc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+            _allItemsDict[entityItemData.Key] =new HealthItemInfo( (HealthItemData)itemData, healthItemDesc, entityItemData.Key );
+        }
+        
+        UpdateItemEvent.Invoke( entityItemData.Key );
+    }
+    
+    /*
     public void UpdateItem( HealthItemDesc item, CharacterItemData itemData)
     {
+        
         HealthItemInfo updatedItem = (HealthItemInfo)_allItemsDict[itemData.Key];
         updatedItem.HealthItem = item;
         updatedItem.Quantity = itemData.Quantity;
         
         ItemUpdateEvent.Invoke();
+        
     }
+    */
     
     public void ToggleInventory()
     {
