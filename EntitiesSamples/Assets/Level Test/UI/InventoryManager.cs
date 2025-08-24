@@ -107,6 +107,7 @@ public class InventoryManager : MonoBehaviour
             {
                 _heldItems.RemoveAt( i );
                 Destroy( item.gameObject );
+                _itemCount--;
                 UpdateInventoryLayout();
                 return;
             }

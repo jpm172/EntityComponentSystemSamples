@@ -103,14 +103,31 @@ public partial struct CharacterInventorySystem : ISystem
                 PlayerUIManager.Instance.RemoveItem( itemData.ValueRO.Key );
             }
             
-            if ( characterInventory.EquippedItem == itemEntity )
+            if ( characterInventory.IsInPipeline( itemEntity ) )
             {
-                characterInventory.SwitchToBuffer = EquippingData.Null;
+                characterInventory = ClearItemFromEquipBuffer( characterInventory, itemEntity );
                 state.EntityManager.SetComponentData( owner, characterInventory );
             }
 
             ecb.DestroyEntity( itemEntity );
         }
+    }
+
+    //if an item is destroyed, we can probably just remove it and skip the "putting away" timer, since the item was used up
+    private CharacterInventory ClearItemFromEquipBuffer( CharacterInventory characterInventory, Entity itemEntity )
+    {
+        
+        if ( characterInventory.SwitchToItem.SwitchTo == itemEntity )
+        {
+            characterInventory.SwitchToItem = EquippingData.Empty;
+        }
+        
+        if ( characterInventory.SwitchToBuffer.SwitchTo == itemEntity || characterInventory.EquippedItem == itemEntity )
+        {
+            characterInventory.SwitchToBuffer = EquippingData.Empty;
+        }
+
+        return characterInventory;
     }
 
     private void FinishedEquip( RefRW<CharacterInventory> inventory, Entity player, EntityCommandBuffer ecb, ref SystemState state )

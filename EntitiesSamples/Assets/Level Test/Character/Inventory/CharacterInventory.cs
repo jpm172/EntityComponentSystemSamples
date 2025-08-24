@@ -140,6 +140,12 @@ public struct EquippingData
         SwitchTo = Entity.Null,
         _null = true
     };
+    
+    public static EquippingData Empty = new EquippingData
+    {
+        SwitchTo = Entity.Null,
+        _null = false
+    };
 
     public EquippingData( Entity switchTo )
     {
