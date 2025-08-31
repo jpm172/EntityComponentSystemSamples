@@ -16716,7 +16716,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f2d2b27e012ffb4699bb5d2b121571b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  state:
+    s0: 0
+    s1: 0
+    s2: 0
+    s3: 0
   seed: 10
+  bigRooms: 0
+  holes: 0
+  hallways: 0
   dimensions:
     x: 0
     y: 0
@@ -16726,7 +16734,6 @@ MonoBehaviour:
   fogOfWarCamera: {fileID: 2115140062}
   fogOfWarObj: {fileID: 202867446}
   floorMaterials:
-  - {fileID: 2100000, guid: 74984cc821ca5b744a72538e8284092f, type: 2}
   - {fileID: 2100000, guid: 979662005cf1d7943b4436dabd530fe6, type: 2}
   - {fileID: 2100000, guid: ed260cb326f56454cabea2688a415c79, type: 2}
   - {fileID: 2100000, guid: bd2bd65ddb71c284bb3834fe0b8ee006, type: 2}
@@ -16739,6 +16746,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 6d0737cab3803b641953545fc7988378, type: 3}
   dynamicWallMaterial: {fileID: 2100000, guid: e77dc11aa3c90a44d991f7a0de9132ef, type: 2}
   staticWallMaterial: {fileID: 2100000, guid: e148d9c713eebb542bbb5882dea2f44a, type: 2}
+  _rooms: []
   FoWTexture: {fileID: 0}
   useSeed: 1
   _minWallThickness: 6
