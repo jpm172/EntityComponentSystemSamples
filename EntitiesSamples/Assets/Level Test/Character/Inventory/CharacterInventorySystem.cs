@@ -156,6 +156,14 @@ public partial struct CharacterInventorySystem : ISystem
         
         if ( inventory.ValueRW.SwitchToItem == EquippingData.Null )
         {
+            /*
+            if ( inventory.ValueRW.SwitchToBuffer.SwitchTo == inventory.ValueRW.EquippedItem && inventory.ValueRW.EquippedItem != Entity.Null )
+            {
+                inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
+                return;
+            }
+            */
+            
             inventory.ValueRW.SwitchToItem = inventory.ValueRW.SwitchToBuffer;
             inventory.ValueRW.SwitchToBuffer = EquippingData.Null;
 

@@ -388,12 +388,18 @@ public class PlayerUIManager : MonoBehaviour
         { 
             Part = healPart
         };
-        //_entityManager.AddComponentData( itemEntity, new UseOnEquip() );
-        _entityManager.AddComponentData( itemEntity, quickData );
+
+       // _entityManager.AddComponentData( itemEntity, quickData );
+       HealthItemDesc desc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+       desc.State = ItemState.Start;
+       _entityManager.SetComponentData( itemEntity, desc );
+
+       if ( !playerInv.IsInPipeline( itemEntity ) )
+       {
+           playerInv.SwitchToBuffer = new EquippingData(itemEntity);
+           _entityManager.SetComponentData( _playerEntity, playerInv );
+       }
         
-         
-        playerInv.SwitchToBuffer = new EquippingData(itemEntity);
-        _entityManager.SetComponentData( _playerEntity, playerInv );
         
     }
 
