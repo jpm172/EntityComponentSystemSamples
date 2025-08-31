@@ -37,6 +37,8 @@ public class InventoryManager : MonoBehaviour
     
     [SerializeField]
     private List<ItemType> _itemTypeWhitelist;
+
+    private List<InventoryItemLayout> _heldItems;
     
     //[SerializeField]
     //private List<ItemData> _items;
@@ -44,95 +46,165 @@ public class InventoryManager : MonoBehaviour
     private bool _collapsed;
 
     private RectTransform _rectTransform;
+    
 
-    private void Awake()
+    public void Initialize()
     {
         _manager = GetComponentInParent<PlayerUIManager>();
         _rectTransform = GetComponent<RectTransform>();
-        
         _spacing = _itemLayer.GetComponent<VerticalLayoutGroup>().spacing;
-
-        List<ItemData> items = FetchItems();
+        _heldItems = new List<InventoryItemLayout>();
         
-        _itemCount = items.Count;
-        foreach ( ItemData data in items )
-        {
-            LoadItem( data );
-        }
+        _manager.NewItemEvent.AddListener( NewItemAdded );
+        _manager.UpdateItemEvent.AddListener( ItemUpdated );
+        _manager.RemoveItemEvent.AddListener( ItemRemoved );
         
+        //LoadItems();
         UpdateInventoryLayout();
-        
     }
 
-    private List<ItemData> FetchItems()
+    private void NewItemAdded(int key)
     {
-        List<ItemData> items = new List<ItemData>();
-        foreach ( ItemType type in _itemTypeWhitelist )
-        {
-            if ( type == ItemType.Weapon )
-            {
-                items.AddRange( _manager.WeaponItems );
-            }
-            /*
-            else if ( type == ItemType.Armor || type == ItemType.Helmet )
-            {
-                items.AddRange( _manager.EquipmentItems );
-                return items;
-            }
-            else if ( type == ItemType.Health )
-            {
-                items.AddRange( _manager.HealthItems );
-            }
-            */
-        }
+        ItemInfo newItemInfo = _manager.AllItems[key];
 
-        return items;
-    }
-
-    private void LoadItem( ItemData data )
-    {
-        ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemInfo>();
-        InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
-        newItem.Data = data;
-        newItem.transform.SetAsFirstSibling();
-
-        DragObject drag = newItem.GetComponent<DragObject>();
-        drag.Initialize();
-        drag.Callback = layout.CallBack;
-        drag.SwapCallback = layout.SwapCallback;
-        drag.TransferFromObj = newItem;
-        drag.SourceObject = gameObject;
-    }
-    
-    public void AddItem(ItemInfo item)
-    {
-        ItemInfo newItem = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemInfo>();
-        InventoryItemLayout layout = newItem.GetComponent<InventoryItemLayout>();
+        if ( !MatchesItemType( newItemInfo.Data.ItemType ) )
+            return;
         
-        
-        
-        newItem.Data = item.Data;
-        newItem.transform.SetAsFirstSibling();
-        
-        DragObject drag = newItem.GetComponent<DragObject>();
-        drag.Initialize();
-        drag.Callback = layout.CallBack;
-        drag.SwapCallback = layout.SwapCallback;
-        drag.TransferFromObj = newItem;
-        drag.SourceObject = gameObject;
-        
+        LoadItem( newItemInfo );
         _itemCount++;
         UpdateInventoryLayout();
     }
 
+    private void ItemUpdated( int key )
+    {
+        ItemInfo updatedItemInfo = _manager.AllItems[key];
+
+        if ( !MatchesItemType( updatedItemInfo.Data.ItemType ) )
+            return;
+
+        foreach ( InventoryItemLayout itemLayout in _heldItems )
+        {
+            if(itemLayout.Key == key)
+            {
+                itemLayout.ReloadItem();
+                return;
+            }
+        }
+    }
+
+    private void ItemRemoved( int key )
+    {
+        ItemInfo updatedItemInfo = _manager.AllItems[key];
+
+        if ( !MatchesItemType( updatedItemInfo.Data.ItemType ) )
+            return;
+
+
+        for ( int i = _heldItems.Count - 1; i >= 0; i-- )
+        {
+            InventoryItemLayout item = _heldItems[i];
+            if ( item.Key == key )
+            {
+                _heldItems.RemoveAt( i );
+                Destroy( item.gameObject );
+                _itemCount--;
+                UpdateInventoryLayout();
+                return;
+            }
+        }
+    }
+    
+    
+    private void LoadItems()
+    {
+        foreach ( ItemType type in _itemTypeWhitelist )
+        {
+            if ( type == ItemType.Weapon )
+            {
+                _itemCount = _manager.WeaponItems.Count;
+                foreach ( WeaponItemInfo item in _manager.WeaponItems.Values )
+                {
+                    LoadItem( item );
+                }
+            }
+            else if ( type == ItemType.Health )
+            {
+                _itemCount = _manager.HealthItemKeys.Count;
+                foreach ( int itemKey in _manager.HealthItemKeys )
+                {
+                    LoadItem( _manager.AllItems[itemKey] );
+                }
+            }
+        }
+    }
+    
+
+    private void LoadItem( ItemInfo item )
+    {
+        ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity, _itemLayer ).GetComponent<ItemContainer>();
+        InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
+        
+        newContainer.Set( item );
+        newContainer.transform.SetAsFirstSibling();
+        newContainer.transform.SetSiblingIndex( item.Order );
+        layout.Initialize();
+
+        _heldItems.Add( layout );
+
+        DragObject drag = newContainer.GetComponent<DragObject>();
+        ConnectDragObject( drag, layout, newContainer );
+
+    }
+    
+    
+    public void AddItem(ItemInfo item)
+    {
+        
+        ItemContainer newContainer = Instantiate( _invItemPrefab, Vector3.zero, Quaternion.identity,  _itemLayer ).GetComponent<ItemContainer>();
+        InventoryItemLayout layout = newContainer.GetComponent<InventoryItemLayout>();
+        
+        newContainer.Set( item );
+        newContainer.transform.SetAsFirstSibling();
+        layout.Initialize();
+        
+        DragObject drag = newContainer.GetComponent<DragObject>();
+        ConnectDragObject( drag, layout, newContainer );
+
+        _itemCount++;
+        UpdateInventoryLayout();
+    }
+
+    private void ConnectDragObject( DragObject drag, InventoryItemLayout layout, ItemContainer newContainer )
+    {
+        drag.Initialize();
+        drag.RemoveCallback = layout.RemoveCallback;
+        drag.Callback = layout.CallBack;
+        drag.SwapCallback = layout.SwapCallback;
+        drag.TransferFromContainer = newContainer;
+        drag.SourceObject = gameObject;
+    }
+
+    public void TryAddItem(ItemInfo item)
+    {
+        if ( !CanAddItem( item ) )
+        {
+            //TODO: drop item
+            return;
+        }
+        
+        AddItem( item );
+        
+    }
+
     public void ReOrderItem( DragObject drag, Vector2 position )
     {
-        for ( int i = 0; i < _itemLayer.transform.childCount; i++ )
+        int childCount = _itemLayer.transform.childCount;
+        for ( int i = 0; i < childCount; i++ )
         {
             Vector3 pos = _itemLayer.GetChild( i ).GetComponent<RectTransform>().position;
             if ( pos.y <= position.y )
             {
-                int index = drag.TransferFromObj.transform.GetSiblingIndex();
+                int index = drag.TransferFromContainer.transform.GetSiblingIndex();
                 if ( index <= i )
                 {
                     index = Math.Max( i - 1, 0 );
@@ -141,11 +213,29 @@ public class InventoryManager : MonoBehaviour
                 {
                     index = i;
                 }
-                drag.TransferFromObj.transform.SetSiblingIndex( index );
+
+                //PlayerUIManager.Instance.ReorderItem( drag.Container.ItemKey, index );
+                drag.Container.Item.Order = index;
+                drag.TransferFromContainer.transform.SetSiblingIndex( index );
+                UpdateItemOrders();
                 return;
             }
         }
-        drag.TransferFromObj.transform.SetSiblingIndex( _itemLayer.transform.childCount );
+        //PlayerUIManager.Instance.ReorderItem( drag.Container.ItemKey, childCount );
+        drag.Container.Item.Order = childCount;
+        drag.TransferFromContainer.transform.SetSiblingIndex( childCount );
+        UpdateItemOrders();
+    }
+
+    private void UpdateItemOrders()
+    {
+        int childCount = _itemLayer.transform.childCount;
+        for ( int i = 0; i < childCount; i++ )
+        {
+           ItemContainer item = _itemLayer.GetChild( i ).GetComponent<ItemContainer>();
+           item.Item.Order = i;
+        }
+        
     }
 
     public bool CanAddItem( ItemInfo info )
@@ -160,6 +250,17 @@ public class InventoryManager : MonoBehaviour
                 return true;
         }
 
+
+        return false;
+    }
+
+    private bool MatchesItemType(ItemType type)
+    {
+        foreach ( ItemType allowedType in _itemTypeWhitelist )
+        {
+            if ( type == allowedType )
+                return true;
+        }
 
         return false;
     }
@@ -180,16 +281,12 @@ public class InventoryManager : MonoBehaviour
             _itemLayer.localScale = Vector3.one;
             _rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30);
         }
-
-        
     }
     
     
     public void RemovedItem()
     {
         _itemCount--;
-        
-        //_rectTransform.sizeDelta = _itemLayer.rect.size + new Vector2(0,30); //works, but only if we delay update by a frame (becuase of deleting GO)
         UpdateInventoryLayout();
     }
 
@@ -202,6 +299,15 @@ public class InventoryManager : MonoBehaviour
         return layoutSize;
     }
 
+    private Vector2 CalculateItemListLayoutSize()
+    {
+        Vector2 itemSize = _invItemPrefab.GetComponent<RectTransform>().rect.size;
+        
+        Vector2 layoutSize = new Vector2(_rectTransform.rect.width, Math.Max(_itemCount, 1)*itemSize.y);
+        layoutSize += new Vector2( 0, _spacing *(_itemCount+1) );
+        return layoutSize;
+    }
+    
     private void UpdateInventoryLayout()
     {
         //update item capacity
@@ -211,8 +317,12 @@ public class InventoryManager : MonoBehaviour
             _itemCounter.text = _itemCount.ToString();
         
         //change layout to fit items
-        if(!_collapsed)
+        if ( !_collapsed )
+        {
             _rectTransform.sizeDelta = CalculateLayoutSize();
+        }
+        _itemLayer.sizeDelta = CalculateItemListLayoutSize();
+            
     }
     
 }

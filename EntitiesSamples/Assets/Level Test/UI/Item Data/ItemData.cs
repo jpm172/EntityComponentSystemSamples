@@ -8,10 +8,25 @@ public class ItemData : ScriptableObject
     [Tooltip("Item Name")]
     public string ItemName;
 
+    [Tooltip("Item ID")]
+    public int ItemID;
+    
     [Tooltip("Item Type")]
     public ItemType ItemType;
     
     [Tooltip( "Item Sprite" )] 
     public Sprite ItemSprite;
+    
+    [Tooltip( "Stackable" )] 
+    public bool Stackable;
+    
+    [Tooltip("Equip Time")]
+    [Range(0, 30)]
+    public float EquipTime;
+    
+    [Tooltip("Holster Time")]
+    [Range(0, 30)]
+    public float HolsterTime;
+    
 
 }

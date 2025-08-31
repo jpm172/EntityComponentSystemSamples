@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 8163349992372542341}
   - component: {fileID: 4796523048492632197}
   - component: {fileID: 3977462888016713010}
-  - component: {fileID: 8268198046506640944}
+  - component: {fileID: 4431654510133051456}
   m_Layer: 5
   m_Name: TransferItemPrefab
   m_TagString: Untagged
@@ -133,7 +133,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2878e95aefc2304da3c3212c5cc7282, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  TransferFromObj: {fileID: 0}
+  TransferFromContainer: {fileID: 0}
   SourceObject: {fileID: 0}
   IsTransferItem: 1
 --- !u!114 &3977462888016713010
@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3590889028a1a3479f8cfe09c722325, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &8268198046506640944
+--- !u!114 &4431654510133051456
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -157,10 +157,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1766037046150380363}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 35f04a6d1263c314cabf35697b47529a, type: 3}
+  m_Script: {fileID: 11500000, guid: 1e76ec037a9a80e4ca1c9449e72646fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Data: {fileID: 11400000, guid: a12a7275d40a5c04785f55116ddeb838, type: 2}
+  Item:
+    Data: {fileID: 0}
 --- !u!1 &2829305268405798777
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,8 +229,9 @@ MonoBehaviour:
       m_Calls: []
   m_text: ItemName
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: b5c72b52a62f8ab40a37fcd8240feb74, type: 2}
+  m_sharedMaterial: {fileID: -1297102371332679698, guid: b5c72b52a62f8ab40a37fcd8240feb74,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

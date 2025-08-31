@@ -14,7 +14,7 @@ public class TransferItemInfo : MonoBehaviour
     private void Start()
     {
         _text = GetComponentInChildren<TextMeshProUGUI>();
-        _text.text = GetComponent<ItemInfo>().Data.ItemName;
+        _text.text = GetComponent<ItemContainer>().Data.ItemName;
     }
     
 }

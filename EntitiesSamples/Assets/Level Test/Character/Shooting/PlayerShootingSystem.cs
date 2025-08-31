@@ -54,7 +54,7 @@ public partial struct PlayerShootingSystem : ISystem
         _colliderMap.Dispose();
     }
 
-    private NativeHashMap<Entity, int> ModifyHitStructures( NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap, ref SystemState state, WeaponInfo weapon )
+    private NativeHashMap<Entity, int> ModifyHitStructures( NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap, ref SystemState state, WeaponDesc weapon )
     {
         NativeHashMap<Entity, int> modifiedEntities = new NativeHashMap<Entity, int>( entityHitMap.Count(), Allocator.TempJob );
         NativeArray<ShootInfo> shootKeys = entityHitMap.GetKeyArray( Allocator.Temp );
@@ -120,7 +120,7 @@ public partial struct PlayerShootingSystem : ISystem
     }
 
 
-    private NativeParallelMultiHashMap<ShootInfo, Entity> FireWeapon(PhysicsWorldSingleton physicsWorld, LocalTransform transform, WeaponInfo weapon)
+    private NativeParallelMultiHashMap<ShootInfo, Entity> FireWeapon(PhysicsWorldSingleton physicsWorld, LocalTransform transform, WeaponDesc weapon, RecoilData recoil)
     {
         NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>();
         //NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo, Entity>(8*weapon.BulletsPerShot, Allocator.TempJob);
@@ -147,7 +147,8 @@ public partial struct PlayerShootingSystem : ISystem
                 PhysicsWorld = physicsWorld,
                 RandomSeed = _rng.NextUInt(),
                 Transform = transform,
-                Weapon = weapon
+                Weapon = weapon,
+                Recoil = recoil
             }.Schedule( weapon.BulletsPerShot, 1 ).Complete();
         }
         
@@ -155,7 +156,7 @@ public partial struct PlayerShootingSystem : ISystem
         return entityHitMap;
     }
 
-    private void ThrowProjectile(ref SystemState state, LocalTransform transform, WeaponInfo weapon, PlayerInputs inputs)
+    private void ThrowProjectile(ref SystemState state, LocalTransform transform, WeaponDesc weapon, PlayerInputs inputs)
     {
         var config = SystemAPI.GetSingleton<GameConfig>();
         
@@ -185,14 +186,6 @@ public partial struct PlayerShootingSystem : ISystem
         state.EntityManager.SetComponentData(entity, pt.WithPosition( transform.Position + throwHeight ));
     }
 
-    private ref WeaponInfo GetEquippedWeapon(RefRW<CharacterInventory> inv)
-    {
-        if(inv.ValueRO.Equipped == 1)
-            return ref inv.ValueRW.PrimaryWeapon;
-        
-        return ref inv.ValueRW.SecondaryWeapon;
-    }
-    
     public void OnUpdate( ref SystemState state )
     {
         state.EntityManager.CompleteDependencyBeforeRW<PhysicsWorldSingleton>();
@@ -204,32 +197,42 @@ public partial struct PlayerShootingSystem : ISystem
 
             if ( fuze.ValueRW.Timer <= 0 )
             {
-                WeaponInfo weaponInfo = new WeaponInfo
+                WeaponDesc WeaponDesc = new WeaponDesc
                 {
                     ExplosionRadius = fuze.ValueRO.ExplosionRadius,
                     Penetration = fuze.ValueRO.Penetration,
                     IsExplosion = true
                 };
 
-                NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = FireWeapon( physicsWorld, transform.ValueRO, weaponInfo );
-                ProcessHits( entityHitMap, ref state, ecb, physicsWorld, weaponInfo );
+                NativeParallelMultiHashMap<ShootInfo, Entity> entityHitMap = FireWeapon( physicsWorld, transform.ValueRO, WeaponDesc, new RecoilData() );
+                ProcessHits( entityHitMap, ref state, ecb, physicsWorld, WeaponDesc );
                 entityHitMap.Dispose();
                 ecb.DestroyEntity( entity );
             }
             
         }
 
-        foreach ( var (transform, input, inventory, player) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PlayerInputs>, RefRW<CharacterInventory>>().WithEntityAccess())
+        foreach ( var (transform, input, recoil, stats, inventory, player) 
+            in SystemAPI.Query<RefRO<LocalTransform>, RefRW<PlayerInputs>, RefRW<RecoilData>, RefRO<CharacterStats>, RefRW<CharacterInventory>>().WithEntityAccess())
         {
-            ref WeaponInfo weapon = ref GetEquippedWeapon( inventory );
+            Entity equippedItem = inventory.ValueRW.EquippedItem;
+            if(!state.EntityManager.HasComponent( equippedItem,typeof(WeaponDesc) ))
+                continue;
+            WeaponDesc weapon = state.EntityManager.GetComponentData<WeaponDesc>( equippedItem );
+            /*
+            ref WeaponDesc weapon = ref GetEquippedWeapon( inventory );
             if ( weapon.Null )
                 continue;
+                */
 
             weapon.Timer -= SystemAPI.Time.DeltaTime;
             
-            if ( !input.ValueRO.Shoot || weapon.Timer > 0 )
+            if ( !input.ValueRO.Shoot || weapon.Timer > 0 || weapon.CurrentAmmo <= 0 || weapon.ReloadProfile.ReloadState != ReloadState.Ready )
+            {
+                state.EntityManager.SetComponentData( equippedItem, weapon );
                 continue;
-            
+            }
+
             weapon.Timer = weapon.FireRate;
             weapon.CurrentAmmo--;
 
@@ -238,13 +241,14 @@ public partial struct PlayerShootingSystem : ISystem
                 ThrowProjectile(ref state, transform.ValueRO,  weapon, input.ValueRO);
                 return;
             }
-            
+            state.EntityManager.SetComponentData( equippedItem, weapon );
             
             
             //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = new NativeParallelMultiHashMap<ShootInfo,Entity>(32, Allocator.TempJob);
             //NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon.ValueRO);
-            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon);
-
+            NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap = FireWeapon(physicsWorld, transform.ValueRO, weapon, recoil.ValueRO);
+            
+            ApplyRecoil( ref recoil.ValueRW, weapon.Recoil, stats.ValueRO );
 
             if ( !entityHitMap.IsEmpty )
             {
@@ -343,11 +347,44 @@ public partial struct PlayerShootingSystem : ISystem
             }
 
             entityHitMap.Dispose();
-        }    //
+        }   
     }
 
+    private void ApplyRecoil(ref RecoilData recoil, RecoilProfile profile, CharacterStats stats)
+    {
+        recoil.RecoveryTime = profile.Recovery; //should only need to update once
+        recoil.TargetRecoilAngle += AddRecoilAngle(recoil, profile, stats);
+        
+        recoil.RecoilTimer = math.min(recoil.RecoilTimer + profile.Control * Time.deltaTime, 1);
+        recoil.TimeSinceShot = 0;
+    }
+    
+    private float AddRecoilAngle(RecoilData recoil, RecoilProfile profile, CharacterStats stats)
+    {
+        float recoilValue = math.lerp( profile.MaxMagnitude, profile.MinMagnitude, recoil.RecoilTimer );
+        recoilValue *= 1 + ( 1 - stats.TotalStats.ArmsCondition() );
+        
+        //Debug.Log( $"{armCondition} -> {recoilValue} " );
+        
+        //float coneAngle = math.lerp( StartCone, EndCone, inputs.RecoilTimer );
+        float coneAngle = 45;
+        
+        //Debug.Log( $"{recoil.RecoilTimer} -> {recoilValue} " );
+        if ( recoil.TargetRecoilAngle + recoilValue > coneAngle )
+        {
+            recoilValue *= -1;
+        }
+        else if ( recoil.TargetRecoilAngle - recoilValue >= -coneAngle )
+        {
+            recoilValue *= math.@select( 1, -1, _rng.NextBool() );
+        }
+        
+        
+        
+        return recoilValue;
+    }
 
-    private void ProcessHits(NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap, ref SystemState state, EntityCommandBuffer ecb, PhysicsWorldSingleton physicsWorld, WeaponInfo weapon)
+    private void ProcessHits(NativeParallelMultiHashMap<ShootInfo,Entity> entityHitMap, ref SystemState state, EntityCommandBuffer ecb, PhysicsWorldSingleton physicsWorld, WeaponDesc weapon)
     {
 
         NativeHashMap<Entity, int> modifiedEntities = ModifyHitStructures( entityHitMap, ref state, weapon );
@@ -690,7 +727,7 @@ public struct DestroyStructureJob : IJob
     public NativeReference<ShootInfo> Info;
     public NativeReference<bool> Modified;
 
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
     public float PPU;
     public int2 Dimensions;
     public void Execute( )
@@ -956,7 +993,7 @@ public partial struct PlayerShootJob : IJobEntity
     //public NativeList<ShootInfo>.ParallelWriter Hits;
     public Random RNG;
 
-    public NativeReference<WeaponInfo> FiredWeapon;
+    public NativeReference<WeaponDesc> FiredWeapon;
     public NativeParallelMultiHashMap<ShootInfo, Entity> EntityHitMap;
     
     private static readonly CollisionFilter CastFilter = new CollisionFilter
@@ -965,14 +1002,14 @@ public partial struct PlayerShootJob : IJobEntity
         BelongsTo = ~(uint)( 1 << 6 )
     };
     
-    private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponInfo weapon )
+    private void Execute( in LocalTransform transform, in PlayerInputs input, in WeaponDesc weapon )
     {
         FiredWeapon.Value = weapon;
 
 
 
 
-        WeaponInfo newWeapon = weapon;
+        WeaponDesc newWeapon = weapon;
         newWeapon.Timer = weapon.FireRate;//
         FiredWeapon.Value = newWeapon;
         //NativeList<ShootInfo> allInfo = new NativeList<ShootInfo>(32, Allocator.Temp);
@@ -1086,7 +1123,8 @@ public struct ParallelPlayerShootJob : IJobParallelFor
     public uint RandomSeed;
     
     public LocalTransform Transform;
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
+    public RecoilData Recoil;
 
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 
@@ -1105,9 +1143,11 @@ public struct ParallelPlayerShootJob : IJobParallelFor
      private void CastRay( LocalTransform transform, int key)
     {
         Random RNG = Random.CreateFromIndex( RandomSeed + (uint)key );
-        float spread = Weapon.WeaponSpread * math.TORADIANS;
-        float3 rayEnd = transform.RotateZ( RNG.NextFloat(-spread,spread) ).Right() * Weapon.Range;
-
+        //float spread = Weapon.WeaponSpread * math.TORADIANS;
+        //float3 rayEnd = transform.RotateZ( RNG.NextFloat(-spread,spread) ).Right() * Weapon.Range;
+        float randomSpread = RNG.NextFloat( -Weapon.WeaponSpread, Weapon.WeaponSpread );//
+        
+        float3 rayEnd = transform.RotateZ( math.radians(-(Recoil.RecoilAngle + randomSpread ) ) ).Right() * Weapon.Range;
         RaycastInput rayInput = new RaycastInput
         {
             Start = transform.Position,
@@ -1193,7 +1233,7 @@ public struct ExplosionJob : IJobParallelFor
     public uint RandomSeed;
 
     public LocalTransform Transform;
-    public WeaponInfo Weapon;
+    public WeaponDesc Weapon;
 
     public NativeParallelMultiHashMap<ShootInfo, Entity>.ParallelWriter EntityHitMap;
 

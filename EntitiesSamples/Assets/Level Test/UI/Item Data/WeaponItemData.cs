@@ -6,17 +6,15 @@ using UnityEngine;
 public class WeaponItemData : ItemData
 {
 
-    [Tooltip("Equip Time")]
-    [Range(0, 30)]
-    public float EquipTime;
-    
-    [Tooltip("Holster Time")]
-    [Range(0, 30)]
-    public float HolsterTime;
+    [Tooltip("Ammo Type")]
+    public AmmoType AmmoType;
     
     [Tooltip("Ammo Capacity")]
     [Range(1, 1000)]
     public int MaxAmmo;
+    
+    [Tooltip("Reload Profile")]
+    public ReloadProfile ReloadProfile;
     
     [Tooltip("Bullets Per Shot")]
     [Range(1, 100)]
@@ -29,6 +27,9 @@ public class WeaponItemData : ItemData
     
     [Tooltip("Spread")]
     public float WeaponSpread;
+
+    [Tooltip( "Recoil Profile" )] 
+    public RecoilProfile Recoil;
     
     [Tooltip("Range")]
     [Range(0.1f, 1000)]
@@ -36,5 +37,8 @@ public class WeaponItemData : ItemData
     
     [Tooltip("Penetration")]
     public float Penetration;
+    
+    [Tooltip("Attachment Slots")]
+    public List<AttachmentSlot> AttachmentSlots;
     
 }

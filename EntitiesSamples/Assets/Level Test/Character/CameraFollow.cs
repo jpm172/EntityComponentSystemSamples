@@ -6,7 +6,11 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-[UpdateInGroup(typeof(SimulationSystemGroup))]
+//[UpdateInGroup(typeof(SimulationSystemGroup))]
+
+//update order is very important for the whole player/eye/camera relationship,
+//if the update order is not correct, then there will be noticeable flickering in the vision when moving
+[UpdateInGroup(typeof(TransformSystemGroup), OrderLast = true)]
 public partial class CameraFollowSystem : SystemBase
 {
 
@@ -30,9 +34,18 @@ public partial class CameraFollowSystem : SystemBase
 
     protected override void OnUpdate()
     {
+        /*
         LocalTransform t = playerQuery.GetSingleton<LocalTransform>();
         _playerTracker.position = t.Position;
         _camera.transform.position = t.Position + offset;
+        */
+        
+        foreach ( var (input, lt) in SystemAPI.Query<RefRO<PlayerInputs>, RefRO<LocalTransform>>() )
+        {
+           // LocalTransform t = playerQuery.GetSingleton<LocalTransform>();
+            _playerTracker.position = lt.ValueRO.Position;
+            _camera.transform.position = lt.ValueRO.Position + offset;
+        }
 
     }
 }

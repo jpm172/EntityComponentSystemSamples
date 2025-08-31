@@ -6,10 +6,8 @@ using UnityEngine;
 public class EquipmentItemLayout : InventoryItemLayout
 {
     
-    protected override void Initialize()
+    protected override void UpdateLayout()
     {
-        _item = GetComponent<ItemInfo>();
-        
         //set the text and change rect to match its size
         _itemText.SetText( _item.Data.ItemName );
         Vector2 textPref = _itemText.GetPreferredValues();

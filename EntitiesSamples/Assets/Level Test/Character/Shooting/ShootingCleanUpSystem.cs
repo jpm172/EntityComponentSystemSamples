@@ -13,7 +13,7 @@ using Collider = Unity.Physics.Collider;
 [UpdateBefore(typeof(PhysicsSystemGroup))]
 public partial struct ShootingCleanUpSystem : ISystem
 {
-//
+
     private EntityQuery query;
     private EntityQuery _endQuery;
     private EntityQuery destroyedQuery;

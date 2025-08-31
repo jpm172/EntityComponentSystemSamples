@@ -13,5 +13,9 @@ MonoBehaviour:
   m_Name: Helmet
   m_EditorClassIdentifier: 
   ItemName: Helmet
+  ItemID: 1
   ItemType: 2
   ItemSprite: {fileID: 21300000, guid: 12f37b5e851c60940a42e5756ec3f7d6, type: 3}
+  Stackable: 0
+  EquipTime: 0
+  HolsterTime: 0

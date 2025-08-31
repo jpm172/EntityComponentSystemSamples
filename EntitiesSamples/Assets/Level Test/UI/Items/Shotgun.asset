@@ -13,11 +13,27 @@ MonoBehaviour:
   m_Name: Shotgun
   m_EditorClassIdentifier: 
   ItemName: Shotgun
+  ItemID: 6
   ItemType: 0
   ItemSprite: {fileID: 21300000, guid: 536fa0949560ca94ab145cc058f0d74c, type: 3}
+  Stackable: 0
+  EquipTime: 2
+  HolsterTime: 0
+  AmmoType: 2
   MaxAmmo: 6
-  BulletsPerShot: 8
+  ReloadProfile:
+    ReloadType: 1
+    ReloadState: 0
+    ReloadTimer: 0.4
+    ReloadRemaining: 0
+  BulletsPerShot: 12
   FireRate: 2
-  WeaponSpread: 12
+  WeaponSpread: 8
+  Recoil:
+    MaxMagnitude: 8
+    MinMagnitude: 3
+    Control: 7
+    Recovery: 0.5
   Range: 10
   Penetration: 10
+  AttachmentSlots: 0100000003000000

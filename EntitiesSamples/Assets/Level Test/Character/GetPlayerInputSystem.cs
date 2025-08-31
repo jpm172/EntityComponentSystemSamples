@@ -30,36 +30,39 @@ public partial class GetPlayerInputSystem : SystemBase
     protected override void OnUpdate()
     {
         Vector2 moveInput = _inputActions.DemoMap.PlayerMovement.ReadValue<Vector2>();
+        bool click = _inputActions.DemoMap.Shoot.WasPerformedThisFrame();
         bool shoot = _inputActions.DemoMap.Shoot.IsPressed();
+        bool reload = _inputActions.DemoMap.Reload.IsPressed();
         bool inventory = _inputActions.DemoMap.Inventory.WasPerformedThisFrame();
-        bool equipPrimary = _inputActions.DemoMap.Primary.WasPerformedThisFrame();
-        bool equipSecondary = _inputActions.DemoMap.Secondary.WasPerformedThisFrame();
-        
-        
+        bool altFire = _inputActions.DemoMap.AlternateFire.IsPressed();
+        bool quickSwitch = _inputActions.DemoMap.QuickSwitch.WasPerformedThisFrame();
+        altFire = _inputActions.DemoMap.AlternateFire.WasPerformedThisFrame(); //DEBUG FOR HEALTH!!!
+
+
         float3 mousePosition = _camera.ScreenToWorldPoint( Input.mousePosition ) * xy;
         
         foreach (var (playerInputs, playerInventory) in SystemAPI.Query<RefRW<PlayerInputs>, RefRW<CharacterInventory>>())
         {
-            if ( equipPrimary )
-            {
-                playerInventory.ValueRW.Equipped = 1;
-            }
-            else if ( equipSecondary )
-            {
-                playerInventory.ValueRW.Equipped = 2;
-            }
+            shoot &= !playerInventory.ValueRO.Switching;
+            altFire &= !playerInventory.ValueRO.Switching;
 
             if ( inventory )
             {
-                _ui.SetActive( !_ui.activeInHierarchy );
+                PlayerUIManager.Instance.ToggleInventory();
             }
-            
+
+            if ( quickSwitch )
+            {
+                PlayerUIManager.Instance.QuickSwitch(); 
+            }
+
+            playerInputs.ValueRW.Click = click;
             playerInputs.ValueRW.MoveInput = moveInput;
             playerInputs.ValueRW.AimPosition = mousePosition;
             playerInputs.ValueRW.Shoot = shoot;
-            playerInputs.ValueRW.ToggleInventory = inventory;
-            playerInputs.ValueRW.EquipPrimary = equipPrimary;
-            playerInputs.ValueRW.EquipSecondary = equipSecondary;
+            playerInputs.ValueRW.AltFire = altFire;
+            playerInputs.ValueRW.Reload = reload;
+            playerInputs.ValueRW.QuickSwitch = quickSwitch;
         }
         
         //Debug.Log( mousePosition );

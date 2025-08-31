@@ -1,40 +1,520 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Entities;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PlayerUIManager : MonoBehaviour
 {
+    public static PlayerUIManager Instance;
+
+    
+    
+
+    public PanelManager ActivePanel;
+
+    private SubMenuManager _subMenuManager;
+    
+    
+    
     [SerializeField]
     private GameObject _gearLayer;
     [SerializeField]
     private GameObject _healthLayer;
+    [SerializeField]
+    private GameObject _workbenchLayer;
+    
+    [SerializeField]
+    private HotbarManager _hotBar;
+    private CanvasGroup _hotBarGroup;
 
     [SerializeField]
-    private List<WeaponItemData> _weaponItems;
-    [SerializeField]
-    private List<HealthItemData> _healthItems;
-    [SerializeField]
-    private List<ItemData> _equipmentItems;
+    private GameObject _panelsParent;
 
-    public List<WeaponItemData> WeaponItems => _weaponItems;
-    public List<ItemData> EquipmentItems => _equipmentItems;
-    public List<HealthItemData> HealthItems => _healthItems;
+    public BodyHealthManager _bodyManager;
+
+    [SerializeField]
+    private int _playerMaxHealth;
+    [SerializeField]
+    private float _playerCurrentHealth;
+
+    [SerializeField]
+    private float _playerBleedRate;
+
+
+    [SerializeField]
+    private ItemInfo[] _serializedItems;
+    
+    private Dictionary<int, ItemInfo> _allItemsDict;
+    private Dictionary<int, WeaponItemInfo> _weaponDict;
+    //private Dictionary<int, HealthItemInfo> _healthItemDict;
+    private List<int> _healthItemKeys;
+    
+    private EntityManager _entityManager;
+    private Entity _playerEntity;
+    
+    
+    //public List<WeaponItemInfo> WeaponItems => _weaponItems;
+    public Dictionary<int, ItemInfo> AllItems => _allItemsDict;
+    public Dictionary<int, WeaponItemInfo> WeaponItems => _weaponDict;
+    //public Dictionary<int, HealthItemInfo> HealthItems => _healthItemDict;
+    public List<int> HealthItemKeys => _healthItemKeys;
+
+    public Entity PlayerEntity => _playerEntity;
+
+    public float PlayerCurrentHealth
+    {
+        get => _playerCurrentHealth;
+        set => _playerCurrentHealth = Math.Max(0,value);
+    }
+
+    public int PlayerMaxHealth
+    {
+        get => _playerMaxHealth;
+        set => _playerMaxHealth = value;
+    }
+
+    public float PlayerBleedRate
+    {
+        get => _playerBleedRate;
+        set => _playerBleedRate = Math.Max(0, value);
+    }
+    
+    public UnityEvent<int> NewItemEvent;
+    public UnityEvent<int> UpdateItemEvent;
+    public UnityEvent<int> RemoveItemEvent;
+
+    public void SerializeItems()
+    {
+        _serializedItems = new ItemInfo[_allItemsDict.Values.Count];
+        _allItemsDict.Values.CopyTo( _serializedItems, 0 );
+    }
+
+    public void AddWound()
+    {
+        _bodyManager.AddWoundECS();
+    }
+
+    public void BreakLimb()
+    {
+        Entity breakDebuff =  _entityManager.CreateEntity();
+   
+        /*
+        BasicStatStatusEffect se = new BasicStatStatusEffect
+        {
+            AffectedStat = StatType.MoveSpeed,
+            ModType = StatModType.Add,
+            Value = 3
+        };
+        */
+
+        BodyStatusEffect se = new BodyStatusEffect
+        {
+            AffectedLimb = BodyPart.LeftArm,
+            AffectedStat = BodyStatType.Condition,
+            ModType = StatModType.Multiply,
+            Value = -1
+        };
+
+        StatusEffectInfo info = new StatusEffectInfo
+            {Type = StatusEffectType.BodyStats, Quality = StatusEffectQuality.Debuff, ID = StatsuEffectID.Tourniquet};
+
+        _entityManager.AddComponentData( breakDebuff, se );
+        _entityManager.AddComponentData( breakDebuff, info );
+        _entityManager.AddComponentData( breakDebuff, new StatusEffectTimer(5) );
+        //_entityManager.AddComponentData( breakDebuff, new StatusEffectBodyListener( _playerEntity, BodyPart.LeftArm, 0, false ) );
+        
+        DynamicBuffer<StatusEffect> effects = _entityManager.GetBuffer<StatusEffect>( _playerEntity );
+        effects.Add( new StatusEffect
+        {
+            EffectEntity = breakDebuff
+        } );
+        _bodyManager.AddStatusEffect( breakDebuff );
+    }
+    
+    private void Awake()
+    {
+        if ( Instance == null )
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy( Instance );
+        }
+        
+        World world = World.DefaultGameObjectInjectionWorld;
+        _entityManager = world.EntityManager;
+
+        _playerMaxHealth = 300;
+        _playerCurrentHealth = _playerMaxHealth;
+        
+        _hotBarGroup = _hotBar.GetComponent<CanvasGroup>();
+        _subMenuManager = GetComponent<SubMenuManager>();
+        
+        _allItemsDict = new Dictionary<int, ItemInfo>();
+        
+        _weaponDict = new Dictionary<int, WeaponItemInfo>();
+        _healthItemKeys = new List<int>();
+        /*
+        for ( int i = 0; i < _loadWeapons.Count; i++ )
+        {
+            WeaponItemInfo newWeapon = new WeaponItemInfo( _loadWeapons[i], _itemKey );
+            newWeapon.Order = i;
+            newWeapon.Weapon.CurrentAmmo = UnityEngine.Random.Range( 0, newWeapon.Weapon.MaxAmmo + 1 );
+            
+            _weaponDict.Add( _itemKey,  newWeapon );
+            _allItemsDict.Add( _itemKey, newWeapon );
+            //_weaponItems.Add( new WeaponItemInfo(_loadWeapons[i], _itemKey) );
+            _itemKey++;
+        }
+        
+        
+        for ( int i = 0; i < _loadHealthItems.Count; i++ )
+        {
+            if ( _loadHealthItems[i].Stackable )
+            {
+                bool foundItem = false;
+                foreach ( int key in _healthItemKeys )
+                {
+                    if ( _allItemsDict[key].Data.ItemID == _loadHealthItems[i].ItemID )
+                    {
+                        _allItemsDict[key].Quantity++;
+                        foundItem = true;
+                        break;
+                    }
+                }
+
+                if ( !foundItem )
+                {
+                    HealthItemInfo newHealth = new HealthItemInfo( _loadHealthItems[i], _itemKey );
+                    newHealth.HealthItem.CurrentCharges =  newHealth.HealthItem.MaxCharges;
+                    newHealth.Order = i;
+            
+                    //_healthItemDict.Add( _itemKey, newHealth );
+                    _healthItemKeys.Add( _itemKey );
+                    _allItemsDict.Add(_itemKey,  newHealth  );
+                    _itemKey++;
+                }
+            }
+            else
+            {
+                //_healthItems.Add( new HealthItemInfo( _loadHealthItems[i], _itemKey ) );
+                HealthItemInfo newHealth = new HealthItemInfo( _loadHealthItems[i], _itemKey );
+                //newHealth.HealthItem.CurrentCharges =  UnityEngine.Random.Range( 0, newHealth.HealthItem.MaxCharges + 1 );
+                newHealth.HealthItem.CurrentCharges =  newHealth.HealthItem.MaxCharges;
+                //newHealth.HealthItem.CurrentCharges =  5;
+                newHealth.Order = i;
+            
+                //_healthItemDict.Add( _itemKey, newHealth );
+                _healthItemKeys.Add( _itemKey );
+                _allItemsDict.Add(_itemKey,  newHealth  );
+                _itemKey++;
+            }
+        }
+        */
+        
+        InitializePanels();
+    }
 
     private void Start()
     {
+        _entityManager.CreateEntityQuery( typeof( PlayerInputs ) )
+            .TryGetSingletonEntity<Entity>(out _playerEntity);
+    }
+
+
+    //will make sure even the disabled panels are set up properly
+    private void InitializePanels()
+    {
+        _workbenchLayer.GetComponent<IInitializeUI>().Initialize();
+        _healthLayer.GetComponent<IInitializeUI>().Initialize();
+        _gearLayer.GetComponent<IInitializeUI>().Initialize();
+    }
+    
+    public void CreateSubMenu( ItemContainer container, Vector2 clickPosition )
+    {
+        _subMenuManager.CreateSubMenu( container, clickPosition );
+    }
+
+    public SubMenu CreateStaticSubMenu()
+    {
+
+        return _subMenuManager.CreateStaticSubMenu();
+    }
+    
+    
+    public void NewWoundECS(CharacterWound newWound)
+    {
+        _bodyManager.AddWoundECS(newWound);
+    }
+
+    public void HealedWoundECS(int woundIndex)
+    {
+        _bodyManager.RemoveWoundECS( woundIndex );
+    }
+
+
+    public void AddedStatusEffect( Entity debuffEntity )
+    {
+        _bodyManager.AddStatusEffect( debuffEntity );
+    }
+    public void RemovedStatusEffectECS( int effectIndex )
+    {
+        _bodyManager.RemoveStatusEffectECS( effectIndex );
+    }
+
+    public void QuickSwitch()
+    {
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        if ( inventory.LastEquipIndex < 0 )
+            return;
+        
+        _hotBar.EquipSlot( inventory.LastEquipIndex );
+    }
+
+
+    public void AddToHotbar(ItemInfo itemInfo, int equipIndex, bool equip)
+    {
+        int targetKey = itemInfo.Key;
+        DynamicBuffer<HotBarItem> hotbarBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
+        DynamicBuffer<InventoryItem> invBuffer = _entityManager.GetBuffer<InventoryItem>( _playerEntity );
+
+
+        for ( int i = 0; i < invBuffer.Length; i++ )
+        {
+            InventoryItem item = invBuffer[i];
+            CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( item.Item );
+            if ( itemData.Key == targetKey )
+            {
+                hotbarBuffer.ElementAt( equipIndex ).Item = item.Item;
+                break;
+            }
+        }
+        
+        if ( equip )
+        {
+            CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+            playerInv.SwitchToBuffer = new EquippingData(hotbarBuffer[equipIndex].Item);
+            _entityManager.SetComponentData( _playerEntity, playerInv );
+        }
+        
+        
+    }
+    
+    public void EquipSlot( int equipIndex, int previousIndex )
+    {
+        
+        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+
+        if ( equipIndex != previousIndex && previousIndex >= 0 )
+        {
+            inventory.LastEquipIndex = previousIndex;
+        }
+        
+        if ( invBuffer[equipIndex].Item == Entity.Null )
+        {
+            inventory.SwitchToBuffer = new EquippingData(Entity.Null);
+            _entityManager.SetComponentData( _playerEntity, inventory );
+            return;
+        }
+        
+
+        bool newSwitchIsEquipped = !inventory.Switching && inventory.EquippedItem == invBuffer[equipIndex].Item;
+        if(newSwitchIsEquipped)
+            return;
+        
+        inventory.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
+
+        _entityManager.SetComponentData( _playerEntity, inventory );
+    }
+
+
+    public void NewItem(Entity itemEntity, CharacterItemData entityItemData)
+    {
+        ItemData itemData = ItemManager.GetItemByID( entityItemData.ID );
+        
+
+        if ( itemData.ItemType == ItemType.Weapon )
+        {
+            WeaponDesc weaponDesc = _entityManager.GetComponentData<WeaponDesc>( itemEntity );
+            WeaponItemInfo newWeapon = new WeaponItemInfo( (WeaponItemData)itemData, weaponDesc, entityItemData.Key );
+            _allItemsDict.Add( entityItemData.Key, newWeapon );
+        }
+        else if ( itemData.ItemType == ItemType.Health )
+        {
+            HealthItemDesc healthItemDesc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+            HealthItemInfo newHealthItem = new HealthItemInfo( (HealthItemData)itemData, healthItemDesc, entityItemData.Key );
+            _allItemsDict.Add( entityItemData.Key, newHealthItem );
+        }
+        
+        NewItemEvent.Invoke( entityItemData.Key );
+        
+    }
+    
+
+    public void SwapItemEntities( int index1, int index2 )
+    {
+        DynamicBuffer<HotBarItem> hotbar = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
+        CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+
+        HotBarItem swap = hotbar[index1];
+        hotbar.ElementAt( index1 ) = hotbar[index2];
+        hotbar.ElementAt( index2 ) = swap;
+
+
+        int equippedIndex = _hotBar.GetEquippedIndex();
+        if ( equippedIndex >= 0 && equippedIndex == index1 )
+        {
+            inventory.SwitchToBuffer = new EquippingData(hotbar[index1].Item);
+        }
+        else if (equippedIndex >= 0 && equippedIndex == index2)
+        {
+            inventory.SwitchToBuffer = new EquippingData(hotbar[index2].Item);
+        }
+
+        _entityManager.SetComponentData( _playerEntity, inventory );
+
+    }
+    
+    public void QuickUseItem(HealthItemInfo healthItem, BodyPart healPart)
+    {
+        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
+        Entity itemEntity = GetItemEntity( healthItem );
+        
+        QuickUseData quickData = new QuickUseData
+        { 
+            Part = healPart
+        };
+
+       // _entityManager.AddComponentData( itemEntity, quickData );
+       HealthItemDesc desc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+       desc.State = ItemState.Start;
+       _entityManager.SetComponentData( itemEntity, desc );
+
+       if ( !playerInv.IsInPipeline( itemEntity ) )
+       {
+           playerInv.SwitchToBuffer = new EquippingData(itemEntity);
+           _entityManager.SetComponentData( _playerEntity, playerInv );
+       }
+        
         
     }
 
+
+    private Entity GetItemEntity( ItemInfo itemInfo )
+    {
+        DynamicBuffer<InventoryItem> playerItems = _entityManager.GetBuffer<InventoryItem>( _playerEntity );
+        Entity itemEntity = Entity.Null;
+
+        for ( int i = 0; i < playerItems.Length; i++ )
+        {
+            CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( playerItems[i].Item );
+            if ( itemData.Key == itemInfo.Key )
+            {
+                itemEntity = playerItems[i].Item;
+            }
+        }
+
+        if ( itemEntity == Entity.Null )
+        {
+            throw new NullReferenceException($"item not found - key: {itemInfo.Key}, ID: {itemInfo.Data.ItemID}, Name: {itemInfo.Data.ItemName}");
+        }
+
+        return itemEntity;
+    }
+    
+    
+    
+    //set update == true whenever using them internally (like the Heal All action) so that
+    //all items are properly updated, but when using items directly (drag and drop), 
+    //it will be handled by the DragObject, and there is no need to update all the other items
+    public void RemoveItem(int key)
+    {
+        Debug.Log( "remove" );
+        _hotBar.TryRemoveFromHotBar( key );
+        
+        RemoveItemEvent.Invoke( key );
+        ItemInfo removedItem = _allItemsDict[key];
+        _allItemsDict.Remove( removedItem.Key );
+        
+    }
+
+
+
+    public void UpdateItem( CharacterItemData entityItemData, Entity itemEntity )
+    {
+        ItemData itemData = ItemManager.GetItemByID( entityItemData.ID );
+        
+
+        if ( itemData.ItemType == ItemType.Weapon )
+        {
+            WeaponDesc weaponDesc = _entityManager.GetComponentData<WeaponDesc>( itemEntity );
+            _allItemsDict[entityItemData.Key] = new WeaponItemInfo( (WeaponItemData)itemData, weaponDesc, entityItemData.Key );
+        }
+        else if ( itemData.ItemType == ItemType.Health )
+        {
+            HealthItemDesc healthItemDesc = _entityManager.GetComponentData<HealthItemDesc>( itemEntity );
+            _allItemsDict[entityItemData.Key] =new HealthItemInfo( (HealthItemData)itemData, healthItemDesc, entityItemData.Key );
+        }
+        
+        UpdateItemEvent.Invoke( entityItemData.Key );
+    }
+
+    public void ToggleInventory()
+    {
+        bool open = !_panelsParent.activeInHierarchy;
+        _panelsParent.SetActive( open );
+        _hotBar.HoldOpen = open;
+        _hotBarGroup.blocksRaycasts = open;
+        //Cursor.visible = open; //works, but commented out while developing
+
+        //close any open submenus when closing inventory
+        if ( !open )
+        {
+            _subMenuManager.OnCloseInventory();
+        }
+    }
+    
     public void OpenGear()
     {
+        ActivePanel = _gearLayer.GetComponent<PanelManager>();
         _gearLayer.SetActive( true );
         _healthLayer.SetActive( false );
+        _workbenchLayer.SetActive( false );
     }
 
     public void OpenHealth()
     {
+        ActivePanel = _healthLayer.GetComponent<PanelManager>();
         _healthLayer.SetActive( true );
         _gearLayer.SetActive( false );
+        _workbenchLayer.SetActive( false );
     }
+
+    public void OpenWorkbench()
+    {
+        ActivePanel = _workbenchLayer.GetComponent<PanelManager>();
+        _workbenchLayer.SetActive( true );
+    }
+    
+    public void CloseWorkbench()
+    {
+        _workbenchLayer.SetActive( false );
+
+        if ( _healthLayer.activeInHierarchy )
+        {
+            ActivePanel = _healthLayer.GetComponent<PanelManager>();
+        }
+        else if(_gearLayer.activeInHierarchy)
+        {
+            ActivePanel = _gearLayer.GetComponent<PanelManager>();
+        }
+        
+    }
+    
+    
+    
 }

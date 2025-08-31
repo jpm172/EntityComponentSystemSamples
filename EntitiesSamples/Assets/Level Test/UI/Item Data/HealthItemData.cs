@@ -6,10 +6,20 @@ using UnityEngine;
 public class HealthItemData : ItemData
 {
 
-    [Tooltip("Durability")]
+    [Tooltip("Max Charges")]
     [Range(1, 10000)]
-    public int MaxDurability;
+    public int MaxCharges;
+
+    [Tooltip("Heal Timer")]
+    [Range(0.1f, 1000)]
+    public float HealTime;
     
-    
-    
+    [Tooltip("Charges Per Heal")]
+    [Range(1, 10000)]
+    public int ChargesPerHeal;
+
+    [Tooltip( "Health Item Type" )] 
+    public HealthItemType Type;
+
+
 }

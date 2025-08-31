@@ -1,28 +1,47 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class HealthItemLayout : InventoryItemLayout
 {
 
-    private int _maxDurability;
-    private int _currentDurability;
+    private int _maxCharges;
+    private int _currentCharges;
 
+    
+    
     [SerializeField]
-    private Image _durabilityMeter;
+    private Image _chargeMeter;
+
+    [SerializeField] 
+    private TextMeshProUGUI _quantityText;
     
     
-    protected override void Initialize()
+    protected override void UpdateLayout()
     {
-        _item = GetComponent<ItemInfo>();
         
-        _maxDurability = ( (HealthItemData) _item.Data ).MaxDurability;
-        _currentDurability = UnityEngine.Random.Range( 0, _maxDurability + 1 );
         
-        float durValue =  (float) _currentDurability / _maxDurability ;
-        _durabilityMeter.fillAmount = durValue;
+        if ( _item.Item.Data.Stackable )
+        { 
+            _chargeMeter.transform.parent.gameObject.SetActive( false );
+            _quantityText.text = $"x{_item.Item.Quantity}";
+        }
+        else
+        {
+            //_quantityText.transform.gameObject.SetActive( false );
+            _maxCharges = ( (HealthItemInfo) _item.Item ).HealthItem.MaxCharges;
+            _currentCharges = ( (HealthItemInfo) _item.Item ).HealthItem.CurrentCharges;
+            
+            _quantityText.text = $"{_currentCharges}";
+        
+            float durValue =  (float) _currentCharges / _maxCharges ;
+            _chargeMeter.fillAmount = durValue;
+        }
+        
+        
         
         //set the text and change rect to match its size
         _itemText.SetText( _item.Data.ItemName );
@@ -35,5 +54,26 @@ public class HealthItemLayout : InventoryItemLayout
         _itemImage.rectTransform.sizeDelta = spriteSize;
         _itemImage.rectTransform.anchoredPosition = new Vector2(finalSize.x + _padding, 0);
         */
+    }
+    
+    public override void UpdateCallBack()
+    {
+        HealthItemInfo healthItem =  (HealthItemInfo) _item.Item ;
+
+        if ( healthItem.Data.Stackable  )
+        {
+            if ( healthItem.Quantity <= 0 )
+            {
+                RemoveItem();
+                return;
+            }
+        }
+        else if ( healthItem.HealthItem.CurrentCharges <= 0 )
+        {
+            RemoveItem();
+            return;
+        }
+        
+        Initialize();
     }
 }
