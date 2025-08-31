@@ -33,10 +33,6 @@ public partial struct CharacterInventoryCleanUpSystem : ISystem
             if(!inv.IsInPipeline( e ))
                 ecb.RemoveComponent<CharacterItemData>( e );
             
-            /*
-            if(!inv.IsInPipeline( e ))
-                ecb.DestroyEntity( e );
-                */
         }
     }
 }

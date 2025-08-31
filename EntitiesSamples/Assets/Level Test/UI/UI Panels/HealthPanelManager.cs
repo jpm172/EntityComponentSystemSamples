@@ -71,9 +71,7 @@ public class HealthPanelManager : PanelManager
             {
                 BodyLabel bodyLabel = _bodyParts[i].GetComponent<BodyLabel>();
                 
-                //_bodyManager.HealBodyPart( bodyLabel.BodyPart, (HealthItemInfo)drag.Container.Item );
                 _bodyManager.HealBodyPartECS( bodyLabel.BodyPart, (HealthItemInfo)drag.Container.Item );
-                //drag.UpdateCallback();
                 return;
             }
         }

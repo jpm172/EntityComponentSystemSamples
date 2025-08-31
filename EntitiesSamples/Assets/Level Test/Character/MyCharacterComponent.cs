@@ -92,6 +92,18 @@ public struct StatInfo
         return ( LeftLegStats.Condition + RightLegStats.Condition ) / 2;
     }
     
+    public float TotalMissingHealth()
+    {
+        return HeadStats.MissingHealth + ChestStats.MissingHealth + LeftArmStats.MissingHealth + RightArmStats.MissingHealth
+               + LeftLegStats.MissingHealth + RightLegStats.MissingHealth;
+    }
+
+    public float TotalBleed()
+    {
+        return HeadStats.Bleed + ChestStats.Bleed + LeftArmStats.Bleed + RightArmStats.Bleed
+               + LeftLegStats.Bleed + RightLegStats.Bleed;
+    }
+    
 }
 
 [Serializable]

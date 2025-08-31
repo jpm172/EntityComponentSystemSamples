@@ -13103,7 +13103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c68455da476903241b8a5a6f9e2096ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ActivePanel: {fileID: 781753427}
+  ActivePanel: {fileID: 1690316809}
   _gearLayer: {fileID: 781753421}
   _healthLayer: {fileID: 1690316803}
   _workbenchLayer: {fileID: 666359128}
@@ -13118,6 +13118,9 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   UpdateItemEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  RemoveItemEvent:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &993911226

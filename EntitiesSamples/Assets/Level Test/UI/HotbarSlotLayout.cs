@@ -145,9 +145,6 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public virtual void ClearSlot(bool deleteEntity)
     {
-        if ( HasItem && deleteEntity )
-            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
-        
         _itemNameText.text = "";
         _itemImage.enabled = false;
         _container.Clear();
@@ -155,9 +152,6 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     public void ClearFromLinkedSlot()
     {
-        if(HasItem)
-            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
-        
         _itemNameText.text = "";
         _itemImage.enabled = false;
         _container.Clear();
@@ -165,9 +159,6 @@ public class HotbarSlotLayout : MonoBehaviour, IPointerDownHandler
 
     protected virtual void DoubleClickClear()
     {
-        if(HasItem)
-            PlayerUIManager.Instance.RemoveItemEntity( _slotIndex, _equipped );
-        
         _itemNameText.text = "";
         _itemImage.enabled = false;
         _container.Clear();

@@ -23,8 +23,9 @@ public struct CharacterBody : IComponentData
     {
         return ( LeftLeg.Condition + RightLeg.Condition ) / 2;
     }
-    
 
+    
+    
     public CharacterLimb GetLimb( BodyPart limb )
     {
         switch ( limb )

@@ -5,7 +5,5 @@ using UnityEngine;
 
 public struct QuickUseData : IComponentData, IEnableableComponent
 {
-    public Entity PreviousEquipped;
     public BodyPart Part;
-    public bool InHotBar;
 }

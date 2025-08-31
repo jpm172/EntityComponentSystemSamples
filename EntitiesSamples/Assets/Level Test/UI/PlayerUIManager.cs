@@ -354,78 +354,25 @@ public class PlayerUIManager : MonoBehaviour
         
     }
     
-    /*
-    public void AddItemEntity(ItemInfo item, int equipIndex, bool equip)
-    {
-
-        ItemType itemType = item.Data.ItemType;
-        if ( itemType == ItemType.Weapon )
-        {
-            Entity itemEntity = CreateWeaponEntity( (WeaponItemInfo) item );
-            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
-            invBuffer.ElementAt( equipIndex ).Item = itemEntity;
-
-            if ( equip )
-            {
-                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-                playerInv.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
-                _entityManager.SetComponentData( _playerEntity, playerInv );
-            }
-            
-        }
-        else if ( itemType == ItemType.Health )
-        {
-            Entity itemEntity = CreateHealthItemEntity( (HealthItemInfo) item );
-            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
-            invBuffer.ElementAt( equipIndex ).Item = itemEntity;
-            if ( equip )
-            {
-                CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-                playerInv.SwitchToBuffer = new EquippingData(invBuffer[equipIndex].Item);
-                _entityManager.SetComponentData( _playerEntity, playerInv );
-            }
-        }
-    }
-    */
-
-    
-    
-    public void RemoveItemEntity( int removeIndex, bool unequip )
-    {
-        Debug.Log( "remove item entity" );
-        /*
-        CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
-        invBuffer.ElementAt( removeIndex ).Item = Entity.Null;
-        
-        if ( unequip )
-        {
-            playerInv.SwitchToBuffer = new EquippingData(Entity.Null);
-            _entityManager.SetComponentData( _playerEntity, playerInv );
-        }
-        */
-        
-
-    }
 
     public void SwapItemEntities( int index1, int index2 )
     {
-        DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
+        DynamicBuffer<HotBarItem> hotbar = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
         CharacterInventory inventory = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
 
-        HotBarItem swap = invBuffer[index1];
-        invBuffer.ElementAt( index1 ) = invBuffer[index2];
-        invBuffer.ElementAt( index2 ) = swap;
+        HotBarItem swap = hotbar[index1];
+        hotbar.ElementAt( index1 ) = hotbar[index2];
+        hotbar.ElementAt( index2 ) = swap;
 
 
         int equippedIndex = _hotBar.GetEquippedIndex();
         if ( equippedIndex >= 0 && equippedIndex == index1 )
         {
-            inventory.SwitchToBuffer = new EquippingData(invBuffer[index1].Item);
+            inventory.SwitchToBuffer = new EquippingData(hotbar[index1].Item);
         }
         else if (equippedIndex >= 0 && equippedIndex == index2)
         {
-            inventory.SwitchToBuffer = new EquippingData(invBuffer[index2].Item);
+            inventory.SwitchToBuffer = new EquippingData(hotbar[index2].Item);
         }
 
         _entityManager.SetComponentData( _playerEntity, inventory );
@@ -435,25 +382,13 @@ public class PlayerUIManager : MonoBehaviour
     public void QuickUseItem(HealthItemInfo healthItem, BodyPart healPart)
     {
         CharacterInventory playerInv = _entityManager.GetComponentData<CharacterInventory>( _playerEntity );
-        Entity itemEntity;
-        bool inHotBar = _hotBar.ContainsItem( healthItem.Key, out int result );
-        if ( inHotBar )
-        {
-            DynamicBuffer<HotBarItem> invBuffer = _entityManager.GetBuffer<HotBarItem>( _playerEntity );
-            itemEntity = invBuffer[result].Item;
-        }
-        else
-        {
-            itemEntity = CreateHealthItemEntity( healthItem );
-        }
+        Entity itemEntity = GetItemEntity( healthItem );
         
         QuickUseData quickData = new QuickUseData
-        {
-            PreviousEquipped = playerInv.EquippedItem,
-            Part = healPart,
-            InHotBar = inHotBar
+        { 
+            Part = healPart
         };
-        _entityManager.AddComponentData( itemEntity, new UseOnEquip() );
+        //_entityManager.AddComponentData( itemEntity, new UseOnEquip() );
         _entityManager.AddComponentData( itemEntity, quickData );
         
          
@@ -462,38 +397,30 @@ public class PlayerUIManager : MonoBehaviour
         
     }
 
-    private Entity CreateWeaponEntity( WeaponItemInfo weaponInfo )
+
+    private Entity GetItemEntity( ItemInfo itemInfo )
     {
-        
-        Entity itemEntity = _entityManager.CreateEntity();
-#if UNITY_EDITOR
-        _entityManager.SetName( itemEntity, weaponInfo.Data.ItemName );
-#endif
-        
-        _entityManager.AddComponentData(itemEntity, weaponInfo.Weapon);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, -1, weaponInfo.Data.EquipTime, 1, weaponInfo.Key));
+        DynamicBuffer<InventoryItem> playerItems = _entityManager.GetBuffer<InventoryItem>( _playerEntity );
+        Entity itemEntity = Entity.Null;
+
+        for ( int i = 0; i < playerItems.Length; i++ )
+        {
+            CharacterItemData itemData = _entityManager.GetComponentData<CharacterItemData>( playerItems[i].Item );
+            if ( itemData.Key == itemInfo.Key )
+            {
+                itemEntity = playerItems[i].Item;
+            }
+        }
+
+        if ( itemEntity == Entity.Null )
+        {
+            throw new NullReferenceException($"item not found - key: {itemInfo.Key}, ID: {itemInfo.Data.ItemID}, Name: {itemInfo.Data.ItemName}");
+        }
 
         return itemEntity;
     }
     
-    private Entity CreateHealthItemEntity( HealthItemInfo itemInfo )
-    {
-        Entity itemEntity = _entityManager.CreateEntity();
-#if UNITY_EDITOR
-        _entityManager.SetName( itemEntity, itemInfo.Data.ItemName );
-#endif
-        
-        
-        _entityManager.AddComponentData(itemEntity, itemInfo.HealthItem);
-        _entityManager.AddComponentData(itemEntity, new CharacterItemData(_playerEntity, -1, itemInfo.Data.EquipTime, itemInfo.Quantity, itemInfo.Key));
-
-        if ( itemInfo.HealthItem.Type == HealthItemType.HealthKit )
-        {
-            _entityManager.AddComponentData( itemEntity, new HealthKitInfo() );
-        }
-        
-        return itemEntity;
-    }
+    
     
     //set update == true whenever using them internally (like the Heal All action) so that
     //all items are properly updated, but when using items directly (drag and drop), 
@@ -529,20 +456,7 @@ public class PlayerUIManager : MonoBehaviour
         
         UpdateItemEvent.Invoke( entityItemData.Key );
     }
-    
-    /*
-    public void UpdateItem( HealthItemDesc item, CharacterItemData itemData)
-    {
-        
-        HealthItemInfo updatedItem = (HealthItemInfo)_allItemsDict[itemData.Key];
-        updatedItem.HealthItem = item;
-        updatedItem.Quantity = itemData.Quantity;
-        
-        ItemUpdateEvent.Invoke();
-        
-    }
-    */
-    
+
     public void ToggleInventory()
     {
         bool open = !_panelsParent.activeInHierarchy;
